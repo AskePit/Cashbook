@@ -68,6 +68,10 @@ QModelIndex CategoriesModel::index(int row, int column, const QModelIndex &paren
 
     Node<Category> *parentItem = getItem(parent);
 
+    if(row >= parentItem->childCount()) {
+        return QModelIndex();
+    }
+
     Node<Category> *childItem = parentItem->at(row);
     if (childItem)
         return createIndex(row, column, childItem);
@@ -219,10 +223,14 @@ QVariant WalletsModel::headerData(int section, Qt::Orientation orientation,
 
 QModelIndex WalletsModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (parent.isValid() && parent.column() != 0)
+    if (parent.isValid() && parent.column() > WalletColumn::Amount)
         return QModelIndex();
 
     Node<Wallet> *parentItem = getItem(parent);
+
+    if(row >= parentItem->childCount()) {
+        return QModelIndex();
+    }
 
     Node<Wallet> *childItem = parentItem->at(row);
     if (childItem)
@@ -296,6 +304,40 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
     emit dataChanged(index, index);
 
     return true;
+}
+
+template <>
+QString pathToString<Category>(Node<Category> *node) {
+    QStringList l;
+    while(node->parent) {
+        l.push_back(node->data);
+        node = node->parent;
+    }
+
+    QString s;
+    for(auto it = l.rbegin(); it != l.rend(); ++it) {
+        s += *it;
+        s += " > ";
+    }
+
+    return s;
+}
+
+template <>
+QString pathToString<Wallet>(Node<Wallet> *node) {
+    QStringList l;
+    while(node->parent) {
+        l.push_back(node->data.name);
+        node = node->parent;
+    }
+
+    QString s;
+    for(auto it = l.rbegin(); it != l.rend(); ++it) {
+        s += *it;
+        s += " > ";
+    }
+
+    return s;
 }
 
 } // namespace cashbook

@@ -19,6 +19,10 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+private slots:
+    void on_categoriesTree_clicked(const QModelIndex &index);
+    void on_walletsTree_clicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     CategoriesModel t;

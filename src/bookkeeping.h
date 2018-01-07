@@ -109,10 +109,16 @@ public:
     CategoriesModel(QObject *parent = 0);
     ~CategoriesModel();
 
+    Node<Category> *getItem(const QModelIndex &index) const;
+
     Node<Category> *addChild(const Category &data) {
         auto node = new Node<Category>(data, rootItem);
         rootItem->children.push_back(node);
         return node;
+    }
+
+    Node<Category> *child(const Category &data) {
+        return rootItem->child(data);
     }
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -136,7 +142,6 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 
 private:
-    Node<Category> *getItem(const QModelIndex &index) const;
     Tree<Category> *rootItem;
 };
 
@@ -147,6 +152,8 @@ class WalletsModel : public QAbstractItemModel
 public:
     WalletsModel(QObject *parent = 0);
     ~WalletsModel();
+
+    Node<Wallet> *getItem(const QModelIndex &index) const;
 
     Node<Wallet> *addChild(const Wallet &data) {
         auto node = new Node<Wallet>(data, rootItem);
@@ -175,7 +182,6 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 
 private:
-    Node<Wallet> *getItem(const QModelIndex &index) const;
     Tree<Wallet> *rootItem;
 };
 
@@ -186,6 +192,9 @@ struct Data
     CategoriesModel categories;
     QVector<Transaction> log;
 };
+
+template <class T>
+QString pathToString(Node<T> *node);
 
 } // namespace cashbook
 
