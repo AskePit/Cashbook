@@ -2,10 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "bookkeeping.h"
 
 namespace Ui {
 class MainWindow;
 }
+
+namespace cashbook
+{
 
 class MainWindow : public QMainWindow
 {
@@ -17,6 +21,10 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    CategoriesModel t;
+    WalletsModel w;
 };
+
+} // namespace cashbook
 
 #endif // MAINWINDOW_H
