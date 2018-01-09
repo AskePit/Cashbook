@@ -16,17 +16,17 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(Data &data, QWidget *parent = 0);
     ~MainWindow();
 
 private slots:
-    void on_categoriesTree_clicked(const QModelIndex &index);
+    void on_inCategoriesTree_clicked(const QModelIndex &index);
+    void on_outCategoriesTree_clicked(const QModelIndex &index);
     void on_walletsTree_clicked(const QModelIndex &index);
 
 private:
     Ui::MainWindow *ui;
-    CategoriesModel t;
-    WalletsModel w;
+    Data &m_data;
 };
 
 } // namespace cashbook

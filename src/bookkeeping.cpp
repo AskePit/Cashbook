@@ -1,10 +1,8 @@
 #include "bookkeeping.h"
+#include "types.h"
 
 namespace cashbook
 {
-
-#define UNUSED(...) (void)__VA_ARGS__
-#define as static_cast
 
 CategoriesModel::CategoriesModel(QObject *parent)
     : QAbstractItemModel(parent)
@@ -146,6 +144,8 @@ public:
     enum t {
         Name = 0,
         Amount = 1,
+
+        Count
     };
 };
 
@@ -163,7 +163,7 @@ WalletsModel::~WalletsModel()
 int WalletsModel::columnCount(const QModelIndex &parent) const
 {
     UNUSED(parent);
-    return 2;
+    return WalletColumn::Count;
 }
 
 QVariant WalletsModel::data(const QModelIndex &index, int role) const
@@ -209,7 +209,6 @@ Node<Wallet> *WalletsModel::getItem(const QModelIndex &index) const
 QVariant WalletsModel::headerData(int section, Qt::Orientation orientation,
                                int role) const
 {
-    UNUSED(section, orientation, role);
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch(section)
         {
@@ -306,38 +305,223 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
     return true;
 }
 
-template <>
-QString pathToString<Category>(Node<Category> *node) {
-    QStringList l;
-    while(node->parent) {
-        l.push_back(node->data);
-        node = node->parent;
+OwnersModel::OwnersModel(QObject *parent)
+    : QAbstractListModel(parent)
+{}
+
+OwnersModel::~OwnersModel()
+{}
+
+QVariant OwnersModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid())
+        return QVariant();
+
+    if (role != Qt::DisplayRole && role != Qt::EditRole)
+        return QVariant();
+
+    return owners[index.row()];
+}
+
+QVariant OwnersModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    UNUSED(section, orientation, role);
+    return QVariant();
+}
+
+int OwnersModel::rowCount(const QModelIndex &parent) const
+{
+    UNUSED(parent);
+    return owners.size();
+}
+
+Qt::ItemFlags OwnersModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return 0;
+
+    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+}
+
+bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (role != Qt::EditRole)
+        return false;
+
+    if(index.column() != 0) {
+        return false;
     }
 
-    QString s;
-    for(auto it = l.rbegin(); it != l.rend(); ++it) {
-        s += *it;
-        s += " > ";
+    owners[index.row()] = value.toString();
+    emit dataChanged(index, index);
+
+    return true;
+}
+
+bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
+{
+    UNUSED(parent);
+    owners.insert(position, rows, IdableString());
+    return true;
+}
+
+bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
+{
+    UNUSED(parent);
+    owners.remove(position, rows);
+    return true;
+}
+
+class LogColumn
+{
+public:
+    enum t {
+        Date = 0,
+        Type,
+        Category,
+        Money,
+        From,
+        To,
+        Note,
+
+        Count
+    };
+};
+
+LogModel::LogModel(QObject *parent)
+    : QAbstractTableModel(parent)
+{}
+
+LogModel::~LogModel()
+{}
+
+template <class T>
+static inline QVariant getVariantPointer(T pointer)
+{
+    QVariant v;
+    v.setValue<T>(pointer);
+    return v;
+}
+
+QVariant LogModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid())
+        return QVariant();
+
+    if (role != Qt::DisplayRole && role != Qt::EditRole)
+        return QVariant();
+
+    const Transaction &t = log[index.row()];
+
+    switch(index.column())
+    {
+        case LogColumn::Date: return t.date;
+        case LogColumn::Type: return t.type;
+        case LogColumn::Category: {
+            if(t.category.empty()) {
+                return QVariant();
+            } else {
+                return getVariantPointer(*t.category.begin());
+            }
+        }
+        case LogColumn::Money: return as<double>(t.amount);
+        case LogColumn::From: return getVariantPointer(t.from);
+        case LogColumn::To: return getVariantPointer(t.to);
+        case LogColumn::Note: return t.note;
     }
 
-    return s;
+    return QVariant();
+}
+
+QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        switch(section)
+        {
+            case LogColumn::Date: return tr("Дата");
+            case LogColumn::Type: return tr("Тип");
+            case LogColumn::Category: return tr("Категория");
+            case LogColumn::Money: return tr("Сумма");
+            case LogColumn::From: return tr("Откуда");
+            case LogColumn::To: return tr("Куда");
+            case LogColumn::Note: return tr("Примечание");
+        }
+    }
+
+    return QVariant();
+}
+
+int LogModel::rowCount(const QModelIndex &parent) const
+{
+    UNUSED(parent);
+    return log.size();
+}
+
+int LogModel::columnCount(const QModelIndex &parent) const
+{
+    UNUSED(parent);
+    return LogColumn::Count;
+}
+
+Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return 0;
+
+    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+}
+
+bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (role != Qt::EditRole)
+        return false;
+
+    Transaction &t = log[index.row()];
+
+    switch(index.column())
+    {
+        case LogColumn::Date: t.date = value.toDate();
+        case LogColumn::Type: t.type = as<Transaction::Type::t>(value.toInt());
+        case LogColumn::Category: {
+            if(value.isNull()) {
+                t.category.clear();
+            } else {
+                t.category.insert(value.value<CategoryNodeP>());
+            }
+        }
+        case LogColumn::Money: t.amount = value.toDouble();
+        case LogColumn::From: t.from = value.value<WalletNodeP>();
+        case LogColumn::To: t.to = value.value<WalletNodeP>();
+        case LogColumn::Note: t.note = value.toString();
+    }
+
+    emit dataChanged(index, index);
+
+    return true;
+}
+
+bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
+{
+    UNUSED(parent);
+    log.insert(position, rows, Transaction());
+    return true;
+}
+
+bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
+{
+    UNUSED(parent);
+    log.remove(position, rows);
+    return true;
 }
 
 template <>
-QString pathToString<Wallet>(Node<Wallet> *node) {
-    QStringList l;
-    while(node->parent) {
-        l.push_back(node->data.name);
-        node = node->parent;
-    }
+QString extractPathString<Category>(const Node<Category> *node) {
+    return node->data;
+}
 
-    QString s;
-    for(auto it = l.rbegin(); it != l.rend(); ++it) {
-        s += *it;
-        s += " > ";
-    }
-
-    return s;
+template <>
+QString extractPathString<Wallet>(const Node<Wallet> *node) {
+    return node->data.name;
 }
 
 } // namespace cashbook

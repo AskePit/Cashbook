@@ -37,9 +37,16 @@ public:
     {}
 };
 
+using IdableStringP = IdableString *;
+using IdableStringNodeP = Node<IdableString> *;
+
 Q_DECLARE_METATYPE(IdableString)
+Q_DECLARE_METATYPE(IdableStringP)
+Q_DECLARE_METATYPE(IdableStringNodeP)
 
 using Owner = IdableString;
+using OwnerP = Owner *;
+using OwnerNodeP = Node<Owner> *;
 
 struct Wallet : public Idable
 {
@@ -87,18 +94,48 @@ struct Wallet : public Idable
     Money amount;
 };
 
+using WalletP = Wallet *;
+using WalletNodeP = Node<Wallet> *;
+Q_DECLARE_METATYPE(WalletP)
+Q_DECLARE_METATYPE(WalletNodeP)
+
 using Category = IdableString;
+using CategoryP = Category *;
+using CategoryNodeP = Node<Category> *;
 
 struct Transaction
 {
+    class Type
+    {
+    public:
+        enum t {
+            In = 0,
+            Out,
+            Transfer,
+        };
+
+        static QString toString(Type::t type) {
+            switch(type) {
+                case In: return QObject::tr("Доход");
+                case Out: return QObject::tr("Трата");
+                case Transfer: return QObject::tr("Перемещение");
+            }
+        }
+
+        static QVector<Type::t> enumerate() {
+            return {In, Out, Transfer};
+        }
+    };
+
     QDate date;
     QString note;
-    QSet<Category *> category;
+    Type::t type {Type::Out};
+    QSet< Node<Category>* > category;
     Money amount;
-    Wallet *from {nullptr};
-    Wallet *to {nullptr};
-    QSet<Owner *> whoDid;
-    QSet<Owner *> forWhom;
+    Node<Wallet> *from {nullptr};
+    Node<Wallet> *to {nullptr};
+    QSet< Node<Owner>* > whoDid;
+    QSet< Node<Owner>* > forWhom;
 };
 
 class CategoriesModel : public QAbstractItemModel
@@ -106,6 +143,8 @@ class CategoriesModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    Tree<Category> *rootItem;
+
     CategoriesModel(QObject *parent = 0);
     ~CategoriesModel();
 
@@ -140,9 +179,6 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
-
-private:
-    Tree<Category> *rootItem;
 };
 
 class WalletsModel : public QAbstractItemModel
@@ -150,6 +186,8 @@ class WalletsModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    Tree<Wallet> *rootItem;
+
     WalletsModel(QObject *parent = 0);
     ~WalletsModel();
 
@@ -180,21 +218,119 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
-
-private:
-    Tree<Wallet> *rootItem;
 };
+
+class OwnersModel : public QAbstractListModel
+{
+    Q_OBJECT
+
+public:
+    QVector<Owner> owners;
+
+    OwnersModel(QObject *parent = 0);
+    ~OwnersModel();
+
+    QVariant data(const QModelIndex &index, int role) const override;
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+
+    bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+};
+
+class LogModel : public QAbstractTableModel
+{
+    Q_OBJECT
+
+public:
+    QVector<Transaction> log;
+
+    LogModel(QObject *parent = 0);
+    ~LogModel();
+
+    QVariant data(const QModelIndex &index, int role) const override;
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+
+    bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+};
+
+const QString pathConcat {"> "};
+
+template <class T>
+QString extractPathString(const Node<T> *node);
+
+template <>
+QString extractPathString<Category>(const Node<Category> *node);
+
+template <>
+QString extractPathString<Wallet>(const Node<Wallet> *node);
+
+template <class T>
+QString pathToString(const Node<T> *node)
+{
+    QStringList l;
+    while(node->parent) {
+        l.push_front(extractPathString(node));
+        node = node->parent;
+    }
+
+    return l.join(pathConcat);
+}
 
 struct Data
 {
-    QVector<Owner> owners;
+    OwnersModel owners;
     WalletsModel wallets;
-    CategoriesModel categories;
-    QVector<Transaction> log;
-};
+    CategoriesModel inCategories;
+    CategoriesModel outCategories;
+    LogModel log;
 
-template <class T>
-QString pathToString(Node<T> *node);
+    Node<Wallet> *walletFromPath(const QString &path) {
+        return nodeFromPath<Wallet, WalletsModel>(wallets, path);
+    }
+
+    Node<Category> *inCategoryFromPath(const QString &path) {
+        return nodeFromPath<Category, CategoriesModel>(inCategories, path);
+    }
+
+    Node<Category> *outCategoryFromPath(const QString &path) {
+        return nodeFromPath<Category, CategoriesModel>(outCategories, path);
+    }
+
+private:
+    template<class T, class Model>
+    Node<T> *nodeFromPath(const Model &model, const QString &path) {
+        QStringList l = path.split(pathConcat, QString::KeepEmptyParts);
+        Node<T> *node = model.rootItem;
+        for(const auto &s : l) {
+            bool found = false;
+            for(const auto &child : node->children) {
+                if(extractPathString(child) == s) {
+                    node = child;
+                    found = true;
+                    break;
+                }
+            }
+            if(!found) {
+                return nullptr;
+            }
+        }
+        return node;
+    }
+};
 
 } // namespace cashbook
 

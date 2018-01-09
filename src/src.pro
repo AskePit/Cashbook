@@ -22,7 +22,8 @@ FORMS += \
 
 HEADERS += \
     mainwindow.h \
-    bookkeeping.h
+    bookkeeping.h \
+    types.h
 
 SOURCES += \
     mainwindow.cpp \
