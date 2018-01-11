@@ -27,6 +27,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     Data &m_data;
+    LogItemDelegate m_logDelegate;
 };
 
 } // namespace cashbook

@@ -1,6 +1,8 @@
 #include "bookkeeping.h"
 #include "types.h"
 
+#include <QComboBox>
+
 namespace cashbook
 {
 
@@ -296,8 +298,8 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
 
     switch(index.column())
     {
-        case WalletColumn::Name: item->data.name = value.toString();
-        case WalletColumn::Amount: item->data.amount = value.toDouble();
+        case WalletColumn::Name: item->data.name = value.toString(); break;
+        case WalletColumn::Amount: item->data.amount = value.toDouble(); break;
     }
 
     emit dataChanged(index, index);
@@ -416,17 +418,40 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     switch(index.column())
     {
         case LogColumn::Date: return t.date;
-        case LogColumn::Type: return t.type;
+        case LogColumn::Type: {
+            if(role == Qt::DisplayRole) {
+                return Transaction::Type::toString(t.type);
+            } else {
+                return as<int>(t.type);
+            }
+        } break;
         case LogColumn::Category: {
             if(t.category.empty()) {
                 return QVariant();
             } else {
-                return getVariantPointer(*t.category.begin());
+                Node<Category> *node = *t.category.begin();
+                if(role == Qt::DisplayRole) {
+                    return pathToString(node);
+                } else {
+                    return getVariantPointer(node);
+                }
             }
-        }
+        } break;
         case LogColumn::Money: return as<double>(t.amount);
-        case LogColumn::From: return getVariantPointer(t.from);
-        case LogColumn::To: return getVariantPointer(t.to);
+        case LogColumn::From: {
+            if(role == Qt::DisplayRole) {
+                return pathToString(t.from);
+            } else {
+                return getVariantPointer(t.from);
+            }
+        } break;
+        case LogColumn::To: {
+            if(role == Qt::DisplayRole) {
+                return pathToString(t.to);
+            } else {
+                return getVariantPointer(t.to);
+            }
+        } break;
         case LogColumn::Note: return t.note;
     }
 
@@ -480,19 +505,19 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
 
     switch(index.column())
     {
-        case LogColumn::Date: t.date = value.toDate();
+        case LogColumn::Date: t.date = value.toDate(); break;
         case LogColumn::Type: t.type = as<Transaction::Type::t>(value.toInt());
         case LogColumn::Category: {
             if(value.isNull()) {
                 t.category.clear();
             } else {
-                t.category.insert(value.value<CategoryNodeP>());
+                t.category.insert(value.value<Node<Category>*>());
             }
-        }
-        case LogColumn::Money: t.amount = value.toDouble();
-        case LogColumn::From: t.from = value.value<WalletNodeP>();
-        case LogColumn::To: t.to = value.value<WalletNodeP>();
-        case LogColumn::Note: t.note = value.toString();
+        } break;
+        case LogColumn::Money: t.amount = value.toDouble(); break;
+        case LogColumn::From: t.from = value.value<Node<Wallet>*>(); break;
+        case LogColumn::To: t.to = value.value<Node<Wallet>*>(); break;
+        case LogColumn::Note: t.note = value.toString(); break;
     }
 
     emit dataChanged(index, index);
@@ -522,6 +547,102 @@ QString extractPathString<Category>(const Node<Category> *node) {
 template <>
 QString extractPathString<Wallet>(const Node<Wallet> *node) {
     return node->data.name;
+}
+
+static const QSet<LogColumn::t> defaultColumns = {
+    LogColumn::Date,
+    LogColumn::Money,
+    LogColumn::Note,
+};
+
+LogItemDelegate::LogItemDelegate(Data &data, QObject* parent)
+    : QStyledItemDelegate(parent)
+    , m_data(data)
+{}
+
+LogItemDelegate::~LogItemDelegate()
+{}
+
+QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    auto column = as<LogColumn::t>(index.column());
+    if (defaultColumns.contains(column)) {
+        return QStyledItemDelegate::createEditor(parent, option, index);
+    }
+
+    const Transaction &record = m_data.log.log[index.row()];
+
+    int col = index.column();
+
+    switch(col) {
+        case LogColumn::Type: {
+            QComboBox* box = new QComboBox(parent);
+            for(auto t : Transaction::Type::enumerate()) {
+                box->addItem(Transaction::Type::toString(t), as<int>(t));
+            }
+            return box;
+        } break;
+
+        case LogColumn::Category: {
+            if(record.type == Transaction::Type::Transfer) {
+                return nullptr;
+            }
+
+            const CategoriesModel &categories =
+                    record.type == Transaction::Type::In ?
+                        m_data.inCategories :
+                        m_data.outCategories;
+
+            QComboBox* box = new QComboBox(parent);
+            auto nodes = categories.rootItem->toList();
+            for(const Node<Category> *n : nodes) {
+                box->addItem(pathToString(n), getVariantPointer(n));
+            }
+            return box;
+
+        } break;
+
+        case LogColumn::From:
+        case LogColumn::To: {
+            if(col == LogColumn::From && record.type == Transaction::Type::In
+            || col == LogColumn::To   && record.type == Transaction::Type::Out) {
+                return nullptr;
+            }
+
+            QComboBox* box = new QComboBox(parent);
+            const auto nodes = m_data.wallets.rootItem->toList();
+            for(const Node<Wallet> *n : nodes) {
+                box->addItem(pathToString(n), getVariantPointer(n));
+            }
+            return box;
+
+        } break;
+    }
+
+    // should not reach this code, but just to be sure
+    return QStyledItemDelegate::createEditor(parent, option, index);
+}
+
+void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
+        QVariant value = index.data(Qt::EditRole);
+        int i = box->findData(value);
+        if(i >= 0) {
+            box->setCurrentIndex(i);
+        }
+    } else {
+        QStyledItemDelegate::setEditorData(editor, index);
+    }
+}
+
+void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+    if (QComboBox* box = qobject_cast<QComboBox*>(editor))
+        // save the current text of the combo box as the current value of the item
+        model->setData(index, box->currentData(), Qt::EditRole);
+    else
+        QStyledItemDelegate::setModelData(editor, model, index);
 }
 
 } // namespace cashbook

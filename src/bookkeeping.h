@@ -12,6 +12,7 @@
 #include <QAbstractItemModel>
 #include <QModelIndex>
 #include <QVariant>
+#include <QStyledItemDelegate>
 
 namespace cashbook
 {
@@ -37,16 +38,10 @@ public:
     {}
 };
 
-using IdableStringP = IdableString *;
-using IdableStringNodeP = Node<IdableString> *;
-
-Q_DECLARE_METATYPE(IdableString)
-Q_DECLARE_METATYPE(IdableStringP)
-Q_DECLARE_METATYPE(IdableStringNodeP)
+Q_DECLARE_METATYPE(Node<IdableString> *)
+Q_DECLARE_METATYPE(const Node<IdableString> *)
 
 using Owner = IdableString;
-using OwnerP = Owner *;
-using OwnerNodeP = Node<Owner> *;
 
 struct Wallet : public Idable
 {
@@ -94,14 +89,10 @@ struct Wallet : public Idable
     Money amount;
 };
 
-using WalletP = Wallet *;
-using WalletNodeP = Node<Wallet> *;
-Q_DECLARE_METATYPE(WalletP)
-Q_DECLARE_METATYPE(WalletNodeP)
+Q_DECLARE_METATYPE(Node<Wallet> *)
+Q_DECLARE_METATYPE(const Node<Wallet> *)
 
 using Category = IdableString;
-using CategoryP = Category *;
-using CategoryNodeP = Node<Category> *;
 
 struct Transaction
 {
@@ -117,6 +108,7 @@ struct Transaction
         static QString toString(Type::t type) {
             switch(type) {
                 case In: return QObject::tr("Доход");
+                default:
                 case Out: return QObject::tr("Трата");
                 case Transfer: return QObject::tr("Перемещение");
             }
@@ -281,6 +273,10 @@ QString extractPathString<Wallet>(const Node<Wallet> *node);
 template <class T>
 QString pathToString(const Node<T> *node)
 {
+    if(!node) {
+        return "";
+    }
+
     QStringList l;
     while(node->parent) {
         l.push_front(extractPathString(node));
@@ -330,6 +326,22 @@ private:
         }
         return node;
     }
+};
+
+class LogItemDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+public:
+    LogItemDelegate(Data &data, QObject* parent = nullptr);
+    ~LogItemDelegate();
+
+    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+
+private:
+    const Data &m_data;
 };
 
 } // namespace cashbook

@@ -24,18 +24,25 @@
        <attribute name="title">
         <string>Главная</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QTableView" name="logTable"/>
-        </item>
-        <item>
-         <widget class="QTreeView" name="walletsTree">
-          <property name="alternatingRowColors">
-           <bool>true</bool>
+         <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <attribute name="headerVisible">
-           <bool>false</bool>
-          </attribute>
+          <widget class="QTableView" name="logTable">
+           <attribute name="verticalHeaderDefaultSectionSize">
+            <number>23</number>
+           </attribute>
+          </widget>
+          <widget class="QTreeView" name="walletsTree">
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -54,25 +61,28 @@
        <attribute name="title">
         <string>Категории</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QTreeView" name="inCategoriesTree">
-          <property name="alternatingRowColors">
-           <bool>true</bool>
+         <widget class="QSplitter" name="splitter_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <attribute name="headerVisible">
-           <bool>false</bool>
-          </attribute>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTreeView" name="outCategoriesTree">
-          <property name="alternatingRowColors">
-           <bool>true</bool>
-          </property>
-          <attribute name="headerVisible">
-           <bool>false</bool>
-          </attribute>
+          <widget class="QTreeView" name="inCategoriesTree">
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+          </widget>
+          <widget class="QTreeView" name="outCategoriesTree">
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+          </widget>
          </widget>
         </item>
        </layout>

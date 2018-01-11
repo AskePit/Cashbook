@@ -10,8 +10,11 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_data(data)
+    , m_logDelegate(m_data)
 {
     ui->setupUi(this);
+
+    ui->logTable->setItemDelegate(&m_logDelegate);
 
     ui->outCategoriesTree->setModel(&m_data.outCategories);
     ui->inCategoriesTree->setModel(&m_data.inCategories);
