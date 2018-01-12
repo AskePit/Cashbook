@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include "bookkeeping.h"
+#include "types.h"
 
 void fillDataExample(cashbook::Data &data)
 {
@@ -86,9 +87,38 @@ void fillDataExample(cashbook::Data &data)
     u.owners.push_back("She");
 
     auto &log = l.log;
-    log.push_back({QDate(2018, 1, 4), "some food", Transaction::Type::Out, {chicken}, 518, wallet, nullptr, {}, {}});
-    log.push_back({QDate(2018, 1, 13), "rent", Transaction::Type::Out, {rent}, 13000, sber, nullptr, {}, {}});
-    log.push_back({QDate(2018, 1, 15), "salary", Transaction::Type::In, {salary}, 25705, nullptr, sber, {}, {}});
+    {
+        Transaction t;
+        t.date = QDate(2018, 1, 4);
+        t.note = "some food";
+        t.type = Transaction::Type::Out;
+        t.category = {chicken};
+        t.amount = 518;
+        t.from = wallet;
+        log.push_back(t);
+    }
+    {
+        Transaction t;
+        t.date = QDate(2018, 1, 13);
+        t.note = "rent";
+        t.type = Transaction::Type::Out;
+        t.category = {rent};
+        t.amount = 13000;
+        t.from = sber;
+        log.push_back(t);
+    }
+    {
+        Transaction t;
+        t.date = QDate(2018, 1, 15);
+        t.note = "salary";
+        t.type = Transaction::Type::In;
+        t.category = {salary};
+        t.amount = 25705;
+        t.to = sber;
+        log.push_back(t);
+    }
+
+    UNUSED(pants, cources, books, bread, iceCream, choco, cookies, pork, sell, deposit);
 }
 
 int main(int argc, char *argv[])
