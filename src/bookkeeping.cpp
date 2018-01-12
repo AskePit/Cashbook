@@ -68,7 +68,7 @@ QModelIndex CategoriesModel::index(int row, int column, const QModelIndex &paren
 
     Node<Category> *parentItem = getItem(parent);
 
-    if(row >= parentItem->childCount()) {
+    if(row >= as<int>(parentItem->childCount())) {
         return QModelIndex();
     }
 
@@ -229,7 +229,7 @@ QModelIndex WalletsModel::index(int row, int column, const QModelIndex &parent) 
 
     Node<Wallet> *parentItem = getItem(parent);
 
-    if(row >= parentItem->childCount()) {
+    if(row >= as<int>(parentItem->childCount())) {
         return QModelIndex();
     }
 
