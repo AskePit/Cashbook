@@ -122,12 +122,12 @@ struct Transaction
     QDate date;
     QString note;
     Type::t type {Type::Out};
-    QSet< Node<Category>* > category;
+    QSet< const Node<Category>* > category;
     Money amount;
-    Node<Wallet> *from {nullptr};
-    Node<Wallet> *to {nullptr};
-    QSet< Node<Owner>* > whoDid;
-    QSet< Node<Owner>* > forWhom;
+    const Node<Wallet> *from {nullptr};
+    const Node<Wallet> *to {nullptr};
+    QSet< const Node<Owner>* > whoDid;
+    QSet< const Node<Owner>* > forWhom;
 };
 
 class CategoriesModel : public QAbstractItemModel
@@ -245,6 +245,9 @@ public:
     LogModel(QObject *parent = 0);
     ~LogModel();
 
+    Transaction &getTransaction(const QModelIndex &index);
+    const Transaction &getTransaction(const QModelIndex &index) const;
+
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
                         int role = Qt::DisplayRole) const override;
@@ -259,7 +262,7 @@ public:
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
 };
 
-const QString pathConcat {"> "};
+const QString pathConcat {"/"};
 
 template <class T>
 QString extractPathString(const Node<T> *node);

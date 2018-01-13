@@ -2,6 +2,7 @@
 #include "types.h"
 
 #include <QComboBox>
+#include <QDebug>
 
 namespace cashbook
 {
@@ -405,6 +406,18 @@ static inline QVariant getVariantPointer(T pointer)
     return v;
 }
 
+Transaction &LogModel::getTransaction(const QModelIndex &index)
+{
+    int i = log.size() - index.row() - 1;
+    return log[i];
+}
+
+const Transaction &LogModel::getTransaction(const QModelIndex &index) const
+{
+    int i = log.size() - index.row() - 1;
+    return log[i];
+}
+
 QVariant LogModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
@@ -413,7 +426,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
-    const Transaction &t = log[index.row()];
+    const Transaction &t = getTransaction(index);
 
     switch(index.column())
     {
@@ -429,7 +442,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             if(t.category.empty()) {
                 return QVariant();
             } else {
-                Node<Category> *node = *t.category.begin();
+                const Node<Category> *node = *t.category.begin();
                 if(role == Qt::DisplayRole) {
                     return pathToString(node);
                 } else {
@@ -501,22 +514,39 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
     if (role != Qt::EditRole)
         return false;
 
-    Transaction &t = log[index.row()];
+    Transaction &t = getTransaction(index);
 
     switch(index.column())
     {
         case LogColumn::Date: t.date = value.toDate(); break;
-        case LogColumn::Type: t.type = as<Transaction::Type::t>(value.toInt());
-        case LogColumn::Category: {
-            if(value.isNull()) {
+        case LogColumn::Type: {
+            auto oldType = t.type;
+            t.type = as<Transaction::Type::t>(value.toInt());
+            if(t.type != oldType) {
                 t.category.clear();
-            } else {
-                t.category.insert(value.value<Node<Category>*>());
+                t.from = nullptr;
+                t.to = nullptr;
+                emit dataChanged(
+                  createIndex(index.row(), LogColumn::Category),
+                  createIndex(index.row(), LogColumn::Category),
+                  {Qt::DisplayRole, Qt::EditRole}
+                );
+                emit dataChanged(
+                  createIndex(index.row(), LogColumn::From),
+                  createIndex(index.row(), LogColumn::To),
+                  {Qt::DisplayRole, Qt::EditRole}
+                );
+            }
+        } break;
+        case LogColumn::Category: {
+            t.category.clear();
+            if(!value.isNull()) {
+                t.category.insert(value.value<const Node<Category>*>());
             }
         } break;
         case LogColumn::Money: t.amount = value.toDouble(); break;
-        case LogColumn::From: t.from = value.value<Node<Wallet>*>(); break;
-        case LogColumn::To: t.to = value.value<Node<Wallet>*>(); break;
+        case LogColumn::From: t.from = value.value<const Node<Wallet>*>(); break;
+        case LogColumn::To: t.to = value.value<const Node<Wallet>*>(); break;
         case LogColumn::Note: t.note = value.toString(); break;
     }
 
@@ -570,7 +600,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
         return QStyledItemDelegate::createEditor(parent, option, index);
     }
 
-    const Transaction &record = m_data.log.log[index.row()];
+    const Transaction &record = m_data.log.getTransaction(index);
 
     int col = index.column();
 

@@ -19,11 +19,6 @@ public:
     explicit MainWindow(Data &data, QWidget *parent = 0);
     ~MainWindow();
 
-private slots:
-    void on_inCategoriesTree_clicked(const QModelIndex &index);
-    void on_outCategoriesTree_clicked(const QModelIndex &index);
-    void on_walletsTree_clicked(const QModelIndex &index);
-
 private:
     Ui::MainWindow *ui;
     Data &m_data;

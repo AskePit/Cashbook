@@ -32,18 +32,3 @@ MainWindow::~MainWindow()
 }
 
 } // namespace cashbook
-
-void cashbook::MainWindow::on_inCategoriesTree_clicked(const QModelIndex &index)
-{
-    ui->statusbar->showMessage(pathToString(m_data.inCategories.getItem(index)));
-}
-
-void cashbook::MainWindow::on_outCategoriesTree_clicked(const QModelIndex &index)
-{
-    ui->statusbar->showMessage(pathToString(m_data.outCategories.getItem(index)));
-}
-
-void cashbook::MainWindow::on_walletsTree_clicked(const QModelIndex &index)
-{
-    ui->statusbar->showMessage(pathToString(m_data.wallets.getItem(index)));
-}
