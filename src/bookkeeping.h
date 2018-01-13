@@ -233,6 +233,7 @@ public:
 
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
 };
 
 class LogModel : public QAbstractTableModel
@@ -245,6 +246,8 @@ public:
     LogModel(QObject *parent = 0);
     ~LogModel();
 
+    int getTransactionIndex(const QModelIndex &index) const;
+    int getTransactionIndex(int modelIndex) const;
     Transaction &getTransaction(const QModelIndex &index);
     const Transaction &getTransaction(const QModelIndex &index) const;
 

@@ -86,7 +86,7 @@ bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &pare
 
     beginInsertRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
-        parentItem->addChildAt("", position);
+        parentItem->addChildAt(tr("Новая категория"), position);
     }
 
     endInsertRows();
@@ -247,10 +247,12 @@ bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
 
     beginInsertRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
-        parentItem->addChildAt(Wallet(), position);
+        Wallet w;
+        w.name = tr("Новый кошелек");
+        parentItem->addChildAt(w, position);
     }
 
-    endInsertRows();
+    emit layoutChanged();
 
     return true;
 }
@@ -364,14 +366,33 @@ bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int r
 bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     UNUSED(parent);
-    owners.insert(position, rows, IdableString());
+    beginInsertRows(parent, position, position + rows - 1);
+    owners.insert(position, rows, tr("Новый пользователь"));
+    endInsertRows();
     return true;
 }
 
 bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     UNUSED(parent);
+    beginRemoveRows(parent, position, position + rows - 1);
     owners.remove(position, rows);
+    endRemoveRows();
+    return true;
+}
+
+bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
+{
+    if(!beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild)) {
+        return false;
+    }
+
+    bool down = sourceRow < destinationChild;
+    int shift = as<int>(down);
+    owners.move(sourceRow, destinationChild - shift);
+
+    endMoveRows();
+
     return true;
 }
 
@@ -406,16 +427,24 @@ static inline QVariant getVariantPointer(T pointer)
     return v;
 }
 
+int LogModel::getTransactionIndex(const QModelIndex &index) const
+{
+    return log.size() - index.row() - 1;
+}
+
+int LogModel::getTransactionIndex(int modelIndex) const
+{
+    return log.size() - modelIndex - 1;
+}
+
 Transaction &LogModel::getTransaction(const QModelIndex &index)
 {
-    int i = log.size() - index.row() - 1;
-    return log[i];
+    return log[getTransactionIndex(index)];
 }
 
 const Transaction &LogModel::getTransaction(const QModelIndex &index) const
 {
-    int i = log.size() - index.row() - 1;
-    return log[i];
+    return log[getTransactionIndex(index)];
 }
 
 QVariant LogModel::data(const QModelIndex &index, int role) const
@@ -558,14 +587,20 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
 bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     UNUSED(parent);
-    log.insert(position, rows, Transaction());
+    beginInsertRows(parent, position, position + rows - 1);
+    Transaction t;
+    t.date = QDate::currentDate();
+    log.insert(getTransactionIndex(position)+1, rows, t);
+    endInsertRows();
     return true;
 }
 
 bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     UNUSED(parent);
-    log.remove(position, rows);
+    beginRemoveRows(parent, position, position + rows - 1);
+    log.remove(getTransactionIndex(position), rows);
+    endRemoveRows();
     return true;
 }
 
