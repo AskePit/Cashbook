@@ -21,22 +21,24 @@ public:
 
 private slots:
     void on_addUserButton_clicked();
-
     void on_removeUserButton_clicked();
-
     void on_upUserButton_clicked();
-
     void on_downUserButton_clicked();
 
     void on_addTransactionButton_clicked();
-
     void on_removeTransactionButton_clicked();
 
     void on_addWalletSiblingButton_clicked();
-
     void on_addWalletChildButton_clicked();
-
     void on_removeWalletButton_clicked();
+
+    void on_addInCategorySiblingButton_clicked();
+    void on_addInCategoryChildButton_clicked();
+    void on_removeInCategoryButton_clicked();
+
+    void on_addOutCategorySiblingButton_clicked();
+    void on_addOutCategoryChildButton_clicked();
+    void on_removeOutCategoryButton_clicked();
 
 private:
     Ui::MainWindow *ui;

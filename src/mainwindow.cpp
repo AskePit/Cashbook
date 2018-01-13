@@ -135,3 +135,73 @@ void cashbook::MainWindow::on_removeWalletButton_clicked()
 
     m_data.wallets.removeRow(index.row(), index.parent());
 }
+
+void cashbook::MainWindow::on_addInCategorySiblingButton_clicked()
+{
+    auto index = ui->inCategoriesTree->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int i = m_data.inCategories.rowCount(index.parent());
+    m_data.inCategories.insertRow(i, index.parent());
+}
+
+void cashbook::MainWindow::on_addInCategoryChildButton_clicked()
+{
+    auto index = ui->inCategoriesTree->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int i = m_data.inCategories.rowCount(index);
+    m_data.inCategories.insertRow(i, index);
+}
+
+void cashbook::MainWindow::on_removeInCategoryButton_clicked()
+{
+    auto index = ui->inCategoriesTree->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    m_data.inCategories.removeRow(index.row(), index.parent());
+}
+
+void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked()
+{
+    auto index = ui->outCategoriesTree->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int i = m_data.outCategories.rowCount(index.parent());
+    m_data.outCategories.insertRow(i, index.parent());
+}
+
+void cashbook::MainWindow::on_addOutCategoryChildButton_clicked()
+{
+    auto index = ui->outCategoriesTree->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int i = m_data.outCategories.rowCount(index);
+    m_data.outCategories.insertRow(i, index);
+}
+
+void cashbook::MainWindow::on_removeOutCategoryButton_clicked()
+{
+    auto index = ui->outCategoriesTree->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    m_data.outCategories.removeRow(index.row(), index.parent());
+}
