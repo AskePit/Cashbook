@@ -64,8 +64,9 @@ QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation,
 
 QModelIndex CategoriesModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (parent.isValid() && parent.column() != 0)
+    if (!hasIndex(row, column, parent)) {
         return QModelIndex();
+    }
 
     Node<Category> *parentItem = getItem(parent);
 
@@ -96,16 +97,27 @@ bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &pare
 
 QModelIndex CategoriesModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QModelIndex();
+    }
 
     Node<Category> *childItem = getItem(index);
     Node<Category> *parentItem = childItem->parent;
 
-    if (parentItem == rootItem)
+    if (parentItem == rootItem) {
         return QModelIndex();
+    }
 
-    return createIndex(as<int>(parentItem->childCount()), 0, parentItem);
+    Node<Category> *parentParentItem = parentItem->parent;
+    size_t row = 0;
+    size_t n = parentParentItem->childCount();
+    for( ; row < n; ++row) {
+        if(parentParentItem->at(row) == parentItem) {
+            break;
+        }
+    }
+
+    return createIndex(as<int>(row), 0, parentItem);
 }
 
 bool CategoriesModel::removeRows(int position, int rows, const QModelIndex &parent)
@@ -225,8 +237,9 @@ QVariant WalletsModel::headerData(int section, Qt::Orientation orientation,
 
 QModelIndex WalletsModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (parent.isValid() && parent.column() > WalletColumn::Amount)
+    if (!hasIndex(row, column, parent)) {
         return QModelIndex();
+    }
 
     Node<Wallet> *parentItem = getItem(parent);
 
@@ -259,16 +272,27 @@ bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
 
 QModelIndex WalletsModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QModelIndex();
+    }
 
     Node<Wallet> *childItem = getItem(index);
     Node<Wallet> *parentItem = childItem->parent;
 
-    if (parentItem == rootItem)
+    if (parentItem == rootItem) {
         return QModelIndex();
+    }
 
-    return createIndex(as<int>(parentItem->childCount()), 0, parentItem);
+    Node<Wallet> *parentParentItem = parentItem->parent;
+    size_t row = 0;
+    size_t n = parentParentItem->childCount();
+    for( ; row < n; ++row) {
+        if(parentParentItem->at(row) == parentItem) {
+            break;
+        }
+    }
+
+    return createIndex(as<int>(row), 0, parentItem);
 }
 
 bool WalletsModel::removeRows(int position, int rows, const QModelIndex &parent)
