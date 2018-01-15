@@ -26,11 +26,13 @@ int CategoriesModel::columnCount(const QModelIndex &parent) const
 
 QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
-    if (role != Qt::DisplayRole && role != Qt::EditRole)
+    if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
+    }
 
     Node<Category> *item = getItem(index);
 
@@ -39,8 +41,9 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return 0;
+    }
 
     return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
 }
@@ -49,8 +52,9 @@ Node<Category> *CategoriesModel::getItem(const QModelIndex &index) const
 {
     if (index.isValid()) {
         Node<Category> *item = as<Node<Category>*>(index.internalPointer());
-        if (item)
+        if (item) {
             return item;
+        }
     }
     return rootItem;
 }
@@ -75,10 +79,11 @@ QModelIndex CategoriesModel::index(int row, int column, const QModelIndex &paren
     }
 
     Node<Category> *childItem = parentItem->at(row);
-    if (childItem)
+    if (childItem) {
         return createIndex(row, column, childItem);
-    else
+    } else {
         return QModelIndex();
+    }
 }
 
 bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &parent)
@@ -143,8 +148,9 @@ int CategoriesModel::rowCount(const QModelIndex &parent) const
 
 bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (role != Qt::EditRole)
+    if (role != Qt::EditRole) {
         return false;
+    }
 
     Node<Category> *item = getItem(index);
     item->data = value.toString();
@@ -183,11 +189,13 @@ int WalletsModel::columnCount(const QModelIndex &parent) const
 
 QVariant WalletsModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
-    if (role != Qt::DisplayRole && role != Qt::EditRole)
+    if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
+    }
 
     Node<Wallet> *item = getItem(index);
 
@@ -205,8 +213,9 @@ QVariant WalletsModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags WalletsModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return 0;
+    }
 
     return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
 }
@@ -215,8 +224,9 @@ Node<Wallet> *WalletsModel::getItem(const QModelIndex &index) const
 {
     if (index.isValid()) {
         Node<Wallet> *item = as<Node<Wallet>*>(index.internalPointer());
-        if (item)
+        if (item) {
             return item;
+        }
     }
     return rootItem;
 }
@@ -248,10 +258,11 @@ QModelIndex WalletsModel::index(int row, int column, const QModelIndex &parent) 
     }
 
     Node<Wallet> *childItem = parentItem->at(row);
-    if (childItem)
+    if (childItem) {
         return createIndex(row, column, childItem);
-    else
+    } else {
         return QModelIndex();
+    }
 }
 
 bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
@@ -318,8 +329,9 @@ int WalletsModel::rowCount(const QModelIndex &parent) const
 
 bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (role != Qt::EditRole)
+    if (role != Qt::EditRole) {
         return false;
+    }
 
     Node<Wallet> *item = getItem(index);
 
@@ -343,11 +355,13 @@ OwnersModel::~OwnersModel()
 
 QVariant OwnersModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
-    if (role != Qt::DisplayRole && role != Qt::EditRole)
+    if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
+    }
 
     return owners[index.row()];
 }
@@ -366,16 +380,18 @@ int OwnersModel::rowCount(const QModelIndex &parent) const
 
 Qt::ItemFlags OwnersModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return 0;
+    }
 
     return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
 }
 
 bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (role != Qt::EditRole)
+    if (role != Qt::EditRole) {
         return false;
+    }
 
     if(index.column() != 0) {
         return false;
@@ -473,11 +489,13 @@ const Transaction &LogModel::getTransaction(const QModelIndex &index) const
 
 QVariant LogModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
+    }
 
-    if (role != Qt::DisplayRole && role != Qt::EditRole)
+    if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
+    }
 
     const Transaction &t = getTransaction(index);
 
@@ -556,16 +574,18 @@ int LogModel::columnCount(const QModelIndex &parent) const
 
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return 0;
+    }
 
     return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
 }
 
 bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (role != Qt::EditRole)
+    if (role != Qt::EditRole) {
         return false;
+    }
 
     Transaction &t = getTransaction(index);
 
@@ -727,11 +747,12 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
 
 void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-    if (QComboBox* box = qobject_cast<QComboBox*>(editor))
+    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
         // save the current text of the combo box as the current value of the item
         model->setData(index, box->currentData(), Qt::EditRole);
-    else
+    } else {
         QStyledItemDelegate::setModelData(editor, model, index);
+    }
 }
 
 } // namespace cashbook
