@@ -29,3 +29,5 @@ SOURCES += \
     mainwindow.cpp \
     main.cpp \
     bookkeeping.cpp
+
+#QMAKE_CXXFLAGS += -std:c++latest

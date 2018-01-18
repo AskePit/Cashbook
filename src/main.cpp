@@ -92,9 +92,9 @@ void fillDataExample(cashbook::Data &data)
         t.date = QDate(2018, 1, 4);
         t.note = "some food";
         t.type = Transaction::Type::Out;
-        t.category = {chicken};
+        t.category = {QVariant::fromValue<const Node<Category>*>(chicken)};
         t.amount = 518;
-        t.from = wallet;
+        t.from = QVariant::fromValue<const Node<Wallet>*>(wallet);
         log.push_back(t);
     }
     {
@@ -102,9 +102,9 @@ void fillDataExample(cashbook::Data &data)
         t.date = QDate(2018, 1, 13);
         t.note = "rent";
         t.type = Transaction::Type::Out;
-        t.category = {rent};
+        t.category = {QVariant::fromValue<const Node<Category>*>(rent)};
         t.amount = 13000;
-        t.from = sber;
+        t.from = QVariant::fromValue<const Node<Wallet>*>(sber);
         log.push_back(t);
     }
     {
@@ -112,9 +112,9 @@ void fillDataExample(cashbook::Data &data)
         t.date = QDate(2018, 1, 15);
         t.note = "salary";
         t.type = Transaction::Type::In;
-        t.category = {salary};
+        t.category = {QVariant::fromValue<const Node<Category>*>(salary)};
         t.amount = 25705;
-        t.to = sber;
+        t.to = QVariant::fromValue<const Node<Wallet>*>(sber);
         log.push_back(t);
     }
 

@@ -2,7 +2,6 @@
 #include "types.h"
 
 #include <QComboBox>
-#include <QDebug>
 
 namespace cashbook
 {
@@ -542,27 +541,28 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             if(t.category.empty()) {
                 return QVariant();
             } else {
-                const Node<Category> *node = *t.category.begin();
+                QVariant node = *t.category.begin();
+
                 if(role == Qt::DisplayRole) {
-                    return pathToString(node);
+                    return pathToString(node.value<const Node<Category>*>());
                 } else {
-                    return getVariantPointer(node);
+                    return node;
                 }
             }
         } break;
         case LogColumn::Money: return as<double>(t.amount);
         case LogColumn::From: {
             if(role == Qt::DisplayRole) {
-                return pathToString(t.from);
+                return pathToString(t.from.value<const Node<Wallet>*>());
             } else {
-                return getVariantPointer(t.from);
+                return t.from;
             }
         } break;
         case LogColumn::To: {
             if(role == Qt::DisplayRole) {
-                return pathToString(t.to);
+                return pathToString(t.to.value<const Node<Wallet>*>());
             } else {
-                return getVariantPointer(t.to);
+                return t.to;
             }
         } break;
         case LogColumn::Note: return t.note;
@@ -621,8 +621,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             t.type = as<Transaction::Type::t>(value.toInt());
             if(t.type != oldType) {
                 t.category.clear();
-                t.from = nullptr;
-                t.to = nullptr;
+                t.from = t.to = QVariant::fromValue<const Node<Wallet>*>(nullptr);
                 emit dataChanged(
                   createIndex(index.row(), LogColumn::Category),
                   createIndex(index.row(), LogColumn::Category),
@@ -637,13 +636,14 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         } break;
         case LogColumn::Category: {
             t.category.clear();
+
             if(!value.isNull()) {
-                t.category.insert(value.value<const Node<Category>*>());
+                t.category.insert(value);
             }
         } break;
         case LogColumn::Money: t.amount = value.toDouble(); break;
-        case LogColumn::From: t.from = value.value<const Node<Wallet>*>(); break;
-        case LogColumn::To: t.to = value.value<const Node<Wallet>*>(); break;
+        case LogColumn::From: t.from = value; break;
+        case LogColumn::To: t.to = value; break;
         case LogColumn::Note: t.note = value.toString(); break;
     }
 
@@ -758,7 +758,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
             QComboBox* box = new QComboBox(parent);
             auto nodes = categories.rootItem->toList();
             for(const Node<Category> *n : nodes) {
-                box->addItem(pathToString(n), getVariantPointer(n));
+                box->addItem(pathToString(n), QVariant::fromValue<const Node<Category> *>(n));
             }
             return box;
 
@@ -774,7 +774,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
             QComboBox* box = new QComboBox(parent);
             const auto nodes = m_data.wallets.rootItem->toList();
             for(const Node<Wallet> *n : nodes) {
-                box->addItem(pathToString(n), getVariantPointer(n));
+                box->addItem(pathToString(n), QVariant::fromValue<const Node<Wallet> *>(n));
             }
             return box;
 
@@ -801,7 +801,6 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
 void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
     if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
-        // save the current text of the combo box as the current value of the item
         model->setData(index, box->currentData(), Qt::EditRole);
     } else {
         QStyledItemDelegate::setModelData(editor, model, index);

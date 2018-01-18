@@ -4,7 +4,7 @@
 #include <std/tree.h>
 #include <std/money.h>
 #include <QString>
-#include <QSet>
+#include <set>
 #include <QVector>
 #include <QUuid>
 #include <QDate>
@@ -84,7 +84,7 @@ struct Wallet : public Idable
 
     Type::t type {Type::Common};
     QString name;
-    QSet<Owner *> owners;
+    std::set<Owner *> owners;
     bool canBeNegative {false};
     Money amount;
 };
@@ -93,6 +93,22 @@ Q_DECLARE_METATYPE(Node<Wallet> *)
 Q_DECLARE_METATYPE(const Node<Wallet> *)
 
 using Category = IdableString;
+
+/**
+ * @brief Archiveable node.
+ * @details Wrapper around existing node OR archived nonexisting node.
+ *
+ * `Transaction` can refer to existent `Category`s or `Wallet`s. But sometimes
+ * some old `Transaction`s may refer to objects that do not exist anymore,
+ * because were removed later. Still, `Transaction` should somehow preserve
+ * information about such nonexistent nodes for history and statistics purposes.
+ *
+ * `ArchNode<T>` wrapper allows to contain:
+ * - valid `Node<T> *` which belongs to any `Category`s or `Wallet`s tree;
+ * - `QString` representing former `Node<T>*` which does not exist anymore.
+ */
+template<class T>
+using ArchNode = QVariant;
 
 struct Transaction
 {
@@ -122,12 +138,10 @@ struct Transaction
     QDate date;
     QString note;
     Type::t type {Type::Out};
-    QSet< const Node<Category>* > category;
+    std::set< ArchNode<Category> > category;
     Money amount;
-    const Node<Wallet> *from {nullptr};
-    const Node<Wallet> *to {nullptr};
-    QSet< const Node<Owner>* > whoDid;
-    QSet< const Node<Owner>* > forWhom;
+    ArchNode<Wallet> from { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
+    ArchNode<Wallet> to { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
 };
 
 /**
