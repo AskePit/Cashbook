@@ -31,14 +31,26 @@ private slots:
     void on_addWalletSiblingButton_clicked();
     void on_addWalletChildButton_clicked();
     void on_removeWalletButton_clicked();
+    void on_upWalletButton_clicked();
+    void on_downWalletButton_clicked();
+    void on_outWalletButton_clicked();
+    void on_inWalletButton_clicked();
 
     void on_addInCategorySiblingButton_clicked();
     void on_addInCategoryChildButton_clicked();
     void on_removeInCategoryButton_clicked();
+    void on_upInCategoryButton_clicked();
+    void on_downInCategoryButton_clicked();
+    void on_outInCategoryButton_clicked();
+    void on_inInCategoryButton_clicked();
 
     void on_addOutCategorySiblingButton_clicked();
     void on_addOutCategoryChildButton_clicked();
     void on_removeOutCategoryButton_clicked();
+    void on_upOutCategoryButton_clicked();
+    void on_downOutCategoryButton_clicked();
+    void on_outOutCategoryButton_clicked();
+    void on_inOutCategoryButton_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -23,6 +23,9 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setModel(&m_data.log);
 
     ui->walletsTree->expandAll();
+    ui->inCategoriesTree->expandAll();
+    ui->outCategoriesTree->expandAll();
+
     ui->walletsTree->resizeColumnToContents(0);
     ui->walletsTree->resizeColumnToContents(1);
     ui->splitter->setStretchFactor(0, 100);
@@ -36,6 +39,103 @@ MainWindow::~MainWindow()
 
 } // namespace cashbook
 
+//
+// Common tree templates
+//
+template <class TreeView, class TreeModel>
+static void addSiblingNode(TreeView &view, TreeModel &model)
+{
+    auto index = view.currentIndex();
+
+    if(!index.isValid()) {
+        if(model.rootItem->childCount() == 0) {
+            model.insertRow(0, QModelIndex());
+        }
+        return;
+    }
+
+    int i = model.rowCount(index.parent());
+    model.insertRow(i, index.parent());
+}
+
+template <class TreeView, class TreeModel>
+static void addChildNode(TreeView &view, TreeModel &model)
+{
+    auto index = view.currentIndex();
+
+    if(!index.isValid()) {
+        if(model.rootItem->childCount() == 0) {
+            model.insertRow(0, QModelIndex());
+        }
+        return;
+    }
+
+    int i = model.rowCount(index);
+    model.insertRow(i, index);
+}
+
+template <class TreeView, class TreeModel>
+static void removeNode(TreeView &view, TreeModel &model)
+{
+    auto index = view.currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+    model.removeRow(index.row(), index.parent());
+}
+
+template <class TreeView, class TreeModel>
+static void upNode(TreeView &view, TreeModel &model)
+{
+    auto index = view.currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+
+    if(row == 0) {
+        return;
+    }
+
+    model.moveRow(index.parent(), row, index.parent(), row-1);
+}
+
+template <class TreeView, class TreeModel>
+static void downNode(TreeView &view, TreeModel &model)
+{
+    auto index = view.currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+
+    if(row == model.rowCount(index.parent())-1) {
+        return;
+    }
+
+    model.moveRow(index.parent(), row, index.parent(), row+2);
+}
+
+template <class TreeView, class TreeModel>
+static void outNode(TreeView &view, TreeModel &model)
+{
+
+}
+
+template <class TreeView, class TreeModel>
+static void inNode(TreeView &view, TreeModel &model)
+{
+
+}
+
+//
+// Users
+//
 void cashbook::MainWindow::on_addUserButton_clicked()
 {
     m_data.owners.insertRow(m_data.owners.rowCount());
@@ -87,6 +187,9 @@ void cashbook::MainWindow::on_downUserButton_clicked()
     m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row+2);
 }
 
+//
+// Transactions
+//
 void cashbook::MainWindow::on_addTransactionButton_clicked()
 {
     m_data.log.insertRow(0);
@@ -101,107 +204,116 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
     m_data.log.removeRow(0);
 }
 
+//
+// Wallets
+//
 void cashbook::MainWindow::on_addWalletSiblingButton_clicked()
 {
-    auto index = ui->walletsTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int i = m_data.wallets.rowCount(index.parent());
-    m_data.wallets.insertRow(i, index.parent());
+    addSiblingNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_addWalletChildButton_clicked()
 {
-    auto index = ui->walletsTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int i = m_data.wallets.rowCount(index);
-    m_data.wallets.insertRow(i, index);
+    addChildNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_removeWalletButton_clicked()
 {
-    auto index = ui->walletsTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    m_data.wallets.removeRow(index.row(), index.parent());
+    removeNode(*ui->walletsTree, m_data.wallets);
 }
 
+void cashbook::MainWindow::on_upWalletButton_clicked()
+{
+    upNode(*ui->walletsTree, m_data.wallets);
+}
+
+void cashbook::MainWindow::on_downWalletButton_clicked()
+{
+    downNode(*ui->walletsTree, m_data.wallets);
+}
+
+void cashbook::MainWindow::on_outWalletButton_clicked()
+{
+    outNode(*ui->walletsTree, m_data.wallets);
+}
+
+void cashbook::MainWindow::on_inWalletButton_clicked()
+{
+    inNode(*ui->walletsTree, m_data.wallets);
+}
+
+//
+// In categories
+//
 void cashbook::MainWindow::on_addInCategorySiblingButton_clicked()
 {
-    auto index = ui->inCategoriesTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int i = m_data.inCategories.rowCount(index.parent());
-    m_data.inCategories.insertRow(i, index.parent());
+    addSiblingNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_addInCategoryChildButton_clicked()
 {
-    auto index = ui->inCategoriesTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int i = m_data.inCategories.rowCount(index);
-    m_data.inCategories.insertRow(i, index);
+    addChildNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_removeInCategoryButton_clicked()
 {
-    auto index = ui->inCategoriesTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    m_data.inCategories.removeRow(index.row(), index.parent());
+    removeNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
+void cashbook::MainWindow::on_upInCategoryButton_clicked()
+{
+    upNode(*ui->inCategoriesTree, m_data.inCategories);
+}
+
+void cashbook::MainWindow::on_downInCategoryButton_clicked()
+{
+    downNode(*ui->inCategoriesTree, m_data.inCategories);
+}
+
+void cashbook::MainWindow::on_outInCategoryButton_clicked()
+{
+    outNode(*ui->inCategoriesTree, m_data.inCategories);
+}
+
+void cashbook::MainWindow::on_inInCategoryButton_clicked()
+{
+    inNode(*ui->inCategoriesTree, m_data.inCategories);
+}
+
+//
+// Out categories
+//
 void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked()
 {
-    auto index = ui->outCategoriesTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int i = m_data.outCategories.rowCount(index.parent());
-    m_data.outCategories.insertRow(i, index.parent());
+    addSiblingNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_addOutCategoryChildButton_clicked()
 {
-    auto index = ui->outCategoriesTree->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int i = m_data.outCategories.rowCount(index);
-    m_data.outCategories.insertRow(i, index);
+    addChildNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_removeOutCategoryButton_clicked()
 {
-    auto index = ui->outCategoriesTree->currentIndex();
+    removeNode(*ui->outCategoriesTree, m_data.outCategories);
+}
 
-    if(!index.isValid()) {
-        return;
-    }
+void cashbook::MainWindow::on_upOutCategoryButton_clicked()
+{
+    upNode(*ui->outCategoriesTree, m_data.outCategories);
+}
 
-    m_data.outCategories.removeRow(index.row(), index.parent());
+void cashbook::MainWindow::on_downOutCategoryButton_clicked()
+{
+    downNode(*ui->outCategoriesTree, m_data.outCategories);
+}
+
+void cashbook::MainWindow::on_outOutCategoryButton_clicked()
+{
+    outNode(*ui->outCategoriesTree, m_data.outCategories);
+}
+
+void cashbook::MainWindow::on_inOutCategoryButton_clicked()
+{
+    inNode(*ui->outCategoriesTree, m_data.outCategories);
 }

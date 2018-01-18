@@ -7,15 +7,164 @@
 namespace cashbook
 {
 
-CategoriesModel::CategoriesModel(QObject *parent)
-    : QAbstractItemModel(parent)
+//
+// Common templates
+//
+namespace common {
+
+template <class Model>
+static inline Qt::ItemFlags flags(const Model *model, const QModelIndex &index)
 {
-    rootItem = new Node<Category>;
+    if (!index.isValid()) {
+        return 0;
+    }
+
+    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | model->QAbstractItemModel::flags(index);
+}
+
+static QVariant headerData(int section, Qt::Orientation orientation, int role)
+{
+    UNUSED(section, orientation, role);
+    return QVariant();
+}
+
+namespace list {
+
+template <class List>
+static int rowCount(const List &list, const QModelIndex &parent)
+{
+    UNUSED(parent);
+    return list.size();
+}
+
+} // namespace list
+
+namespace tree {
+
+template<class Model, class DataType>
+static Node<DataType> *getItem(const Model *model, const QModelIndex &index)
+{
+    if (index.isValid()) {
+        Node<DataType> *item = as<Node<DataType>*>(index.internalPointer());
+        if (item) {
+            return item;
+        }
+    }
+    return model->rootItem;
+}
+
+template<class Model>
+static QModelIndex index(const Model *model, int row, int column, const QModelIndex &parent)
+{
+    if (!model->hasIndex(row, column, parent)) {
+        return QModelIndex();
+    }
+
+    auto *parentItem = model->getItem(parent);
+
+    if(row >= as<int>(parentItem->childCount())) {
+        return QModelIndex();
+    }
+
+    auto *childItem = parentItem->at(row);
+    if (childItem) {
+        return model->createIndex(row, column, childItem);
+    } else {
+        return QModelIndex();
+    }
+}
+
+template<class Model, class DataType>
+static bool insertRows(Model *model, std::function<DataType()> createData, int position, int rows, const QModelIndex &parent)
+{
+    Node<DataType> *parentItem = model->getItem(parent);
+
+    model->beginInsertRows(parent, position, position + rows - 1);
+    for(int i = 0; i<rows; ++i) {
+        parentItem->addChildAt(createData(), position);
+    }
+
+    model->endInsertRows();
+
+    return true;
+}
+
+template<class Model>
+static QModelIndex parent(const Model *model, const QModelIndex &index)
+{
+    if (!index.isValid()) {
+        return QModelIndex();
+    }
+
+    auto *childItem = model->getItem(index);
+    auto *parentItem = childItem->parent;
+
+    if (parentItem == model->rootItem) {
+        return QModelIndex();
+    }
+
+    auto *parentParentItem = parentItem->parent;
+    size_t row = 0;
+    size_t n = parentParentItem->childCount();
+    for( ; row < n; ++row) {
+        if(parentParentItem->at(row) == parentItem) {
+            break;
+        }
+    }
+
+    return model->createIndex(as<int>(row), 0, parentItem);
+}
+
+template<class Model>
+static bool removeRows(Model *model, int position, int rows, const QModelIndex &parent)
+{
+    auto *parentItem = model->getItem(parent);
+    bool success = true;
+
+    model->beginRemoveRows(parent, position, position + rows - 1);
+    for(int i = 0; i<rows; ++i) {
+        parentItem->removeChildAt(position);
+    }
+    model->endRemoveRows();
+
+    return success;
+}
+
+template<class Model>
+static int rowCount(const Model *model, const QModelIndex &parent)
+{
+    auto *parentItem = model->getItem(parent);
+    return as<int>(parentItem->childCount());
+}
+
+template<class Model, class DataType>
+static void constructor(Model *model)
+{
+    model->rootItem = new Node<DataType>;
+}
+
+template<class Model>
+static void destructor(Model *model)
+{
+    delete model->rootItem;
+}
+
+} // namespace tree
+} // namespace common
+
+//
+// Categories
+//
+
+CategoriesModel::CategoriesModel(QObject *parent)
+    : TreeModel(parent)
+{
+    common::tree::constructor<CategoriesModel, Category>(this);
 }
 
 CategoriesModel::~CategoriesModel()
 {
-    delete rootItem;
+    common::tree::destructor(this);
 }
 
 int CategoriesModel::columnCount(const QModelIndex &parent) const
@@ -41,109 +190,45 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid()) {
-        return 0;
-    }
-
-    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+    return common::flags(this, index);
 }
 
 Node<Category> *CategoriesModel::getItem(const QModelIndex &index) const
 {
-    if (index.isValid()) {
-        Node<Category> *item = as<Node<Category>*>(index.internalPointer());
-        if (item) {
-            return item;
-        }
-    }
-    return rootItem;
+    return common::tree::getItem<CategoriesModel, Category>(this, index);
 }
 
-QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation,
-                               int role) const
+QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    UNUSED(section, orientation, role);
-    return QVariant();
+    return common::headerData(section, orientation, role);
 }
 
 QModelIndex CategoriesModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (!hasIndex(row, column, parent)) {
-        return QModelIndex();
-    }
-
-    Node<Category> *parentItem = getItem(parent);
-
-    if(row >= as<int>(parentItem->childCount())) {
-        return QModelIndex();
-    }
-
-    Node<Category> *childItem = parentItem->at(row);
-    if (childItem) {
-        return createIndex(row, column, childItem);
-    } else {
-        return QModelIndex();
-    }
+    return common::tree::index(this, row, column, parent);
 }
 
 bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
-    Node<Category> *parentItem = getItem(parent);
-
-    beginInsertRows(parent, position, position + rows - 1);
-    for(int i = 0; i<rows; ++i) {
-        parentItem->addChildAt(tr("Новая категория"), position);
-    }
-
-    endInsertRows();
-
-    return true;
+    auto createCategory = [](){
+        return tr("Новая категория");
+    };
+    return common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent);
 }
 
 QModelIndex CategoriesModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid()) {
-        return QModelIndex();
-    }
-
-    Node<Category> *childItem = getItem(index);
-    Node<Category> *parentItem = childItem->parent;
-
-    if (parentItem == rootItem) {
-        return QModelIndex();
-    }
-
-    Node<Category> *parentParentItem = parentItem->parent;
-    size_t row = 0;
-    size_t n = parentParentItem->childCount();
-    for( ; row < n; ++row) {
-        if(parentParentItem->at(row) == parentItem) {
-            break;
-        }
-    }
-
-    return createIndex(as<int>(row), 0, parentItem);
+    return common::tree::parent(this, index);
 }
 
 bool CategoriesModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    Node<Category> *parentItem = getItem(parent);
-    bool success = true;
-
-    beginRemoveRows(parent, position, position + rows - 1);
-    for(int i = 0; i<rows; ++i) {
-        parentItem->removeChildAt(position);
-    }
-    endRemoveRows();
-
-    return success;
+    return common::tree::removeRows(this, position, rows, parent);
 }
 
 int CategoriesModel::rowCount(const QModelIndex &parent) const
 {
-    Node<Category> *parentItem = getItem(parent);
-
-    return as<int>(parentItem->childCount());
+    return common::tree::rowCount(this, parent);
 }
 
 bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -159,6 +244,10 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
     return true;
 }
 
+//
+// Wallets
+//
+
 class WalletColumn
 {
 public:
@@ -171,14 +260,14 @@ public:
 };
 
 WalletsModel::WalletsModel(QObject *parent)
-    : QAbstractItemModel(parent)
+    : TreeModel(parent)
 {
-    rootItem = new Node<Wallet>;
+    common::tree::constructor<WalletsModel, Wallet>(this);
 }
 
 WalletsModel::~WalletsModel()
 {
-    delete rootItem;
+    common::tree::destructor(this);
 }
 
 int WalletsModel::columnCount(const QModelIndex &parent) const
@@ -213,22 +302,12 @@ QVariant WalletsModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags WalletsModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid()) {
-        return 0;
-    }
-
-    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+    return common::flags(this, index);
 }
 
 Node<Wallet> *WalletsModel::getItem(const QModelIndex &index) const
 {
-    if (index.isValid()) {
-        Node<Wallet> *item = as<Node<Wallet>*>(index.internalPointer());
-        if (item) {
-            return item;
-        }
-    }
-    return rootItem;
+    return common::tree::getItem<WalletsModel, Wallet>(this, index);
 }
 
 QVariant WalletsModel::headerData(int section, Qt::Orientation orientation,
@@ -247,84 +326,32 @@ QVariant WalletsModel::headerData(int section, Qt::Orientation orientation,
 
 QModelIndex WalletsModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (!hasIndex(row, column, parent)) {
-        return QModelIndex();
-    }
-
-    Node<Wallet> *parentItem = getItem(parent);
-
-    if(row >= as<int>(parentItem->childCount())) {
-        return QModelIndex();
-    }
-
-    Node<Wallet> *childItem = parentItem->at(row);
-    if (childItem) {
-        return createIndex(row, column, childItem);
-    } else {
-        return QModelIndex();
-    }
+    return common::tree::index(this, row, column, parent);
 }
 
 bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
-    Node<Wallet> *parentItem = getItem(parent);
-
-    beginInsertRows(parent, position, position + rows - 1);
-    for(int i = 0; i<rows; ++i) {
+    auto createCategory = [](){
         Wallet w;
         w.name = tr("Новый кошелек");
-        parentItem->addChildAt(w, position);
-    }
-
-    emit layoutChanged();
-
-    return true;
+        return w;
+    };
+    return common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent);
 }
 
 QModelIndex WalletsModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid()) {
-        return QModelIndex();
-    }
-
-    Node<Wallet> *childItem = getItem(index);
-    Node<Wallet> *parentItem = childItem->parent;
-
-    if (parentItem == rootItem) {
-        return QModelIndex();
-    }
-
-    Node<Wallet> *parentParentItem = parentItem->parent;
-    size_t row = 0;
-    size_t n = parentParentItem->childCount();
-    for( ; row < n; ++row) {
-        if(parentParentItem->at(row) == parentItem) {
-            break;
-        }
-    }
-
-    return createIndex(as<int>(row), 0, parentItem);
+    return common::tree::parent(this, index);
 }
 
 bool WalletsModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    Node<Wallet> *parentItem = getItem(parent);
-    bool success = true;
-
-    beginRemoveRows(parent, position, position + rows - 1);
-    for(int i = 0; i<rows; ++i) {
-        parentItem->removeChildAt(position);
-    }
-    endRemoveRows();
-
-    return success;
+    return common::tree::removeRows(this, position, rows, parent);
 }
 
 int WalletsModel::rowCount(const QModelIndex &parent) const
 {
-    Node<Wallet> *parentItem = getItem(parent);
-
-    return as<int>(parentItem->childCount());
+    return common::tree::rowCount(this, parent);
 }
 
 bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -345,6 +372,10 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
 
     return true;
 }
+
+//
+// Owners
+//
 
 OwnersModel::OwnersModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -368,23 +399,17 @@ QVariant OwnersModel::data(const QModelIndex &index, int role) const
 
 QVariant OwnersModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    UNUSED(section, orientation, role);
-    return QVariant();
+    return common::headerData(section, orientation, role);
 }
 
 int OwnersModel::rowCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
-    return owners.size();
+    return common::list::rowCount(owners, parent);
 }
 
 Qt::ItemFlags OwnersModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid()) {
-        return 0;
-    }
-
-    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+    return common::flags(this, index);
 }
 
 bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -435,6 +460,10 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 
     return true;
 }
+
+//
+// Log
+//
 
 class LogColumn
 {
@@ -562,8 +591,7 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
 int LogModel::rowCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
-    return log.size();
+    return common::list::rowCount(log, parent);
 }
 
 int LogModel::columnCount(const QModelIndex &parent) const
@@ -574,11 +602,7 @@ int LogModel::columnCount(const QModelIndex &parent) const
 
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid()) {
-        return 0;
-    }
-
-    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+    return common::flags(this, index);
 }
 
 bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -647,6 +671,35 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     endRemoveRows();
     return true;
 }
+
+Data::Data()
+{
+    connect(&owners, &OwnersModel::rowsRemoved, this, &Data::onOwnersRemove);
+    connect(&inCategories, &CategoriesModel::rowsRemoved, this, &Data::onInCategoriesRemove);
+    connect(&outCategories, &CategoriesModel::rowsRemoved, this, &Data::onOutCategoriesRemove);
+    connect(&wallets, &WalletsModel::rowsRemoved, this, &Data::onWalletsRemove);
+}
+
+void Data::onOwnersRemove(const QModelIndex &parent, int first, int last)
+{
+
+}
+
+void Data::onInCategoriesRemove(const QModelIndex &parent, int first, int last)
+{
+
+}
+
+void Data::onOutCategoriesRemove(const QModelIndex &parent, int first, int last)
+{
+
+}
+
+void Data::onWalletsRemove(const QModelIndex &parent, int first, int last)
+{
+
+}
+
 
 template <>
 QString extractPathString<Category>(const Node<Category> *node) {

@@ -130,7 +130,41 @@ struct Transaction
     QSet< const Node<Owner>* > forWhom;
 };
 
-class CategoriesModel : public QAbstractItemModel
+/**
+ * @brief The TreeModel class
+ * @details This class is mainly intended to make public some of protected
+ *          methods to make it possible to use them in template nonmember
+ *          functions.
+ */
+class TreeModel : public QAbstractItemModel
+{
+    Q_OBJECT
+
+public:
+    TreeModel(QObject *parent = 0) : QAbstractItemModel(parent) {}
+
+    QModelIndex createIndex(int row, int column, void *data) const {
+        return QAbstractItemModel::createIndex(row, column, data);
+    }
+
+    void beginInsertRows(const QModelIndex &parent, int first, int last) {
+        return QAbstractItemModel::beginInsertRows(parent, first, last);
+    }
+
+    void endInsertRows() {
+        return QAbstractItemModel::endInsertRows();
+    }
+
+    void beginRemoveRows(const QModelIndex &parent, int first, int last) {
+        return QAbstractItemModel::beginRemoveRows(parent, first, last);
+    }
+
+    void endRemoveRows() {
+        return QAbstractItemModel::endRemoveRows();
+    }
+};
+
+class CategoriesModel : public TreeModel
 {
     Q_OBJECT
 
@@ -173,7 +207,7 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 };
 
-class WalletsModel : public QAbstractItemModel
+class WalletsModel : public TreeModel
 {
     Q_OBJECT
 
@@ -292,8 +326,13 @@ QString pathToString(const Node<T> *node)
     return l.join(pathConcat);
 }
 
-struct Data
+class Data : public QObject
 {
+    Q_OBJECT
+
+public:
+    Data();
+
     OwnersModel owners;
     WalletsModel wallets;
     CategoriesModel inCategories;
@@ -332,6 +371,11 @@ private:
         }
         return node;
     }
+
+    void onOwnersRemove(const QModelIndex &parent, int first, int last);
+    void onInCategoriesRemove(const QModelIndex &parent, int first, int last);
+    void onOutCategoriesRemove(const QModelIndex &parent, int first, int last);
+    void onWalletsRemove(const QModelIndex &parent, int first, int last);
 };
 
 class LogItemDelegate : public QStyledItemDelegate
