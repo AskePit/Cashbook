@@ -2,6 +2,7 @@
 #include "types.h"
 
 #include <QComboBox>
+#include <QSet>
 
 namespace cashbook
 {
@@ -130,6 +131,20 @@ static bool removeRows(Model *model, int position, int rows, const QModelIndex &
 }
 
 template<class Model>
+static bool moveRow(Model *model, const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
+{
+    auto *srcParentItem = model->getItem(sourceParent);
+    auto *dstParentItem = model->getItem(destinationParent);
+    auto *srcChildItem = srcParentItem->at(sourceRow);
+
+    model->beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild);
+    srcChildItem->attachSelfAsChildAt(dstParentItem, destinationChild);
+    model->endMoveRows();
+
+    return true;
+}
+
+template<class Model>
 static int rowCount(const Model *model, const QModelIndex &parent)
 {
     auto *parentItem = model->getItem(parent);
@@ -223,6 +238,11 @@ QModelIndex CategoriesModel::parent(const QModelIndex &index) const
 bool CategoriesModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     return common::tree::removeRows(this, position, rows, parent);
+}
+
+bool CategoriesModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
+{
+    return common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild);
 }
 
 int CategoriesModel::rowCount(const QModelIndex &parent) const
@@ -346,6 +366,11 @@ QModelIndex WalletsModel::parent(const QModelIndex &index) const
 bool WalletsModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     return common::tree::removeRows(this, position, rows, parent);
+}
+
+bool WalletsModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
+{
+    return common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild);
 }
 
 int WalletsModel::rowCount(const QModelIndex &parent) const

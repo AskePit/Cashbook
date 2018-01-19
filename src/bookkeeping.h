@@ -82,6 +82,16 @@ struct Wallet : public Idable
         , amount(a)
     {}
 
+    bool operator==(const Wallet &other) const
+    {
+        return name == other.name
+            && id == other.id
+            && amount == other.amount
+            && type == other.type
+            && canBeNegative == other.canBeNegative
+            && owners == other.owners;
+    }
+
     Type::t type {Type::Common};
     QString name;
     std::set<Owner *> owners;
@@ -176,6 +186,14 @@ public:
     void endRemoveRows() {
         return QAbstractItemModel::endRemoveRows();
     }
+
+    bool beginMoveRows(const QModelIndex &sourceParent, int sourceFirst, int sourceLast, const QModelIndex &destinationParent, int destinationRow) {
+        return QAbstractItemModel::beginMoveRows(sourceParent, sourceFirst, sourceLast, destinationParent, destinationRow);
+    }
+
+    void endMoveRows() {
+        return QAbstractItemModel::endMoveRows();
+    }
 };
 
 class CategoriesModel : public TreeModel
@@ -219,6 +237,8 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
+
+    bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
 };
 
 class WalletsModel : public TreeModel
@@ -258,6 +278,8 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
+
+    bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
 };
 
 class OwnersModel : public QAbstractListModel
