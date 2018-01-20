@@ -42,8 +42,8 @@ MainWindow::~MainWindow()
 //
 // Common tree templates
 //
-template <class TreeView, class TreeModel>
-static void addSiblingNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void addSiblingNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -58,8 +58,8 @@ static void addSiblingNode(TreeView &view, TreeModel &model)
     model.insertRow(i, index.parent());
 }
 
-template <class TreeView, class TreeModel>
-static void addChildNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void addChildNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -74,8 +74,8 @@ static void addChildNode(TreeView &view, TreeModel &model)
     model.insertRow(i, index);
 }
 
-template <class TreeView, class TreeModel>
-static void removeNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void removeNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -85,8 +85,8 @@ static void removeNode(TreeView &view, TreeModel &model)
     model.removeRow(index.row(), index.parent());
 }
 
-template <class TreeView, class TreeModel>
-static void upNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void upNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -103,8 +103,8 @@ static void upNode(TreeView &view, TreeModel &model)
     model.moveRow(index.parent(), row, index.parent(), row-1);
 }
 
-template <class TreeView, class TreeModel>
-static void downNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void downNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -121,8 +121,8 @@ static void downNode(TreeView &view, TreeModel &model)
     model.moveRow(index.parent(), row, index.parent(), row+2);
 }
 
-template <class TreeView, class TreeModel>
-static void outNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void outNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -143,8 +143,8 @@ static void outNode(TreeView &view, TreeModel &model)
     model.moveRow(parent, row, parentParent, model.rowCount(parentParent));
 }
 
-template <class TreeView, class TreeModel>
-static void inNode(TreeView &view, TreeModel &model)
+template <class TreeModel>
+static void inNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
