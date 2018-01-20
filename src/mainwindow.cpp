@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QDebug>
+#include "innodedialog.h"
 
 namespace cashbook
 {
@@ -124,13 +124,47 @@ static void downNode(TreeView &view, TreeModel &model)
 template <class TreeView, class TreeModel>
 static void outNode(TreeView &view, TreeModel &model)
 {
+    auto index = view.currentIndex();
 
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+
+    const auto parent = index.parent();
+
+    if(!parent.isValid()) {
+        return;
+    }
+
+    const auto parentParent = parent.parent();
+
+    model.moveRow(parent, row, parentParent, model.rowCount(parentParent));
 }
 
 template <class TreeView, class TreeModel>
 static void inNode(TreeView &view, TreeModel &model)
 {
+    auto index = view.currentIndex();
 
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+    auto srcParent = index.parent();
+
+    InNodeDialog d(model);
+    if(d.exec()) {
+        auto dstParent = d.getIndex();
+
+        if(index == dstParent) {
+            return;
+        }
+
+        model.moveRow(srcParent, row, dstParent, model.rowCount(dstParent));
+    }
 }
 
 //

@@ -3,6 +3,7 @@
 
 #include <QComboBox>
 #include <QSet>
+#include <QDebug>
 
 namespace cashbook
 {
@@ -137,8 +138,10 @@ static bool moveRow(Model *model, const QModelIndex &sourceParent, int sourceRow
     auto *dstParentItem = model->getItem(destinationParent);
     auto *srcChildItem = srcParentItem->at(sourceRow);
 
+    bool down = sourceParent == destinationParent && sourceRow < destinationChild;
+
     model->beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild);
-    srcChildItem->attachSelfAsChildAt(dstParentItem, destinationChild);
+    srcChildItem->attachSelfAsChildAt(dstParentItem, destinationChild-as<int>(down));
     model->endMoveRows();
 
     return true;

@@ -18,16 +18,19 @@ INCLUDEPATH += $${ASKE_INCLUDE_PATH}
 LIBS += -L$${ASKE_LIB_PATH} -laskelib_std$${ASKE_LIB_SUFFIX}
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    innodedialog.ui
 
 HEADERS += \
     mainwindow.h \
     bookkeeping.h \
-    types.h
+    types.h \
+    innodedialog.h
 
 SOURCES += \
     mainwindow.cpp \
     main.cpp \
-    bookkeeping.cpp
+    bookkeeping.cpp \
+    innodedialog.cpp
 
 #QMAKE_CXXFLAGS += -std:c++latest
