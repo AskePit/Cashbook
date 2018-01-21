@@ -25,12 +25,14 @@ HEADERS += \
     mainwindow.h \
     bookkeeping.h \
     types.h \
-    innodedialog.h
+    innodedialog.h \
+    serialization.h
 
 SOURCES += \
     mainwindow.cpp \
     main.cpp \
     bookkeeping.cpp \
-    innodedialog.cpp
+    innodedialog.cpp \
+    serialization.cpp
 
 #QMAKE_CXXFLAGS += -std:c++latest

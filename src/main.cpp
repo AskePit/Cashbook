@@ -1,7 +1,10 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include <QDebug>
+
 #include "bookkeeping.h"
 #include "types.h"
+#include "serialization.h"
 
 void fillDataExample(cashbook::Data &data)
 {
@@ -117,6 +120,16 @@ void fillDataExample(cashbook::Data &data)
         t.to = sber;
         log.push_back(t);
     }
+    {
+        Transaction t;
+        t.date = QDate(2018, 1, 30);
+        t.note = "transfer";
+        t.type = Transaction::Type::Transfer;
+        t.amount = 25705;
+        t.from = wallet;
+        t.to = sber;
+        log.push_back(t);
+    }
 
     UNUSED(pants, cources, books, bread, iceCream, choco, cookies, pork, sell, deposit);
 }
@@ -127,6 +140,7 @@ int main(int argc, char *argv[])
 
     cashbook::Data data;
     fillDataExample(data);
+    //cashbook::save(data, "exported.json");
 
     cashbook::MainWindow w(data);
     w.show();
