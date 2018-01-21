@@ -4,7 +4,6 @@
 #include <std/tree.h>
 #include <std/money.h>
 #include <QString>
-#include <set>
 #include <QVector>
 #include <QUuid>
 #include <QDate>
@@ -42,6 +41,34 @@ Q_DECLARE_METATYPE(Node<IdableString> *)
 Q_DECLARE_METATYPE(const Node<IdableString> *)
 
 using Owner = IdableString;
+
+/**
+ * @brief Archiveable pointer.
+ * @details Wrapper around existing pointer OR archived nonexisting one.
+ *
+ * `ArchPointer<T>` wrapper allows to contain:
+ * - valid `const T *` which belongs to any `Owner`;
+ * - `QString` representing former `const T*` which does not exist anymore.
+ */
+/*template <class T>
+class ArchPointer : public QVariant
+{
+public:
+    ArchPointer(const QVariant &v)
+        : QVariant(v)
+    {}
+
+    ArchPointer(T *p)
+        : QVariant(QVariant::fromValue<const T*>(p))
+    {}
+
+    ArchPointer(const QString &str)
+        : QVariant(QVariant::fromValue<QString>(str))
+    {}
+
+private:
+
+};*/
 
 struct Wallet : public Idable
 {
@@ -94,7 +121,7 @@ struct Wallet : public Idable
 
     Type::t type {Type::Common};
     QString name;
-    std::set<Owner *> owners;
+    QVector<const Owner *> owners;
     bool canBeNegative {false};
     Money amount;
 };
@@ -117,8 +144,50 @@ using Category = IdableString;
  * - valid `Node<T> *` which belongs to any `Category`s or `Wallet`s tree;
  * - `QString` representing former `Node<T>*` which does not exist anymore.
  */
-template<class T>
-using ArchNode = QVariant;
+template <class T>
+class ArchNode : public QVariant
+{
+public:
+    ArchNode()
+        : QVariant()
+    {}
+
+    ArchNode(const QVariant &v)
+        : QVariant(v)
+    {}
+
+    ArchNode(const Node<T> *node)
+        : QVariant(QVariant::fromValue<const Node<T>*>(node))
+    {}
+
+    ArchNode(const QString &str)
+        : QVariant(QVariant::fromValue<QString>(str))
+    {}
+
+    ArchNode &operator =(const Node<T> *node)
+    {
+        this->QVariant::operator =(QVariant::fromValue<const Node<T>*>(node));
+        return *this;
+    }
+
+    ArchNode &operator =(const QString &str)
+    {
+        this->QVariant::operator =(str);
+        return *this;
+    }
+
+    const Node<T> *toNode() const {
+        return value<const Node<T>*>();
+    }
+
+    bool isValidPointer() const {
+        return canConvert<const Node<T>*>();
+    }
+
+    bool isArchived() const {
+        return !isValidPointer();
+    }
+};
 
 struct Transaction
 {
@@ -148,7 +217,7 @@ struct Transaction
     QDate date;
     QString note;
     Type::t type {Type::Out};
-    std::set< ArchNode<Category> > category;
+    QVector< ArchNode<Category> > category;
     Money amount;
     ArchNode<Wallet> from { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
     ArchNode<Wallet> to { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
@@ -194,6 +263,9 @@ public:
     void endMoveRows() {
         return QAbstractItemModel::endMoveRows();
     }
+
+signals:
+    void nodesGonnaBeRemoved(QStringList nodeIds);
 };
 
 class CategoriesModel : public TreeModel
@@ -304,6 +376,9 @@ public:
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
+
+signals:
+    void nodesGonnaBeRemoved(QStringList nodeIds);
 };
 
 class LogModel : public QAbstractTableModel
@@ -408,10 +483,10 @@ private:
         return node;
     }
 
-    void onOwnersRemove(const QModelIndex &parent, int first, int last);
-    void onInCategoriesRemove(const QModelIndex &parent, int first, int last);
-    void onOutCategoriesRemove(const QModelIndex &parent, int first, int last);
-    void onWalletsRemove(const QModelIndex &parent, int first, int last);
+    void onOwnersRemove(QStringList paths);
+    void onInCategoriesRemove(QStringList paths);
+    void onOutCategoriesRemove(QStringList paths);
+    void onWalletsRemove(QStringList paths);
 };
 
 class LogItemDelegate : public QStyledItemDelegate

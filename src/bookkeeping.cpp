@@ -20,7 +20,7 @@ static inline Qt::ItemFlags flags(const Model *model, const QModelIndex &index)
         return 0;
     }
 
-    return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | model->QAbstractItemModel::flags(index);
+    return Qt::ItemIsEditable | /*Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled |*/ model->QAbstractItemModel::flags(index);
 }
 
 static QVariant headerData(int section, Qt::Orientation orientation, int role)
@@ -121,6 +121,20 @@ static bool removeRows(Model *model, int position, int rows, const QModelIndex &
 {
     auto *parentItem = model->getItem(parent);
     bool success = true;
+
+    QStringList nodeIds;
+    /*
+     * Traverse each node to be deleted and dump all of their nested nodes as
+     * nodes to be removed.
+     */
+    for(int i = position; i<position + rows; ++i) {
+        auto node = parentItem->at(i);
+        auto l = node->toList();
+        for(const auto *n : l) {
+            nodeIds << pathToString(n);
+        }
+    }
+    emit model->nodesGonnaBeRemoved(nodeIds);
 
     model->beginRemoveRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
@@ -467,6 +481,13 @@ bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
 bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     UNUSED(parent);
+
+    QStringList names;
+    for(int i = position; i<position + rows; ++i) {
+        names << owners[i];
+    }
+    emit nodesGonnaBeRemoved(names);
+
     beginRemoveRows(parent, position, position + rows - 1);
     owners.remove(position, rows);
     endRemoveRows();
@@ -543,6 +564,20 @@ const Transaction &LogModel::getTransaction(const QModelIndex &index) const
     return log[getTransactionIndex(index)];
 }
 
+template <class T>
+static QVariant archNodeData(const ArchNode<T> &archNode, int role)
+{
+    if(role == Qt::DisplayRole) {
+        if(archNode.isValidPointer()) {
+            return pathToString(archNode.toNode());
+        } else {
+            return archNode.toString();
+        }
+    } else { // Qt::EditRole
+        return archNode;
+    }
+}
+
 QVariant LogModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) {
@@ -569,29 +604,16 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             if(t.category.empty()) {
                 return QVariant();
             } else {
-                QVariant node = *t.category.begin();
-
-                if(role == Qt::DisplayRole) {
-                    return pathToString(node.value<const Node<Category>*>());
-                } else {
-                    return node;
-                }
+                const ArchNode<Category> &archNode = t.category.first();
+                return archNodeData(archNode, role);
             }
         } break;
         case LogColumn::Money: return as<double>(t.amount);
         case LogColumn::From: {
-            if(role == Qt::DisplayRole) {
-                return pathToString(t.from.value<const Node<Wallet>*>());
-            } else {
-                return t.from;
-            }
+            return archNodeData(t.from, role);
         } break;
         case LogColumn::To: {
-            if(role == Qt::DisplayRole) {
-                return pathToString(t.to.value<const Node<Wallet>*>());
-            } else {
-                return t.to;
-            }
+            return archNodeData(t.to, role);
         } break;
         case LogColumn::Note: return t.note;
     }
@@ -628,9 +650,49 @@ int LogModel::columnCount(const QModelIndex &parent) const
     return LogColumn::Count;
 }
 
+static const QSet<LogColumn::t> archNodeColumns = {
+    LogColumn::Category,
+    LogColumn::From,
+    LogColumn::To,
+};
+
+template <class DataType>
+static Qt::ItemFlags archNodeFlags(const QAbstractItemModel *model, const QModelIndex &index, const ArchNode<DataType> &archNode)
+{
+    if(archNode.isValidPointer()) {
+        return common::flags(model, index);
+    } else {
+        return model->QAbstractItemModel::flags(index);
+    }
+}
+
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
-    return common::flags(this, index);
+    if (!index.isValid()) {
+        return 0;
+    }
+
+    auto column = as<LogColumn::t>(index.column());
+
+    if(!archNodeColumns.contains(column)) {
+        return common::flags(this, index);
+    } else {
+        const Transaction &t = getTransaction(index);
+        switch(column) {
+            case LogColumn::Category: {
+                if(!t.category.empty()) {
+                    return archNodeFlags(this, index, t.category.first());
+                } else {
+                    return common::flags(this, index);
+                }
+            }
+
+            case LogColumn::From: return archNodeFlags(this, index, t.from);
+            case LogColumn::To: return archNodeFlags(this, index, t.to);
+        }
+    }
+
+    return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
 }
 
 bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -649,7 +711,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             t.type = as<Transaction::Type::t>(value.toInt());
             if(t.type != oldType) {
                 t.category.clear();
-                t.from = t.to = QVariant::fromValue<const Node<Wallet>*>(nullptr);
+                t.from = t.to = as<const Node<Wallet>*>(nullptr);
                 emit dataChanged(
                   createIndex(index.row(), LogColumn::Category),
                   createIndex(index.row(), LogColumn::Category),
@@ -666,7 +728,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             t.category.clear();
 
             if(!value.isNull()) {
-                t.category.insert(value);
+                t.category.push_back(value);
             }
         } break;
         case LogColumn::Money: t.amount = value.toDouble(); break;
@@ -702,30 +764,64 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
 
 Data::Data()
 {
-    connect(&owners, &OwnersModel::rowsRemoved, this, &Data::onOwnersRemove);
-    connect(&inCategories, &CategoriesModel::rowsRemoved, this, &Data::onInCategoriesRemove);
-    connect(&outCategories, &CategoriesModel::rowsRemoved, this, &Data::onOutCategoriesRemove);
-    connect(&wallets, &WalletsModel::rowsRemoved, this, &Data::onWalletsRemove);
+    connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
+    connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
+    connect(&outCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onOutCategoriesRemove);
+    connect(&wallets, &WalletsModel::nodesGonnaBeRemoved, this, &Data::onWalletsRemove);
 }
 
-void Data::onOwnersRemove(const QModelIndex &parent, int first, int last)
+void Data::onOwnersRemove(QStringList paths)
 {
 
 }
 
-void Data::onInCategoriesRemove(const QModelIndex &parent, int first, int last)
+template <class DataType>
+static void invalidateArchNode(ArchNode<DataType> &archNode, const QStringList &paths)
 {
-
+    if(archNode.isValidPointer()) {
+        QString path = pathToString(archNode.toNode());
+        if(paths.contains(path)) {
+            archNode = path; // invalidate ArchPointer by assigning QString to it.
+        }
+    }
 }
 
-void Data::onOutCategoriesRemove(const QModelIndex &parent, int first, int last)
+void Data::onInCategoriesRemove(QStringList paths)
 {
+    for(Transaction &t : log.log) {
+        if(t.type != Transaction::Type::In) {
+            continue;
+        }
 
+        if(t.category.empty()) {
+            continue;
+        }
+
+        invalidateArchNode(t.category.first(), paths);
+    }
 }
 
-void Data::onWalletsRemove(const QModelIndex &parent, int first, int last)
+void Data::onOutCategoriesRemove(QStringList paths)
 {
+    for(Transaction &t : log.log) {
+        if(t.type != Transaction::Type::Out) {
+            continue;
+        }
 
+        if(t.category.empty()) {
+            continue;
+        }
+
+        invalidateArchNode(t.category.first(), paths);
+    }
+}
+
+void Data::onWalletsRemove(QStringList paths)
+{
+    for(Transaction &t : log.log) {
+        invalidateArchNode(t.from, paths);
+        invalidateArchNode(t.to, paths);
+    }
 }
 
 
@@ -786,7 +882,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
             QComboBox* box = new QComboBox(parent);
             auto nodes = categories.rootItem->toList();
             for(const Node<Category> *n : nodes) {
-                box->addItem(pathToString(n), QVariant::fromValue<const Node<Category> *>(n));
+                box->addItem(pathToString(n), ArchNode<Category>(n));
             }
             return box;
 
@@ -802,7 +898,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
             QComboBox* box = new QComboBox(parent);
             const auto nodes = m_data.wallets.rootItem->toList();
             for(const Node<Wallet> *n : nodes) {
-                box->addItem(pathToString(n), QVariant::fromValue<const Node<Wallet> *>(n));
+                box->addItem(pathToString(n), ArchNode<Wallet>(n));
             }
             return box;
 
