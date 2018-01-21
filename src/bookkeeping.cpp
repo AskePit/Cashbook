@@ -569,7 +569,7 @@ static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
     if(role == Qt::DisplayRole) {
         if(archNode.isValidPointer()) {
-            return pathToString(archNode.toNode());
+            return pathToString(archNode.toPointer());
         } else {
             return archNode.toString();
         }
@@ -772,14 +772,24 @@ Data::Data()
 
 void Data::onOwnersRemove(QStringList paths)
 {
-
+    auto nodes = wallets.rootItem->toList();
+    for(auto *node : nodes) {
+        for(ArchPointer<Owner> &owner : node->data.owners) {
+            if(owner.isValidPointer()) {
+                QString name = *owner.toPointer();
+                if(paths.contains(name)) {
+                    owner = name; // invalidate ArchPointer by assigning QString to it.
+                }
+            }
+        }
+    }
 }
 
 template <class DataType>
 static void invalidateArchNode(ArchNode<DataType> &archNode, const QStringList &paths)
 {
     if(archNode.isValidPointer()) {
-        QString path = pathToString(archNode.toNode());
+        QString path = pathToString(archNode.toPointer());
         if(paths.contains(path)) {
             archNode = path; // invalidate ArchPointer by assigning QString to it.
         }

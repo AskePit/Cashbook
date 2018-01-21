@@ -18,7 +18,7 @@ namespace cashbook
 
 struct Idable
 {
-    QUuid id;
+    QUuid id {QUuid::createUuid()};
 };
 
 class IdableString : public Idable, public QString
@@ -37,6 +37,8 @@ public:
     {}
 };
 
+Q_DECLARE_METATYPE(IdableString *)
+Q_DECLARE_METATYPE(const IdableString *)
 Q_DECLARE_METATYPE(Node<IdableString> *)
 Q_DECLARE_METATYPE(const Node<IdableString> *)
 
@@ -50,25 +52,50 @@ using Owner = IdableString;
  * - valid `const T *` which belongs to any `Owner`;
  * - `QString` representing former `const T*` which does not exist anymore.
  */
-/*template <class T>
+template <class T>
 class ArchPointer : public QVariant
 {
 public:
+    ArchPointer()
+        : QVariant()
+    {}
+
     ArchPointer(const QVariant &v)
         : QVariant(v)
     {}
 
-    ArchPointer(T *p)
-        : QVariant(QVariant::fromValue<const T*>(p))
+    ArchPointer(const T *node)
+        : QVariant(QVariant::fromValue<const T*>(node))
     {}
 
     ArchPointer(const QString &str)
         : QVariant(QVariant::fromValue<QString>(str))
     {}
 
-private:
+    ArchPointer &operator =(const T *node)
+    {
+        this->QVariant::operator =(QVariant::fromValue<const T*>(node));
+        return *this;
+    }
 
-};*/
+    ArchPointer &operator =(const QString &str)
+    {
+        this->QVariant::operator =(str);
+        return *this;
+    }
+
+    const T *toPointer() const {
+        return value<const T*>();
+    }
+
+    bool isValidPointer() const {
+        return canConvert<const T*>();
+    }
+
+    bool isArchived() const {
+        return !isValidPointer();
+    }
+};
 
 struct Wallet : public Idable
 {
@@ -121,7 +148,7 @@ struct Wallet : public Idable
 
     Type::t type {Type::Common};
     QString name;
-    QVector<const Owner *> owners;
+    QVector<ArchPointer<Owner>> owners;
     bool canBeNegative {false};
     Money amount;
 };
@@ -145,49 +172,7 @@ using Category = IdableString;
  * - `QString` representing former `Node<T>*` which does not exist anymore.
  */
 template <class T>
-class ArchNode : public QVariant
-{
-public:
-    ArchNode()
-        : QVariant()
-    {}
-
-    ArchNode(const QVariant &v)
-        : QVariant(v)
-    {}
-
-    ArchNode(const Node<T> *node)
-        : QVariant(QVariant::fromValue<const Node<T>*>(node))
-    {}
-
-    ArchNode(const QString &str)
-        : QVariant(QVariant::fromValue<QString>(str))
-    {}
-
-    ArchNode &operator =(const Node<T> *node)
-    {
-        this->QVariant::operator =(QVariant::fromValue<const Node<T>*>(node));
-        return *this;
-    }
-
-    ArchNode &operator =(const QString &str)
-    {
-        this->QVariant::operator =(str);
-        return *this;
-    }
-
-    const Node<T> *toNode() const {
-        return value<const Node<T>*>();
-    }
-
-    bool isValidPointer() const {
-        return canConvert<const Node<T>*>();
-    }
-
-    bool isArchived() const {
-        return !isValidPointer();
-    }
-};
+using ArchNode = ArchPointer<Node<T>>;
 
 struct Transaction
 {
