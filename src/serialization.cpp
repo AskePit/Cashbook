@@ -66,7 +66,7 @@ static void save(const Wallet &wallet, QJsonObject &json)
     json[QLatin1String("type")] = as<int>(wallet.type);
     json[QLatin1String("name")] = wallet.name;
     json[QLatin1String("canBeNegative")] = wallet.canBeNegative;
-    json[QLatin1String("amount")] = as<double>(wallet.amount);
+    json[QLatin1String("amount")] = wallet.amount.as_cents();
 
     QJsonArray ownersJson;
     for(const ArchPointer<Owner> &owner : wallet.owners) {
@@ -129,7 +129,7 @@ static void save(const Transaction &t, QJsonObject &json)
     }
 
     json[QLatin1String("categories")] = categories;
-    json[QLatin1String("amount")] = as<double>(t.amount);
+    json[QLatin1String("amount")] = t.amount.as_cents();
     QJsonObject from;
     save(t.from, from);
     QJsonObject to;
