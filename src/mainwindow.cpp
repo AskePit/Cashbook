@@ -30,6 +30,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->walletsTree->resizeColumnToContents(1);
     ui->splitter->setStretchFactor(0, 100);
     ui->splitter->setStretchFactor(1, 50);
+
+    showMaximized();
 }
 
 MainWindow::~MainWindow()

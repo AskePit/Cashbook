@@ -313,6 +313,33 @@ int WalletsModel::columnCount(const QModelIndex &parent) const
     return WalletColumn::Count;
 }
 
+static QString formatMoney(const Money &money)
+{
+    QString units = QString::number(money.units());
+
+    int start = units.size()%3;
+    int n = units.size()/3;
+
+    if(start == 0) {
+        start += 3;
+        n -= 1;
+    }
+
+    for(int i = 0; i<n; ++i) {
+        int index = start + 3*i + i;
+        units.insert(index, ' ');
+    }
+
+    QString symbol = Currency::symbol(money.currency());
+
+    if(money.cents()) {
+        QString cents = QString::number(money.cents());
+        return QString("%1,%2 %3").arg(units, cents, symbol);
+    } else {
+        return QString("%1 %2").arg(units, symbol);
+    }
+}
+
 QVariant WalletsModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) {
@@ -330,7 +357,13 @@ QVariant WalletsModel::data(const QModelIndex &index, int role) const
         case WalletColumn::Name: return item->data.name;
         case WalletColumn::Amount:
             if(item->isLeaf()) {
-                return as<double>(item->data.amount);
+                const Money &money = item->data.amount;
+
+                if(role == Qt::DisplayRole) {
+                    return formatMoney(money);
+                } else { // Qt::EditRole
+                    return as<double>(money);
+                }
             }
     }
 
@@ -609,7 +642,13 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
                 return archNodeData(archNode, role);
             }
         } break;
-        case LogColumn::Money: return as<double>(t.amount);
+        case LogColumn::Money: {
+            if(role == Qt::DisplayRole) {
+                return formatMoney(t.amount);
+            } else { // Qt::EditRole
+                return as<double>(t.amount);
+            }
+        }
         case LogColumn::From: {
             return archNodeData(t.from, role);
         } break;
