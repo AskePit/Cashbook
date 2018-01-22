@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QSet>
 #include <QDebug>
+#include <functional>
 
 namespace cashbook
 {
