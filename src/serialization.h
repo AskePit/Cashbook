@@ -10,8 +10,8 @@ namespace cashbook
 
 class Data;
 
-QByteArray save(const Data &data);
 void save(const Data &data, const QString &fileName);
+void load(Data &data, const QString &fileName);
 
 } // namespace cashbook
 

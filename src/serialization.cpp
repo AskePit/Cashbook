@@ -6,8 +6,14 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QFile>
+#include <utility>
+#include <stack>
 
 namespace cashbook {
+
+//
+// Save
+//
 
 static void save(const IdableString &data, QJsonObject &json)
 {
@@ -175,7 +181,7 @@ static void save(const Data &data, QJsonObject &json)
     json[QLatin1String("log")] = log;
 }
 
-QByteArray save(const Data &data)
+static QByteArray save(const Data &data)
 {
     QJsonObject json;
     save(data, json);
@@ -192,6 +198,217 @@ void save(const Data &data, const QString &fileName)
     f.close();
 }
 
+//
+// Load
+//
+static void load(IdableString &data, QJsonObject json)
+{
+    QString id = json[QLatin1String("id")].toString();
+    data.id = QUuid(id);
+    as<QString &>(data) = json[QLatin1String("str")].toString();
+}
+
+static void load(OwnersModel &data, QJsonArray arr)
+{
+    for(QJsonValue v : std::as_const(arr)) {
+        QJsonObject obj = v.toObject();
+        Owner owner;
+        load(owner, obj);
+        data.owners.push_back(owner);
+    }
+}
+
+static void load(CategoriesModel &data, QJsonArray arr)
+{
+    Node<Category> *currNode = data.rootItem;
+    std::stack<int> children;
+
+    for(QJsonValue v : std::as_const(arr)) {
+        QJsonObject nodeObj = v.toObject();
+        QJsonObject categoryObj = nodeObj[QLatin1String("category")].toObject();
+        load(currNode->data, categoryObj);
+        int ch = nodeObj[QLatin1String("children")].toInt();
+        children.push(ch);
+
+        while(!children.empty() && children.top() == 0) {
+            currNode = currNode->parent;
+            children.pop();
+        }
+
+        if(!children.empty()) {
+            currNode = currNode->addChild(Category());
+            children.top() -= 1;
+        }
+    }
+}
+
+static void load(ArchPointer<Owner> &data, QJsonObject json, const OwnersModel &ownersModel)
+{
+    bool valid = json[QLatin1String("valid")].toBool();
+
+    if(valid) {
+        QString id = json[QLatin1String("ref")].toString();
+        QUuid uid = QUuid{id};
+
+        if(!uid.isNull()) {
+            for(const Owner &owner : ownersModel.owners) {
+                if(owner.id == uid) {
+                    data = &owner;
+                    return;
+                }
+            }
+        } else {
+            data = as<const Owner*>(nullptr);
+        }
+    } else {
+        data = json[QLatin1String("archive")].toString();
+    }
+}
+
+static void load(Wallet &wallet, QJsonObject json, const OwnersModel &ownersModel)
+{
+    QString id = json[QLatin1String("id")].toString();
+    wallet.id = QUuid(id);
+    wallet.type = as<Wallet::Type::t>(json[QLatin1String("type")].toInt());
+    wallet.name = json[QLatin1String("name")].toString();
+    wallet.canBeNegative = json[QLatin1String("canBeNegative")].toBool();
+    wallet.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
+
+    QJsonArray ownersJson = json[QLatin1String("owners")].toArray();
+    for(QJsonValue ownerVal : std::as_const(ownersJson)) {
+        QJsonObject ownerObj = ownerVal.toObject();
+        ArchPointer<Owner> owner;
+        load(owner, ownerObj, ownersModel);
+        wallet.owners.push_back(owner);
+    }
+}
+
+static void load(WalletsModel &data, QJsonArray arr, const OwnersModel &ownersModel)
+{
+    Node<Wallet> *currNode = data.rootItem;
+    std::stack<int> children;
+
+    for(QJsonValue v : std::as_const(arr)) {
+        QJsonObject nodeObj = v.toObject();
+        QJsonObject walletObj = nodeObj[QLatin1String("wallet")].toObject();
+        load(currNode->data, walletObj, ownersModel);
+        int ch = nodeObj[QLatin1String("children")].toInt();
+        children.push(ch);
+
+        while(!children.empty() && children.top() == 0) {
+            currNode = currNode->parent;
+            children.pop();
+        }
+
+        if(!children.empty()) {
+            currNode = currNode->addChild(Wallet());
+            children.top() -= 1;
+        }
+    }
+}
+
+template <class T, class Model>
+static void load(ArchNode<T> &data, QJsonObject json, const Model &refModel)
+{
+    bool valid = json[QLatin1String("valid")].toBool();
+
+    if(valid) {
+        QString id = json[QLatin1String("ref")].toString();
+        QUuid uid = QUuid{id};
+
+        if(!uid.isNull()) {
+            auto nodes = refModel.rootItem->toList();
+            for(const Node<T> *obj : nodes) {
+                if(obj->data.id == uid) {
+                    data = obj;
+                    return;
+                }
+            }
+        } else {
+            data = as<const Node<T>*>(nullptr);
+        }
+    } else {
+        data = json[QLatin1String("archive")].toString();
+    }
+
+
+    if(valid) {
+        const Node<T> *pointer = data.toPointer();
+        if(pointer) {
+            json[QLatin1String("ref")] = pointer->data.id.toString();
+        } else {
+            json[QLatin1String("ref")] = QUuid().toString();
+        }
+    } else {
+        json[QLatin1String("archive")] = data.toString();
+    }
+}
+
+static void load(Transaction &t, QJsonObject json,
+                 const WalletsModel &wallets,
+                 const CategoriesModel &inCategories,
+                 const CategoriesModel &outCategories
+) {
+    t.date = QDate::fromString(json[QLatin1String("date")].toString(), "dd.MM.yyyy");
+    t.note = json[QLatin1String("note")].toString();
+    t.type = as<Transaction::Type::t>( json[QLatin1String("type")].toInt() );
+    t.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
+
+    QJsonArray categories = json[QLatin1String("categories")].toArray();
+    for(QJsonValue v : std::as_const(categories)) {
+        QJsonObject obj = v.toObject();
+        ArchNode<Category> category;
+        if(t.type == Transaction::Type::In) {
+            load(category, obj, inCategories);
+        } else if(t.type == Transaction::Type::Out) {
+            load(category, obj, outCategories);
+        }
+        t.category.push_back(category);
+    }
+
+    if(t.type != Transaction::Type::In) {
+        QJsonObject from = json[QLatin1String("from")].toObject();
+        load(t.from, from, wallets);
+    }
+
+    if(t.type != Transaction::Type::Out) {
+        QJsonObject to = json[QLatin1String("to")].toObject();
+        load(t.to, to, wallets);
+    }
+}
+
+static void load(LogModel &data, QJsonArray json,
+                 const WalletsModel &wallets,
+                 const CategoriesModel &inCategories,
+                 const CategoriesModel &outCategories
+){
+    for(QJsonValue tVal : std::as_const(json)) {
+        QJsonObject tObj = tVal.toObject();
+        Transaction t;
+        load(t, tObj, wallets, inCategories, outCategories);
+        data.log.push_back(t);
+    }
+}
+
+static void load(Data &data, QJsonObject json)
+{
+    load(data.owners, json[QLatin1String("owners")].toArray());
+    load(data.wallets, json[QLatin1String("wallets")].toArray(), data.owners);
+    load(data.inCategories, json[QLatin1String("inCategories")].toArray());
+    load(data.outCategories, json[QLatin1String("outCategories")].toArray());
+    load(data.log, json[QLatin1String("log")].toArray(), data.wallets, data.inCategories, data.outCategories);
+}
+
+void load(Data &data, const QString &fileName)
+{
+    QFile f(fileName);
+    f.open(QIODevice::ReadOnly);
+    QByteArray bytes = f.readAll();
+    f.close();
+
+    QJsonDocument loadDoc(QJsonDocument::fromJson(bytes));
+    QJsonObject json = loadDoc.object();
+    load(data, json);
+}
+
 } // namespace cashbook
-
-
