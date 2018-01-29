@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
     cashbook::Data data;
     fillDataExample(data);
     //cashbook::save(data, "exported.json");
+    //cashbook::load(data, "exported.json");
 
     cashbook::MainWindow w(data);
     w.show();

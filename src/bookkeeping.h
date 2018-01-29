@@ -113,12 +113,43 @@ struct Wallet : public Idable
 
         static QString toString(Type::t type) {
             switch(type) {
+                default:
                 case Common: return QObject::tr("Общий");
                 case Cash: return QObject::tr("Наличные");
                 case Card: return QObject::tr("Карта");
                 case Account: return QObject::tr("Счет");
                 case Deposit: return QObject::tr("Вклад");
                 case EMoney: return QObject::tr("Эл. деньги");
+            }
+        }
+
+        static QString toConfigString(Type::t type) {
+            switch(type) {
+                default:
+                case Common: return QStringLiteral("Common");
+                case Cash: return QStringLiteral("Cash");
+                case Card: return QStringLiteral("Card");
+                case Account: return QStringLiteral("Account");
+                case Deposit: return QStringLiteral("Deposit");
+                case EMoney: return QStringLiteral("EMoney");
+            }
+        }
+
+        static Type::t fromConfigString(const QString &str) {
+            if(str == "Common") {
+                return Common;
+            } else if(str == "Cash") {
+                return Cash;
+            } else if(str == "Card") {
+                return Card;
+            } else if(str == "Account") {
+                return Account;
+            } else if(str == "Deposit") {
+                return Deposit;
+            } else if(str == "EMoney") {
+                return EMoney;
+            } else {
+                return Common;
             }
         }
 
@@ -191,6 +222,27 @@ struct Transaction
                 default:
                 case Out: return QObject::tr("Трата");
                 case Transfer: return QObject::tr("Перемещение");
+            }
+        }
+
+        static QString toConfigString(Type::t type) {
+            switch(type) {
+                case In: return QStringLiteral("In");
+                default:
+                case Out: return QStringLiteral("Out");
+                case Transfer: return QStringLiteral("Transfer");
+            }
+        }
+
+        static Type::t fromConfigString(const QString &str) {
+            if(str == "In") {
+                return In;
+            } else if(str == "Out") {
+                return Out;
+            } else if(str == "Transfer") {
+                return Transfer;
+            } else {
+                return Out;
             }
         }
 

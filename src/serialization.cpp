@@ -69,7 +69,7 @@ static void save(const ArchPointer<Owner> &data, QJsonObject &json)
 static void save(const Wallet &wallet, QJsonObject &json)
 {
     json[QLatin1String("id")] = wallet.id.toString();
-    json[QLatin1String("type")] = as<int>(wallet.type);
+    json[QLatin1String("type")] = Wallet::Type::toConfigString(wallet.type);
     json[QLatin1String("name")] = wallet.name;
     json[QLatin1String("canBeNegative")] = wallet.canBeNegative;
     json[QLatin1String("amount")] = wallet.amount.as_cents();
@@ -125,7 +125,7 @@ static void save(const Transaction &t, QJsonObject &json)
 {
     json[QLatin1String("date")] = t.date.toString(QStringLiteral("dd.MM.yyyy"));
     json[QLatin1String("note")] = t.note;
-    json[QLatin1String("type")] = as<int>(t.type);
+    json[QLatin1String("type")] = Transaction::Type::toConfigString(t.type);
 
     QJsonArray categories;
     for(const ArchNode<Category> &c : t.category) {
@@ -269,7 +269,7 @@ static void load(Wallet &wallet, QJsonObject json, const OwnersModel &ownersMode
 {
     QString id = json[QLatin1String("id")].toString();
     wallet.id = QUuid(id);
-    wallet.type = as<Wallet::Type::t>(json[QLatin1String("type")].toInt());
+    wallet.type = Wallet::Type::fromConfigString( json[QLatin1String("type")].toString() );
     wallet.name = json[QLatin1String("name")].toString();
     wallet.canBeNegative = json[QLatin1String("canBeNegative")].toBool();
     wallet.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
@@ -351,7 +351,7 @@ static void load(Transaction &t, QJsonObject json,
 ) {
     t.date = QDate::fromString(json[QLatin1String("date")].toString(), "dd.MM.yyyy");
     t.note = json[QLatin1String("note")].toString();
-    t.type = as<Transaction::Type::t>( json[QLatin1String("type")].toInt() );
+    t.type = Transaction::Type::fromConfigString( json[QLatin1String("type")].toString() );
     t.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
 
     QJsonArray categories = json[QLatin1String("categories")].toArray();
