@@ -179,6 +179,9 @@ static void save(const Data &data, QJsonObject &json)
     json[QLatin1String("inCategories")] = inCategories;
     json[QLatin1String("outCategories")] = outCategories;
     json[QLatin1String("log")] = log;
+
+    json[QLatin1String("transactionCount")] = data.log.log.size();
+    json[QLatin1String("lastAnchored")] = data.log.lastAnchored;
 }
 
 static QByteArray save(const Data &data)
@@ -305,6 +308,8 @@ static void load(WalletsModel &data, QJsonArray arr, const OwnersModel &ownersMo
             children.top() -= 1;
         }
     }
+
+    emit data.recalculated();
 }
 
 template <class T, class Model>
@@ -397,6 +402,8 @@ static void load(Data &data, QJsonObject json)
     load(data.inCategories, json[QLatin1String("inCategories")].toArray());
     load(data.outCategories, json[QLatin1String("outCategories")].toArray());
     load(data.log, json[QLatin1String("log")].toArray(), data.wallets, data.inCategories, data.outCategories);
+
+    data.log.lastAnchored = json[QLatin1String("lastAnchored")].toInt();
 }
 
 void load(Data &data, const QString &fileName)

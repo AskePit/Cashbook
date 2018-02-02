@@ -121,7 +121,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="removeTransactionButton">
+               <widget class="QPushButton" name="anchoreTransactionsButton">
                 <property name="minimumSize">
                  <size>
                   <width>23</width>
@@ -135,7 +135,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>-</string>
+                 <string>v</string>
                 </property>
                </widget>
               </item>

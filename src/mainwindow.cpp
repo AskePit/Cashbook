@@ -5,9 +5,12 @@
 #include "serialization.h"
 
 #include <QFileDialog>
+#include <QFileInfo>
 
 namespace cashbook
 {
+
+static const QString defaultDataFile {"cashbook.json"};
 
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
@@ -15,8 +18,6 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_data(data)
     , m_logDelegate(m_data)
 {
-    //cashbook::load(m_data, "saved.json");
-
     ui->setupUi(this);
 
     ui->logTable->setItemDelegate(&m_logDelegate);
@@ -31,8 +32,6 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->inCategoriesTree->expandAll();
     ui->outCategoriesTree->expandAll();
 
-    ui->walletsTree->resizeColumnToContents(0);
-    ui->walletsTree->resizeColumnToContents(1);
     ui->splitter->setStretchFactor(0, 100);
     ui->splitter->setStretchFactor(1, 50);
 
@@ -43,12 +42,38 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setColumnWidth(LogColumn::From, 145);
     ui->logTable->setColumnWidth(LogColumn::To, 145);
 
+    connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
+
     showMaximized();
+
+    QFileInfo f(defaultDataFile);
+    if(f.exists()) {
+        loadFile(defaultDataFile);
+    }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::loadFile(const QString &filename)
+{
+    if(filename.isEmpty()) {
+        return;
+    }
+
+    cashbook::load(m_data, filename);
+    ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
+}
+
+void MainWindow::saveFile(const QString &filename)
+{
+    if(filename.isEmpty()) {
+        return;
+    }
+
+    cashbook::save(m_data, filename);
 }
 
 } // namespace cashbook
@@ -243,14 +268,11 @@ void cashbook::MainWindow::on_addTransactionButton_clicked()
     m_data.log.insertRow(0);
 }
 
-void cashbook::MainWindow::on_removeTransactionButton_clicked()
+void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
-    if(m_data.log.rowCount() == 0) {
-        return;
-    }
-
-    m_data.log.removeRow(0);
+    m_data.anchoreTransactions();
 }
+
 
 //
 // Wallets
@@ -368,10 +390,10 @@ void cashbook::MainWindow::on_inOutCategoryButton_clicked()
 
 void cashbook::MainWindow::on_actionSave_triggered()
 {
-    QString filename =
-                QFileDialog::getSaveFileName(this, tr("Сохранить файл"), "", tr("Json файлы (*.json)"));
+    /*QString filename =
+                QFileDialog::getSaveFileName(this, tr("Сохранить файл"), "", tr("Json файлы (*.json)"));*/
 
-    cashbook::save(m_data, filename);
+    saveFile(defaultDataFile);
 }
 
 void cashbook::MainWindow::on_actionOpen_triggered()
@@ -379,9 +401,5 @@ void cashbook::MainWindow::on_actionOpen_triggered()
     QString filename =
                 QFileDialog::getOpenFileName(this, tr("Открыть файл"), "", tr("Json файлы (*.json)"));
 
-    if(filename.isEmpty()) {
-        return;
-    }
-
-    cashbook::load(m_data, filename);
+    loadFile(filename);
 }

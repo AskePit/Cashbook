@@ -301,8 +301,15 @@ public:
         return QAbstractItemModel::endMoveRows();
     }
 
+    void update() {
+        beginResetModel();
+        endResetModel();
+        emit recalculated();
+    }
+
 signals:
     void nodesGonnaBeRemoved(QStringList nodeIds);
+    void recalculated();
 };
 
 class CategoriesModel : public TreeModel
@@ -355,6 +362,17 @@ public:
         rootItem = new Tree<Category>;
         emit endResetModel();
     }
+};
+
+class WalletColumn
+{
+public:
+    enum t {
+        Name = 0,
+        Amount = 1,
+
+        Count
+    };
 };
 
 class WalletsModel : public TreeModel
@@ -454,15 +472,20 @@ public:
     };
 };
 
+constexpr int noAnchored {-1};
+
 class LogModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
     QVector<Transaction> log;
+    int lastAnchored {noAnchored};
 
     LogModel(QObject *parent = 0);
     ~LogModel();
+
+    void anchoreTransactions();
 
     int getTransactionIndex(const QModelIndex &index) const;
     int getTransactionIndex(int modelIndex) const;
@@ -486,6 +509,7 @@ public:
         emit beginResetModel();
         log.clear();
         emit endResetModel();
+        lastAnchored = noAnchored;
     }
 };
 
@@ -528,6 +552,8 @@ public:
     CategoriesModel inCategories;
     CategoriesModel outCategories;
     LogModel log;
+
+    void anchoreTransactions();
 
     Node<Wallet> *walletFromPath(const QString &path) {
         return nodeFromPath<Wallet, WalletsModel>(wallets, path);

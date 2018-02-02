@@ -285,17 +285,6 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
 // Wallets
 //
 
-class WalletColumn
-{
-public:
-    enum t {
-        Name = 0,
-        Amount = 1,
-
-        Count
-    };
-};
-
 WalletsModel::WalletsModel(QObject *parent)
     : TreeModel(parent)
 {
@@ -334,6 +323,9 @@ static QString formatMoney(const Money &money)
 
     if(money.cents()) {
         QString cents = QString::number(money.cents());
+        if(cents.startsWith('-')) {
+            cents = cents.mid(1);
+        }
         if(cents.size() == 1) {
             cents = QStringLiteral("0") + cents;
         }
@@ -556,6 +548,24 @@ LogModel::LogModel(QObject *parent)
 
 LogModel::~LogModel()
 {}
+
+void LogModel::anchoreTransactions()
+{
+    for(int i = lastAnchored + 1; i<log.size(); ++i) {
+        Transaction &t = log[i];
+        if(t.type != Transaction::Type::In && t.from.isValidPointer()) {
+            Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
+            w->data.amount -= t.amount;
+        }
+
+        if(t.type != Transaction::Type::Out && t.to.isValidPointer()) {
+            Node<Wallet> *w = const_cast<Node<Wallet>*>(t.to.toPointer());
+            w->data.amount += t.amount;
+        }
+    }
+
+    lastAnchored = log.size()-1;
+}
 
 template <class T>
 static inline QVariant getVariantPointer(T pointer)
@@ -886,6 +896,12 @@ QString extractPathString<Category>(const Node<Category> *node) {
 template <>
 QString extractPathString<Wallet>(const Node<Wallet> *node) {
     return node ? node->data.name : "";
+}
+
+void Data::anchoreTransactions()
+{
+    log.anchoreTransactions();
+    wallets.update();
 }
 
 static const QSet<LogColumn::t> defaultColumns = {
