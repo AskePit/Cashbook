@@ -401,6 +401,8 @@ static void load(Data &data, QJsonObject json)
 
 void load(Data &data, const QString &fileName)
 {
+    data.clear();
+
     QFile f(fileName);
     f.open(QIODevice::ReadOnly);
     QByteArray bytes = f.readAll();

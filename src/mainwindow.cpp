@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 
 #include "innodedialog.h"
+#include "serialization.h"
+
+#include <QFileDialog>
 
 namespace cashbook
 {
@@ -12,6 +15,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_data(data)
     , m_logDelegate(m_data)
 {
+    //cashbook::load(m_data, "saved.json");
+
     ui->setupUi(this);
 
     ui->logTable->setItemDelegate(&m_logDelegate);
@@ -30,6 +35,13 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->walletsTree->resizeColumnToContents(1);
     ui->splitter->setStretchFactor(0, 100);
     ui->splitter->setStretchFactor(1, 50);
+
+    ui->logTable->setColumnWidth(LogColumn::Date, 55);
+    ui->logTable->setColumnWidth(LogColumn::Type, 70);
+    ui->logTable->setColumnWidth(LogColumn::Category, 200);
+    ui->logTable->setColumnWidth(LogColumn::Money, 65);
+    ui->logTable->setColumnWidth(LogColumn::From, 145);
+    ui->logTable->setColumnWidth(LogColumn::To, 145);
 
     showMaximized();
 }
@@ -352,4 +364,24 @@ void cashbook::MainWindow::on_outOutCategoryButton_clicked()
 void cashbook::MainWindow::on_inOutCategoryButton_clicked()
 {
     inNode(*ui->outCategoriesTree, m_data.outCategories);
+}
+
+void cashbook::MainWindow::on_actionSave_triggered()
+{
+    QString filename =
+                QFileDialog::getSaveFileName(this, tr("Сохранить файл"), "", tr("Json файлы (*.json)"));
+
+    cashbook::save(m_data, filename);
+}
+
+void cashbook::MainWindow::on_actionOpen_triggered()
+{
+    QString filename =
+                QFileDialog::getOpenFileName(this, tr("Открыть файл"), "", tr("Json файлы (*.json)"));
+
+    if(filename.isEmpty()) {
+        return;
+    }
+
+    cashbook::load(m_data, filename);
 }

@@ -52,6 +52,9 @@ private slots:
     void on_outOutCategoryButton_clicked();
     void on_inOutCategoryButton_clicked();
 
+    void on_actionSave_triggered();
+    void on_actionOpen_triggered();
+
 private:
     Ui::MainWindow *ui;
     Data &m_data;

@@ -221,7 +221,7 @@ struct Transaction
                 case In: return QObject::tr("Доход");
                 default:
                 case Out: return QObject::tr("Трата");
-                case Transfer: return QObject::tr("Перемещение");
+                case Transfer: return QObject::tr("Перевод");
             }
         }
 
@@ -348,6 +348,13 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
+
+    void clear() {
+        emit beginResetModel();
+        delete rootItem;
+        rootItem = new Tree<Category>;
+        emit endResetModel();
+    }
 };
 
 class WalletsModel : public TreeModel
@@ -389,6 +396,13 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
+
+    void clear() {
+        emit beginResetModel();
+        delete rootItem;
+        rootItem = new Tree<Wallet>;
+        emit endResetModel();
+    }
 };
 
 class OwnersModel : public QAbstractListModel
@@ -414,8 +428,30 @@ public:
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
 
+    void clear() {
+        emit beginResetModel();
+        owners.clear();
+        emit endResetModel();
+    }
+
 signals:
     void nodesGonnaBeRemoved(QStringList nodeIds);
+};
+
+class LogColumn
+{
+public:
+    enum t {
+        Date = 0,
+        Type,
+        Category,
+        Money,
+        From,
+        To,
+        Note,
+
+        Count
+    };
 };
 
 class LogModel : public QAbstractTableModel
@@ -445,6 +481,12 @@ public:
 
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+
+    void clear() {
+        emit beginResetModel();
+        log.clear();
+        emit endResetModel();
+    }
 };
 
 const QString pathConcat {"/"};
@@ -497,6 +539,14 @@ public:
 
     Node<Category> *outCategoryFromPath(const QString &path) {
         return nodeFromPath<Category, CategoriesModel>(outCategories, path);
+    }
+
+    void clear() {
+        owners.clear();
+        wallets.clear();
+        inCategories.clear();
+        outCategories.clear();
+        log.clear();
     }
 
 private:

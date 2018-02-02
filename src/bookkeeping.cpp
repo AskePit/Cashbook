@@ -334,6 +334,9 @@ static QString formatMoney(const Money &money)
 
     if(money.cents()) {
         QString cents = QString::number(money.cents());
+        if(cents.size() == 1) {
+            cents = QStringLiteral("0") + cents;
+        }
         return QString("%1,%2 %3").arg(units, cents, symbol);
     } else {
         return QString("%1 %2").arg(units, symbol);
@@ -547,22 +550,6 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 // Log
 //
 
-class LogColumn
-{
-public:
-    enum t {
-        Date = 0,
-        Type,
-        Category,
-        Money,
-        From,
-        To,
-        Note,
-
-        Count
-    };
-};
-
 LogModel::LogModel(QObject *parent)
     : QAbstractTableModel(parent)
 {}
@@ -603,7 +590,17 @@ static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
     if(role == Qt::DisplayRole) {
         if(archNode.isValidPointer()) {
-            return pathToString(archNode.toPointer());
+            //return pathToString(archNode.toPointer());
+            const Node<T> *node = archNode.toPointer();
+            QString path = extractPathString(node);
+            if(node && node->parent) {
+                QString parentPath = extractPathString(node->parent);
+                if(!parentPath.isEmpty()) {
+                    path += " (" + parentPath + ")";
+                }
+            }
+
+            return path;
         } else {
             return archNode.toString();
         }
@@ -626,7 +623,13 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
 
     switch(index.column())
     {
-        case LogColumn::Date: return t.date;
+        case LogColumn::Date: {
+            if(role == Qt::DisplayRole) {
+                return t.date.toString("dd.MM.yy");
+            } else {
+                return t.date;
+            }
+        }
         case LogColumn::Type: {
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(t.type);
@@ -877,12 +880,12 @@ void Data::onWalletsRemove(QStringList paths)
 
 template <>
 QString extractPathString<Category>(const Node<Category> *node) {
-    return node->data;
+    return node ? node->data : "";
 }
 
 template <>
 QString extractPathString<Wallet>(const Node<Wallet> *node) {
-    return node->data.name;
+    return node ? node->data.name : "";
 }
 
 static const QSet<LogColumn::t> defaultColumns = {

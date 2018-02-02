@@ -4,7 +4,6 @@
 
 #include "bookkeeping.h"
 #include "types.h"
-#include "serialization.h"
 
 void fillDataExample(cashbook::Data &data)
 {
@@ -139,9 +138,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     cashbook::Data data;
-    fillDataExample(data);
-    //cashbook::save(data, "exported.json");
-    //cashbook::load(data, "exported.json");
+    //fillDataExample(data);
 
     cashbook::MainWindow w(data);
     w.show();
