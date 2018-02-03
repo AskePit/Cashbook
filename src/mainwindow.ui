@@ -124,18 +124,18 @@
                <widget class="QPushButton" name="anchoreTransactionsButton">
                 <property name="minimumSize">
                  <size>
-                  <width>23</width>
+                  <width>40</width>
                   <height>23</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>23</width>
+                  <width>40</width>
                   <height>23</height>
                  </size>
                 </property>
                 <property name="text">
-                 <string>v</string>
+                 <string>Enter</string>
                 </property>
                </widget>
               </item>

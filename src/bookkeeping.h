@@ -487,10 +487,25 @@ public:
 
     void anchoreTransactions();
 
+    /**
+     * @brief Get transaction position in data vector by index in table.
+     * @param index Index in table
+     * @return Position in internal data vector
+     * @sa getTransaction
+     * @sa getTransactionRow
+     */
     int getTransactionIndex(const QModelIndex &index) const;
     int getTransactionIndex(int modelIndex) const;
     Transaction &getTransaction(const QModelIndex &index);
     const Transaction &getTransaction(const QModelIndex &index) const;
+
+    /**
+     * @brief Get index in table by transaction position in data vector.
+     * @param index Index in table
+     * @return Position in internal data vector
+     * @sa getTransactionIndex
+     */
+    int getTransactionRow(int transactionIndex) const;
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,

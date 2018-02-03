@@ -555,14 +555,26 @@ void LogModel::anchoreTransactions()
         Transaction &t = log[i];
         if(t.type != Transaction::Type::In && t.from.isValidPointer()) {
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
-            w->data.amount -= t.amount;
+            if(w) {
+                w->data.amount -= t.amount;
+            }
+
         }
 
         if(t.type != Transaction::Type::Out && t.to.isValidPointer()) {
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.to.toPointer());
-            w->data.amount += t.amount;
+            if(w) {
+                w->data.amount += t.amount;
+            }
         }
     }
+
+    const int left = 0;
+    const int top = 0;
+    const int bottom = getTransactionRow(lastAnchored)-1;
+    const int right = LogColumn::Count-1;
+
+    emit dataChanged(index(top, left), index(bottom, right));
 
     lastAnchored = log.size()-1;
 }
@@ -593,6 +605,13 @@ Transaction &LogModel::getTransaction(const QModelIndex &index)
 const Transaction &LogModel::getTransaction(const QModelIndex &index) const
 {
     return log[getTransactionIndex(index)];
+}
+
+int LogModel::getTransactionRow(int transactionIndex) const
+{
+    // it is a symmetric transformation,
+    // so it's equal to getTransactionIndex()
+    return getTransactionIndex(transactionIndex);
 }
 
 template <class T>
@@ -719,8 +738,14 @@ static Qt::ItemFlags archNodeFlags(const QAbstractItemModel *model, const QModel
     }
 }
 
+const Qt::ItemFlags disabledFlag {0}; // Read-only and Disabled
+
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
+    if(getTransactionIndex(index) <= lastAnchored) {
+        return disabledFlag;
+    }
+
     if (!index.isValid()) {
         return 0;
     }
@@ -733,6 +758,10 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
         const Transaction &t = getTransaction(index);
         switch(column) {
             case LogColumn::Category: {
+                if(t.type == Transaction::Type::Transfer) {
+                    return disabledFlag;
+                }
+
                 if(!t.category.empty()) {
                     return archNodeFlags(this, index, t.category.first());
                 } else {
@@ -740,8 +769,18 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
                 }
             }
 
-            case LogColumn::From: return archNodeFlags(this, index, t.from);
-            case LogColumn::To: return archNodeFlags(this, index, t.to);
+            case LogColumn::From: {
+                if(t.type == Transaction::Type::In) {
+                    return disabledFlag;
+                }
+                return archNodeFlags(this, index, t.from);
+            }
+            case LogColumn::To: {
+                if(t.type == Transaction::Type::Out) {
+                    return disabledFlag;
+                }
+                return archNodeFlags(this, index, t.to);
+            }
         }
     }
 
