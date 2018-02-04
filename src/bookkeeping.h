@@ -3,6 +3,7 @@
 
 #include <std/tree.h>
 #include <std/money.h>
+#include <std/rvector.h>
 #include <QString>
 #include <QVector>
 #include <QUuid>
@@ -472,40 +473,18 @@ public:
     };
 };
 
-constexpr int noAnchored {-1};
-
 class LogModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
-    QVector<Transaction> log;
-    int lastAnchored {noAnchored};
+    aske::rvector<Transaction> log;
+    int unanchored {0};
 
     LogModel(QObject *parent = 0);
     ~LogModel();
 
     void anchoreTransactions();
-
-    /**
-     * @brief Get transaction position in data vector by index in table.
-     * @param index Index in table
-     * @return Position in internal data vector
-     * @sa getTransaction
-     * @sa getTransactionRow
-     */
-    int getTransactionIndex(const QModelIndex &index) const;
-    int getTransactionIndex(int modelIndex) const;
-    Transaction &getTransaction(const QModelIndex &index);
-    const Transaction &getTransaction(const QModelIndex &index) const;
-
-    /**
-     * @brief Get index in table by transaction position in data vector.
-     * @param index Index in table
-     * @return Position in internal data vector
-     * @sa getTransactionIndex
-     */
-    int getTransactionRow(int transactionIndex) const;
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -524,7 +503,7 @@ public:
         emit beginResetModel();
         log.clear();
         emit endResetModel();
-        lastAnchored = noAnchored;
+        unanchored = 0;
     }
 };
 

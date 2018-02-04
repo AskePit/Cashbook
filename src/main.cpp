@@ -97,7 +97,7 @@ void fillDataExample(cashbook::Data &data)
         t.category = {chicken};
         t.amount = 518;
         t.from = wallet;
-        log.push_back(t);
+        log.push_front(t);
     }
     {
         Transaction t;
@@ -107,7 +107,7 @@ void fillDataExample(cashbook::Data &data)
         t.category = {rent};
         t.amount = 13000;
         t.from = sber;
-        log.push_back(t);
+        log.push_front(t);
     }
     {
         Transaction t;
@@ -117,7 +117,7 @@ void fillDataExample(cashbook::Data &data)
         t.category = {salary};
         t.amount = 25705;
         t.to = sber;
-        log.push_back(t);
+        log.push_front(t);
     }
     {
         Transaction t;
@@ -127,7 +127,7 @@ void fillDataExample(cashbook::Data &data)
         t.amount = 25705;
         t.from = wallet;
         t.to = sber;
-        log.push_back(t);
+        log.push_front(t);
     }
 
     UNUSED(pants, cources, books, bread, iceCream, choco, cookies, pork, sell, deposit);

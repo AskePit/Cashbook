@@ -36,7 +36,7 @@ template <class List>
 static int rowCount(const List &list, const QModelIndex &parent)
 {
     UNUSED(parent);
-    return list.size();
+    return as<int>(list.size());
 }
 
 } // namespace list
@@ -551,7 +551,7 @@ LogModel::~LogModel()
 
 void LogModel::anchoreTransactions()
 {
-    for(int i = lastAnchored + 1; i<log.size(); ++i) {
+    for(int i = unanchored-1; i>=0; --i) {
         Transaction &t = log[i];
         if(t.type != Transaction::Type::In && t.from.isValidPointer()) {
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
@@ -571,12 +571,12 @@ void LogModel::anchoreTransactions()
 
     const int left = 0;
     const int top = 0;
-    const int bottom = getTransactionRow(lastAnchored)-1;
+    const int bottom = unanchored-1;
     const int right = LogColumn::Count-1;
 
     emit dataChanged(index(top, left), index(bottom, right));
 
-    lastAnchored = log.size()-1;
+    unanchored = 0;
 }
 
 template <class T>
@@ -585,33 +585,6 @@ static inline QVariant getVariantPointer(T pointer)
     QVariant v;
     v.setValue<T>(pointer);
     return v;
-}
-
-int LogModel::getTransactionIndex(const QModelIndex &index) const
-{
-    return log.size() - index.row() - 1;
-}
-
-int LogModel::getTransactionIndex(int modelIndex) const
-{
-    return log.size() - modelIndex - 1;
-}
-
-Transaction &LogModel::getTransaction(const QModelIndex &index)
-{
-    return log[getTransactionIndex(index)];
-}
-
-const Transaction &LogModel::getTransaction(const QModelIndex &index) const
-{
-    return log[getTransactionIndex(index)];
-}
-
-int LogModel::getTransactionRow(int transactionIndex) const
-{
-    // it is a symmetric transformation,
-    // so it's equal to getTransactionIndex()
-    return getTransactionIndex(transactionIndex);
 }
 
 template <class T>
@@ -648,7 +621,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Transaction &t = getTransaction(index);
+    const Transaction &t = log[index.row()];
 
     switch(index.column())
     {
@@ -742,7 +715,7 @@ const Qt::ItemFlags disabledFlag {0}; // Read-only and Disabled
 
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
-    if(getTransactionIndex(index) <= lastAnchored) {
+    if(index.row() > unanchored-1) {
         return disabledFlag;
     }
 
@@ -755,7 +728,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
     if(!archNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Transaction &t = getTransaction(index);
+        const Transaction &t = log[index.row()];
         switch(column) {
             case LogColumn::Category: {
                 if(t.type == Transaction::Type::Transfer) {
@@ -793,7 +766,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         return false;
     }
 
-    Transaction &t = getTransaction(index);
+    Transaction &t = log[index.row()];
 
     switch(index.column())
     {
@@ -840,7 +813,8 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     beginInsertRows(parent, position, position + rows - 1);
     Transaction t;
     t.date = QDate::currentDate();
-    log.insert(getTransactionIndex(position)+1, rows, t);
+    log.insert(position, rows, t);
+    unanchored += rows;
     endInsertRows();
     return true;
 }
@@ -849,7 +823,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
-    log.remove(getTransactionIndex(position), rows);
+    log.remove(position, rows);
     endRemoveRows();
     return true;
 }
@@ -964,7 +938,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
         return QStyledItemDelegate::createEditor(parent, option, index);
     }
 
-    const Transaction &record = m_data.log.getTransaction(index);
+    const Transaction &record = m_data.log.log[index.row()];
 
     int col = index.column();
 

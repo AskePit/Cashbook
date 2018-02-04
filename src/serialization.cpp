@@ -180,8 +180,7 @@ static void save(const Data &data, QJsonObject &json)
     json[QLatin1String("outCategories")] = outCategories;
     json[QLatin1String("log")] = log;
 
-    json[QLatin1String("transactionCount")] = data.log.log.size();
-    json[QLatin1String("lastAnchored")] = data.log.lastAnchored;
+    json[QLatin1String("unanchored")] = data.log.unanchored;
 }
 
 static QByteArray save(const Data &data)
@@ -391,7 +390,7 @@ static void load(LogModel &data, QJsonArray json,
         QJsonObject tObj = tVal.toObject();
         Transaction t;
         load(t, tObj, wallets, inCategories, outCategories);
-        data.log.push_back(t);
+        data.log.push_front(t);
     }
 }
 
@@ -403,7 +402,7 @@ static void load(Data &data, QJsonObject json)
     load(data.outCategories, json[QLatin1String("outCategories")].toArray());
     load(data.log, json[QLatin1String("log")].toArray(), data.wallets, data.inCategories, data.outCategories);
 
-    data.log.lastAnchored = json[QLatin1String("lastAnchored")].toInt();
+    data.log.unanchored = json[QLatin1String("unanchored")].toInt();
 }
 
 void load(Data &data, const QString &fileName)
