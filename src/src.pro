@@ -36,3 +36,6 @@ SOURCES += \
     serialization.cpp
 
 #QMAKE_CXXFLAGS += -std:c++latest
+
+RESOURCES += \
+    resources/resources.qrc

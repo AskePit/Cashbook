@@ -381,17 +381,27 @@ static void load(Transaction &t, QJsonObject json,
     }
 }
 
-static void load(LogModel &data, QJsonArray json,
-                 const WalletsModel &wallets,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
-){
+static void load(LogModel &logModel, QJsonArray json, Data &data){
     int n = json.size();
     for (int i = n-1; i>=0; --i) {
         QJsonObject tObj = json[i].toObject();
         Transaction t;
-        load(t, tObj, wallets, inCategories, outCategories);
-        data.log.push_front(t);
+        load(t, tObj, data.wallets, data.inCategories, data.outCategories);
+        logModel.log.push_front(t);
+
+        if(t.type == Transaction::Type::In) {
+            Month month;
+            month.year = t.date.year();
+            month.month = t.date.month();
+            data.briefStatistics[month].received += t.amount;
+        }
+
+        if(t.type == Transaction::Type::Out) {
+            Month month;
+            month.year = t.date.year();
+            month.month = t.date.month();
+            data.briefStatistics[month].spent += t.amount;
+        }
     }
 }
 
@@ -401,7 +411,7 @@ static void load(Data &data, QJsonObject json)
     load(data.wallets, json[QLatin1String("wallets")].toArray(), data.owners);
     load(data.inCategories, json[QLatin1String("inCategories")].toArray());
     load(data.outCategories, json[QLatin1String("outCategories")].toArray());
-    load(data.log, json[QLatin1String("log")].toArray(), data.wallets, data.inCategories, data.outCategories);
+    load(data.log, json[QLatin1String("log")].toArray(), data);
 
     data.log.unanchored = json[QLatin1String("unanchored")].toInt();
 }
