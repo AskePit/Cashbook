@@ -386,8 +386,9 @@ static void load(LogModel &data, QJsonArray json,
                  const CategoriesModel &inCategories,
                  const CategoriesModel &outCategories
 ){
-    for(QJsonValue tVal : std::as_const(json)) {
-        QJsonObject tObj = tVal.toObject();
+    int n = json.size();
+    for (int i = n-1; i>=0; --i) {
+        QJsonObject tObj = json[i].toObject();
         Transaction t;
         load(t, tObj, wallets, inCategories, outCategories);
         data.log.push_front(t);
