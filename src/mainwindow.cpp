@@ -58,15 +58,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::loadFile(const QString &filename)
+void MainWindow::loadBriefStatistics()
 {
-    if(filename.isEmpty()) {
-        return;
-    }
-
-    cashbook::load(m_data, filename);
-
-    const QString title {"Краткая статистика"};
+    const QString title {tr("Краткая статистика")};
     const QString titleFont {"\"Segoe UI\""};
     const QString titleAlign {"center"};
     const QString titleColor {"black"};
@@ -77,13 +71,13 @@ void MainWindow::loadFile(const QString &filename)
     const QString textPadding {"0"};
 
     const QString dateFont {"\"Segoe UI\""};
-    const QString dateFontSize {"11pt"};
+    const QString dateFontSize {"9pt"};
     const QString dateColor {"black"};
-    const QString dateWeight {"bold"};
+    const QString dateWeight {""};
 
     const QString moneyFont {"\"Segoe UI\""};
-    const QString moneyFontSize {"11pt"};
-    const QString moneyOutColor {"#d94057"};
+    const QString moneyFontSize {"9pt"};
+    const QString moneyOutColor {"#be3922"};
     const QString moneyInColor {"green"};
     const QString moneyWeight {"bold"};
 
@@ -99,14 +93,26 @@ void MainWindow::loadFile(const QString &filename)
                     "<td valign='middle' style='text-align: right; padding: 0 0 0 "+textPadding+"; color: "+dateColor+"'>"+record.first.toString()+"</td>"
                     "<td width='"+dateMoneySpacing+"'></td>"
                     "<td style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
-                        "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>"+formatMoney(record.second.spent)+"</td></tr>"
-                        "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>"+formatMoney(record.second.received)+"</td></tr>"
+                        "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>▲ "+formatMoney(record.second.received)+"</td></tr>"
+                        "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>▼ "+formatMoney(record.second.spent)+"</td></tr>"
                     "</table></td>"
                 "</tr>"
                 "<tr><td><br/></td></tr>";
     }
 
     text += "</table>";
+
+    ui->statisticsField->setText(text);
+}
+
+void MainWindow::loadFile(const QString &filename)
+{
+    if(filename.isEmpty()) {
+        return;
+    }
+
+    cashbook::load(m_data, filename);
+    loadBriefStatistics();
 
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
 }

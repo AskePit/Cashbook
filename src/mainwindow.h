@@ -60,6 +60,8 @@ private:
     void loadFile(const QString &filename);
     void saveFile(const QString &filename);
 
+    void loadBriefStatistics();
+
 private:
     Ui::MainWindow *ui;
     Data &m_data;
