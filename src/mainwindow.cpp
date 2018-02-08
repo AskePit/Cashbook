@@ -1,17 +1,22 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <std/fs.h>
 #include "innodedialog.h"
 #include "bookkeeping.h"
 #include "serialization.h"
 
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QMessageBox>
 
 namespace cashbook
 {
 
 static const QString defaultDataFile {"cashbook.json"};
+static const QString defaultBackupFile1 {"backup/cashbook.backup.1"};
+static const QString defaultBackupFile2 {"backup/cashbook.backup.2"};
+static const QString defaultBackupFile3 {"backup/cashbook.backup.3"};
 
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
@@ -132,7 +137,7 @@ void MainWindow::saveFile(const QString &filename)
 // Common tree templates
 //
 template <class TreeModel>
-static void addSiblingNode(QTreeView &view, TreeModel &model)
+static bool addSiblingNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -140,15 +145,16 @@ static void addSiblingNode(QTreeView &view, TreeModel &model)
         if(model.rootItem->childCount() == 0) {
             model.insertRow(0, QModelIndex());
         }
-        return;
+        return true;
     }
 
     int i = model.rowCount(index.parent());
     model.insertRow(i, index.parent());
+    return true;
 }
 
 template <class TreeModel>
-static void addChildNode(QTreeView &view, TreeModel &model)
+static bool addChildNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
@@ -156,67 +162,71 @@ static void addChildNode(QTreeView &view, TreeModel &model)
         if(model.rootItem->childCount() == 0) {
             model.insertRow(0, QModelIndex());
         }
-        return;
+        return true;
     }
 
     int i = model.rowCount(index);
     model.insertRow(i, index);
+    return true;
 }
 
 template <class TreeModel>
-static void removeNode(QTreeView &view, TreeModel &model)
+static bool removeNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
     model.removeRow(index.row(), index.parent());
+    return true;
 }
 
 template <class TreeModel>
-static void upNode(QTreeView &view, TreeModel &model)
+static bool upNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
 
     if(row == 0) {
-        return;
+        return false;
     }
 
     model.moveRow(index.parent(), row, index.parent(), row-1);
+    return true;
 }
 
 template <class TreeModel>
-static void downNode(QTreeView &view, TreeModel &model)
+static bool downNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
 
     if(row == model.rowCount(index.parent())-1) {
-        return;
+        return false;
     }
 
     model.moveRow(index.parent(), row, index.parent(), row+2);
+    return true;
 }
 
 template <class TreeModel>
-static void outNode(QTreeView &view, TreeModel &model)
+static bool outNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
@@ -224,21 +234,21 @@ static void outNode(QTreeView &view, TreeModel &model)
     const auto parent = index.parent();
 
     if(!parent.isValid()) {
-        return;
+        return false;
     }
 
     const auto parentParent = parent.parent();
-
     model.moveRow(parent, row, parentParent, model.rowCount(parentParent));
+    return true;
 }
 
 template <class TreeModel>
-static void inNode(QTreeView &view, TreeModel &model)
+static bool inNode(QTreeView &view, TreeModel &model)
 {
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
@@ -249,10 +259,13 @@ static void inNode(QTreeView &view, TreeModel &model)
         auto dstParent = d.getIndex();
 
         if(index == dstParent) {
-            return;
+            return false;
         }
 
         model.moveRow(srcParent, row, dstParent, model.rowCount(dstParent));
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -261,7 +274,7 @@ static void inNode(QTreeView &view, TreeModel &model)
 //
 void cashbook::MainWindow::on_addUserButton_clicked()
 {
-    m_data.owners.insertRow(m_data.owners.rowCount());
+    m_changed |= m_data.owners.insertRow(m_data.owners.rowCount());
 }
 
 void cashbook::MainWindow::on_removeUserButton_clicked()
@@ -273,7 +286,7 @@ void cashbook::MainWindow::on_removeUserButton_clicked()
     }
 
     int row = index.row();
-    m_data.owners.removeRow(row);
+    m_changed |= m_data.owners.removeRow(row);
 }
 
 void cashbook::MainWindow::on_upUserButton_clicked()
@@ -290,7 +303,7 @@ void cashbook::MainWindow::on_upUserButton_clicked()
         return;
     }
 
-    m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row-1);
+    m_changed |= m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row-1);
 }
 
 void cashbook::MainWindow::on_downUserButton_clicked()
@@ -307,7 +320,7 @@ void cashbook::MainWindow::on_downUserButton_clicked()
         return;
     }
 
-    m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row+2);
+    m_changed |= m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row+2);
 }
 
 //
@@ -315,12 +328,12 @@ void cashbook::MainWindow::on_downUserButton_clicked()
 //
 void cashbook::MainWindow::on_addTransactionButton_clicked()
 {
-    m_data.log.insertRow(0);
+    m_changed |= m_data.log.insertRow(0);
 }
 
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
-    m_data.anchoreTransactions();
+    m_changed |= m_data.anchoreTransactions();
 }
 
 
@@ -329,37 +342,37 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 //
 void cashbook::MainWindow::on_addWalletSiblingButton_clicked()
 {
-    addSiblingNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= addSiblingNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_addWalletChildButton_clicked()
 {
-    addChildNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= addChildNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_removeWalletButton_clicked()
 {
-    removeNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= removeNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_upWalletButton_clicked()
 {
-    upNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= upNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_downWalletButton_clicked()
 {
-    downNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= downNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_outWalletButton_clicked()
 {
-    outNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= outNode(*ui->walletsTree, m_data.wallets);
 }
 
 void cashbook::MainWindow::on_inWalletButton_clicked()
 {
-    inNode(*ui->walletsTree, m_data.wallets);
+    m_changed |= inNode(*ui->walletsTree, m_data.wallets);
 }
 
 //
@@ -367,37 +380,37 @@ void cashbook::MainWindow::on_inWalletButton_clicked()
 //
 void cashbook::MainWindow::on_addInCategorySiblingButton_clicked()
 {
-    addSiblingNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= addSiblingNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_addInCategoryChildButton_clicked()
 {
-    addChildNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= addChildNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_removeInCategoryButton_clicked()
 {
-    removeNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= removeNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_upInCategoryButton_clicked()
 {
-    upNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= upNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_downInCategoryButton_clicked()
 {
-    downNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= downNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_outInCategoryButton_clicked()
 {
-    outNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= outNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 void cashbook::MainWindow::on_inInCategoryButton_clicked()
 {
-    inNode(*ui->inCategoriesTree, m_data.inCategories);
+    m_changed |= inNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 //
@@ -405,45 +418,52 @@ void cashbook::MainWindow::on_inInCategoryButton_clicked()
 //
 void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked()
 {
-    addSiblingNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= addSiblingNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_addOutCategoryChildButton_clicked()
 {
-    addChildNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= addChildNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_removeOutCategoryButton_clicked()
 {
-    removeNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= removeNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_upOutCategoryButton_clicked()
 {
-    upNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= upNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_downOutCategoryButton_clicked()
 {
-    downNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= downNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_outOutCategoryButton_clicked()
 {
-    outNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= outNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_inOutCategoryButton_clicked()
 {
-    inNode(*ui->outCategoriesTree, m_data.outCategories);
+    m_changed |= inNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
 void cashbook::MainWindow::on_actionSave_triggered()
 {
-    /*QString filename =
-                QFileDialog::getSaveFileName(this, tr("Сохранить файл"), "", tr("Json файлы (*.json)"));*/
+    if(!m_changed) {
+        return;
+    }
+
+    QDir().mkpath("backup");
+    aske::copyFileForced(defaultBackupFile2, defaultBackupFile3);
+    aske::copyFileForced(defaultBackupFile1, defaultBackupFile2);
+    aske::copyFileForced(defaultDataFile, defaultBackupFile1);
 
     saveFile(defaultDataFile);
+    m_changed = false;
 }
 
 void cashbook::MainWindow::on_actionOpen_triggered()
@@ -452,4 +472,26 @@ void cashbook::MainWindow::on_actionOpen_triggered()
                 QFileDialog::getOpenFileName(this, tr("Открыть файл"), "", tr("Json файлы (*.json)"));
 
     loadFile(filename);
+}
+
+int callQuestionDialog(const QString &message, QWidget *parent)
+{
+    QMessageBox msgBox {parent};
+    msgBox.setText(message);
+
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    return msgBox.exec();
+}
+
+void cashbook::MainWindow::closeEvent(QCloseEvent *event)
+{
+    Q_UNUSED(event);
+
+    if(m_changed) {
+        int ret { callQuestionDialog(tr("Сохранить изменения?"), this) };
+        if(ret == QMessageBox::Ok) {
+            on_actionSave_triggered();
+        }
+    }
 }

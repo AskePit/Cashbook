@@ -516,8 +516,12 @@ LogModel::LogModel(QObject *parent)
 LogModel::~LogModel()
 {}
 
-void LogModel::anchoreTransactions()
+bool LogModel::anchoreTransactions()
 {
+    if(!unanchored) {
+        return false;
+    }
+
     for(int i = unanchored-1; i>=0; --i) {
         Transaction &t = log[i];
         if(t.type != Transaction::Type::In && t.from.isValidPointer()) {
@@ -544,6 +548,7 @@ void LogModel::anchoreTransactions()
     emit dataChanged(index(top, left), index(bottom, right));
 
     unanchored = 0;
+    return true;
 }
 
 template <class T>
@@ -878,10 +883,14 @@ QString extractPathString<Wallet>(const Node<Wallet> *node) {
     return node ? node->data.name : "";
 }
 
-void Data::anchoreTransactions()
+bool Data::anchoreTransactions()
 {
-    log.anchoreTransactions();
-    wallets.update();
+    bool did = log.anchoreTransactions();
+    if(did) {
+        wallets.update();
+    }
+
+    return did;
 }
 
 static const QSet<LogColumn::t> defaultColumns = {

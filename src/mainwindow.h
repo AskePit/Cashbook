@@ -62,10 +62,15 @@ private:
 
     void loadBriefStatistics();
 
+protected:
+    void closeEvent(QCloseEvent *event);
+
 private:
     Ui::MainWindow *ui;
     Data &m_data;
     LogItemDelegate m_logDelegate;
+
+    bool m_changed {false};
 };
 
 } // namespace cashbook

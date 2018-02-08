@@ -485,7 +485,7 @@ public:
     LogModel(QObject *parent = 0);
     ~LogModel();
 
-    void anchoreTransactions();
+    bool anchoreTransactions();
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -617,7 +617,7 @@ public:
 
     BriefStatistics briefStatistics;
 
-    void anchoreTransactions();
+    bool anchoreTransactions();
 
     Node<Wallet> *walletFromPath(const QString &path) {
         return nodeFromPath<Wallet, WalletsModel>(wallets, path);
