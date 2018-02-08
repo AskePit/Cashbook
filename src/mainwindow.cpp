@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "innodedialog.h"
+#include "bookkeeping.h"
 #include "serialization.h"
 
 #include <QFileDialog>
@@ -64,6 +65,49 @@ void MainWindow::loadFile(const QString &filename)
     }
 
     cashbook::load(m_data, filename);
+
+    const QString title {"Краткая статистика"};
+    const QString titleFont {"\"Segoe UI\""};
+    const QString titleAlign {"center"};
+    const QString titleColor {"black"};
+    const QString titleFontSize {"11pt"};
+    const QString titleWeight {"normal"};
+
+    const QString border {"0"};
+    const QString textPadding {"0"};
+
+    const QString dateFont {"\"Segoe UI\""};
+    const QString dateFontSize {"11pt"};
+    const QString dateColor {"black"};
+    const QString dateWeight {"bold"};
+
+    const QString moneyFont {"\"Segoe UI\""};
+    const QString moneyFontSize {"11pt"};
+    const QString moneyOutColor {"#d94057"};
+    const QString moneyInColor {"green"};
+    const QString moneyWeight {"bold"};
+
+    const QString dateMoneySpacing {"10"};
+
+    QString text = "<div style='height:1px; font-size:14px;'>&nbsp;</div>"
+                   "<p style='text-align: "+titleAlign+"; color: "+titleColor+"; font-family: "+titleFont+"; font-size: "+titleFontSize+"; font-weight: "+titleWeight+";'>"+title+"</p>"
+                   "<br/>"
+                   "<table align='center' border='"+border+"' width=100% style='font-family: "+dateFont+"; font-size: "+dateFontSize+"; font-weight: "+dateWeight+";'>";
+
+    for(const auto &record : m_data.briefStatistics) {
+        text += "<tr>"
+                    "<td valign='middle' style='text-align: right; padding: 0 0 0 "+textPadding+"; color: "+dateColor+"'>"+record.first.toString()+"</td>"
+                    "<td width='"+dateMoneySpacing+"'></td>"
+                    "<td style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
+                        "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>"+formatMoney(record.second.spent)+"</td></tr>"
+                        "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>"+formatMoney(record.second.received)+"</td></tr>"
+                    "</table></td>"
+                "</tr>"
+                "<tr><td><br/></td></tr>";
+    }
+
+    text += "</table>";
+
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
 }
 

@@ -13,6 +13,7 @@
 #include <QModelIndex>
 #include <QVariant>
 #include <QStyledItemDelegate>
+#include <map>
 
 namespace cashbook
 {
@@ -534,6 +535,44 @@ QString pathToString(const Node<T> *node)
     return l.join(pathConcat);
 }
 
+struct Month
+{
+    int year {0};
+    int month {0};
+
+    bool operator<(const Month &other) {
+        if(year < other.year) {
+            return true;
+        } else if(year > other.year) {
+            return false;
+        }
+
+        return month < other.month;
+    }
+
+    QString toString() const {
+        return QString("%1 %2").arg(year).arg(month);
+    }
+};
+
+inline bool operator<(const Month &m1, const Month &m2) {
+    if(m1.year < m2.year) {
+        return true;
+    } else if(m1.year > m2.year) {
+        return false;
+    }
+
+    return m1.month < m2.month;
+}
+
+struct BriefStatisticsRecord
+{
+    Money spent;
+    Money received;
+};
+
+using BriefStatistics = std::map<Month, BriefStatisticsRecord>;
+
 class Data : public QObject
 {
     Q_OBJECT
@@ -546,6 +585,8 @@ public:
     CategoriesModel inCategories;
     CategoriesModel outCategories;
     LogModel log;
+
+    BriefStatistics briefStatistics;
 
     void anchoreTransactions();
 
@@ -611,6 +652,8 @@ public:
 private:
     const Data &m_data;
 };
+
+QString formatMoney(const Money &money);
 
 } // namespace cashbook
 
