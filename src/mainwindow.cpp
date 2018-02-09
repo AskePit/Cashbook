@@ -331,6 +331,15 @@ void cashbook::MainWindow::on_addTransactionButton_clicked()
     m_changed |= m_data.log.insertRow(0);
 }
 
+void cashbook::MainWindow::on_removeTransactionButton_clicked()
+{
+    QModelIndex index = ui->logTable->currentIndex();
+    if(index.isValid()) {
+        m_data.log.removeRow(index.row());
+    }
+
+}
+
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
     bool did = m_data.anchoreTransactions();

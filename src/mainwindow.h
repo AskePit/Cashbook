@@ -26,6 +26,8 @@ private slots:
     void on_downUserButton_clicked();
 
     void on_addTransactionButton_clicked();
+    void on_removeTransactionButton_clicked();
+    void on_anchoreTransactionsButton_clicked();
 
     void on_addWalletSiblingButton_clicked();
     void on_addWalletChildButton_clicked();
@@ -53,8 +55,6 @@ private slots:
 
     void on_actionSave_triggered();
     void on_actionOpen_triggered();
-
-    void on_anchoreTransactionsButton_clicked();
 
 private:
     void loadFile(const QString &filename);

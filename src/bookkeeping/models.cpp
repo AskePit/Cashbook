@@ -795,6 +795,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
     log.remove(position, rows);
+    unanchored -= 1;
     endRemoveRows();
     return true;
 }
