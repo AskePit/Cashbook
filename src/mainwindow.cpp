@@ -119,6 +119,13 @@ void MainWindow::loadFile(const QString &filename)
     cashbook::load(m_data, filename);
     loadBriefStatistics();
 
+    ui->logTable->resizeColumnsToContents();
+
+    const int pad = 17;
+    for(int i = 0; i<LogColumn::Count; ++i) {
+        ui->logTable->setColumnWidth(i, ui->logTable->columnWidth(i) + pad);
+    }
+
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
 }
 
