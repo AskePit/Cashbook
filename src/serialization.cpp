@@ -389,17 +389,13 @@ static void load(LogModel &logModel, QJsonArray json, Data &data){
         logModel.log.push_front(t);
 
         if(t.type == Transaction::Type::In) {
-            Month month;
-            month.year = t.date.year();
-            month.month = t.date.month();
-            data.briefStatistics[month].received += t.amount;
+            Month month(t.date);
+            logModel.briefStatistics[month].received += t.amount;
         }
 
         if(t.type == Transaction::Type::Out) {
-            Month month;
-            month.year = t.date.year();
-            month.month = t.date.month();
-            data.briefStatistics[month].spent += t.amount;
+            Month month(t.date);
+            logModel.briefStatistics[month].spent += t.amount;
         }
     }
 }

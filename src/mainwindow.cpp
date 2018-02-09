@@ -93,7 +93,7 @@ void MainWindow::loadBriefStatistics()
                    "<br/>"
                    "<table align='center' border='"+border+"' width=100% style='font-family: "+dateFont+"; font-size: "+dateFontSize+"; font-weight: "+dateWeight+";'>";
 
-    for(const auto &record : m_data.briefStatistics) {
+    for(const auto &record : m_data.log.briefStatistics) {
         text += "<tr>"
                     "<td valign='middle' style='text-align: right; padding: 0 0 0 "+textPadding+"; color: "+dateColor+"'>"+record.first.toString()+"</td>"
                     "<td width='"+dateMoneySpacing+"'></td>"
@@ -333,7 +333,12 @@ void cashbook::MainWindow::on_addTransactionButton_clicked()
 
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
-    m_changed |= m_data.anchoreTransactions();
+    bool did = m_data.anchoreTransactions();
+    m_changed |= did;
+
+    if(did) {
+        loadBriefStatistics();
+    }
 }
 
 

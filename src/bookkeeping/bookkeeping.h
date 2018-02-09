@@ -2,7 +2,6 @@
 #define BOOKKEEPING_H
 
 #include "models.h"
-#include "statistics.h"
 
 namespace cashbook
 {
@@ -19,8 +18,6 @@ public:
     CategoriesModel inCategories;
     CategoriesModel outCategories;
     LogModel log;
-
-    BriefStatistics briefStatistics;
 
     Node<Wallet> *walletFromPath(const QString &path);
     Node<Category> *inCategoryFromPath(const QString &path);

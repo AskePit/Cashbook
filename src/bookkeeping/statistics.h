@@ -5,11 +5,15 @@
 #include <map>
 #include <functional>
 
+class QDate;
+
 namespace cashbook
 {
 
 struct Month
 {
+    Month(const QDate &date);
+
     int year {0};
     int month {0};
 

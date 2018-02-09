@@ -527,6 +527,10 @@ bool LogModel::anchoreTransactions()
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
             if(w) {
                 w->data.amount -= t.amount;
+                if(t.type == Transaction::Type::Out) {
+                    Month month(t.date);
+                    briefStatistics[month].spent += t.amount;
+                }
             }
 
         }
@@ -535,6 +539,10 @@ bool LogModel::anchoreTransactions()
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.to.toPointer());
             if(w) {
                 w->data.amount += t.amount;
+                if(t.type == Transaction::Type::In) {
+                    Month month(t.date);
+                    briefStatistics[month].received += t.amount;
+                }
             }
         }
     }

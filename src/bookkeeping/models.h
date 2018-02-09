@@ -2,6 +2,7 @@
 #define BOOKKEEPING_MODELS_H
 
 #include "basic_types.h"
+#include "statistics.h"
 
 #include <std/rvector.h>
 #include <QAbstractItemModel>
@@ -228,6 +229,7 @@ class LogModel : public QAbstractTableModel
 
 public:
     aske::rvector<Transaction> log;
+    BriefStatistics briefStatistics;
     int unanchored {0};
 
     LogModel(QObject *parent = 0);

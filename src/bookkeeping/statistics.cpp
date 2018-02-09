@@ -1,9 +1,16 @@
 #include "statistics.h"
 
 #include <QObject>
+#include <QDate>
 
 namespace cashbook
 {
+
+Month::Month(const QDate &date)
+{
+    year = date.year();
+    month = date.month();
+}
 
 bool Month::operator<(const Month &other) {
     if(year < other.year) {
