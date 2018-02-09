@@ -1,9 +1,8 @@
+#include "models.h"
 #include "bookkeeping.h"
-#include "types.h"
 
 #include <QComboBox>
 #include <QSet>
-#include <QDebug>
 #include <functional>
 
 namespace cashbook
@@ -552,14 +551,6 @@ bool LogModel::anchoreTransactions()
 }
 
 template <class T>
-static inline QVariant getVariantPointer(T pointer)
-{
-    QVariant v;
-    v.setValue<T>(pointer);
-    return v;
-}
-
-template <class T>
 static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
     if(role == Qt::DisplayRole) {
@@ -800,99 +791,6 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     return true;
 }
 
-Data::Data()
-{
-    connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
-    connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
-    connect(&outCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onOutCategoriesRemove);
-    connect(&wallets, &WalletsModel::nodesGonnaBeRemoved, this, &Data::onWalletsRemove);
-}
-
-void Data::onOwnersRemove(QStringList paths)
-{
-    auto nodes = wallets.rootItem->toList();
-    for(auto *node : nodes) {
-        for(ArchPointer<Owner> &owner : node->data.owners) {
-            if(owner.isValidPointer()) {
-                QString name = *owner.toPointer();
-                if(paths.contains(name)) {
-                    owner = name; // invalidate ArchPointer by assigning QString to it.
-                }
-            }
-        }
-    }
-}
-
-template <class DataType>
-static void invalidateArchNode(ArchNode<DataType> &archNode, const QStringList &paths)
-{
-    if(archNode.isValidPointer()) {
-        QString path = pathToString(archNode.toPointer());
-        if(paths.contains(path)) {
-            archNode = path; // invalidate ArchPointer by assigning QString to it.
-        }
-    }
-}
-
-void Data::onInCategoriesRemove(QStringList paths)
-{
-    for(Transaction &t : log.log) {
-        if(t.type != Transaction::Type::In) {
-            continue;
-        }
-
-        if(t.category.empty()) {
-            continue;
-        }
-
-        invalidateArchNode(t.category.first(), paths);
-    }
-}
-
-void Data::onOutCategoriesRemove(QStringList paths)
-{
-    for(Transaction &t : log.log) {
-        if(t.type != Transaction::Type::Out) {
-            continue;
-        }
-
-        if(t.category.empty()) {
-            continue;
-        }
-
-        invalidateArchNode(t.category.first(), paths);
-    }
-}
-
-void Data::onWalletsRemove(QStringList paths)
-{
-    for(Transaction &t : log.log) {
-        invalidateArchNode(t.from, paths);
-        invalidateArchNode(t.to, paths);
-    }
-}
-
-
-template <>
-QString extractPathString<Category>(const Node<Category> *node) {
-    return node ? node->data : "";
-}
-
-template <>
-QString extractPathString<Wallet>(const Node<Wallet> *node) {
-    return node ? node->data.name : "";
-}
-
-bool Data::anchoreTransactions()
-{
-    bool did = log.anchoreTransactions();
-    if(did) {
-        wallets.update();
-    }
-
-    return did;
-}
-
 static const QSet<LogColumn::t> defaultColumns = {
     LogColumn::Date,
     LogColumn::Money,
@@ -986,39 +884,6 @@ void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, c
         model->setData(index, box->currentData(), Qt::EditRole);
     } else {
         QStyledItemDelegate::setModelData(editor, model, index);
-    }
-}
-
-QString formatMoney(const Money &money)
-{
-    QString units = QString::number(money.units());
-
-    int start = units.size()%3;
-    int n = units.size()/3;
-
-    if(start == 0) {
-        start += 3;
-        n -= 1;
-    }
-
-    for(int i = 0; i<n; ++i) {
-        int index = start + 3*i + i;
-        units.insert(index, ' ');
-    }
-
-    QString symbol = Currency::symbol(money.currency());
-
-    if(money.cents()) {
-        QString cents = QString::number(money.cents());
-        if(cents.startsWith('-')) {
-            cents = cents.mid(1);
-        }
-        if(cents.size() == 1) {
-            cents = QStringLiteral("0") + cents;
-        }
-        return QString("%1,%2 %3").arg(units, cents, symbol);
-    } else {
-        return QString("%1 %2").arg(units, symbol);
     }
 }
 

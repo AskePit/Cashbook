@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "bookkeeping.h"
+#include "bookkeeping/bookkeeping.h"
 
 namespace Ui {
 class MainWindow;

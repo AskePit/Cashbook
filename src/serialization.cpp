@@ -1,6 +1,5 @@
 #include "serialization.h"
-#include "bookkeeping.h"
-#include "types.h"
+#include "bookkeeping/bookkeeping.h"
 
 #include <QJsonArray>
 #include <QJsonObject>

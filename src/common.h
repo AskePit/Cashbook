@@ -1,7 +1,7 @@
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef COMMON_H
+#define COMMON_H
 
 #define UNUSED(...) (void)__VA_ARGS__
 #define as static_cast
 
-#endif // TYPES_H
+#endif // COMMON_H

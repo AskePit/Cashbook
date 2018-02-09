@@ -3,7 +3,7 @@
 
 #include <std/fs.h>
 #include "innodedialog.h"
-#include "bookkeeping.h"
+#include "bookkeeping/bookkeeping.h"
 #include "serialization.h"
 
 #include <QFileDialog>
