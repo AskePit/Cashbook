@@ -19,10 +19,13 @@ public:
     CategoriesModel outCategories;
     LogModel log;
 
+    Statistics statistics;
+
     Node<Wallet> *walletFromPath(const QString &path);
     Node<Category> *inCategoryFromPath(const QString &path);
     Node<Category> *outCategoryFromPath(const QString &path);
 
+    void loadStatistics();
     bool anchoreTransactions();
     void clear();
 

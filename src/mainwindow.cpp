@@ -18,6 +18,14 @@ static const QString defaultBackupFile1 {"backup/cashbook.backup.1"};
 static const QString defaultBackupFile2 {"backup/cashbook.backup.2"};
 static const QString defaultBackupFile3 {"backup/cashbook.backup.3"};
 
+static void setupStatisticsTable(QTableWidget *table) {
+    table->setColumnCount(2);
+    table->setShowGrid(true);
+    table->setHorizontalHeaderLabels({QObject::tr("Категория"), QObject::tr("Сумма")});
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->verticalHeader()->hide();
+}
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -27,6 +35,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->setupUi(this);
 
     ui->logTable->setItemDelegate(&m_logDelegate);
+    ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
+    ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
 
     ui->outCategoriesTree->setModel(&m_data.outCategories);
     ui->inCategoriesTree->setModel(&m_data.inCategories);
@@ -50,6 +60,10 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 
     connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
 
+    setupStatisticsTable(ui->topSpentTable);
+    setupStatisticsTable(ui->topRegularSpentTable);
+    setupStatisticsTable(ui->topIrregularSpentTable);
+
     showMaximized();
 
     QFileInfo f(defaultDataFile);
@@ -66,6 +80,9 @@ MainWindow::~MainWindow()
 void MainWindow::loadBriefStatistics()
 {
     const QString title {tr("Краткая статистика")};
+    const QString regular {tr("Регулярные")};
+    const QString irregular {tr("Нерегулярные")};
+
     const QString titleFont {"\"Segoe UI\""};
     const QString titleAlign {"center"};
     const QString titleColor {"black"};
@@ -90,24 +107,69 @@ void MainWindow::loadBriefStatistics()
 
     QString text = "<div style='height:1px; font-size:14px;'>&nbsp;</div>"
                    "<p style='text-align: "+titleAlign+"; color: "+titleColor+"; font-family: "+titleFont+"; font-size: "+titleFontSize+"; font-weight: "+titleWeight+";'>"+title+"</p>"
-                   "<br/>"
-                   "<table align='center' border='"+border+"' width=100% style='font-family: "+dateFont+"; font-size: "+dateFontSize+"; font-weight: "+dateWeight+";'>";
+                   "<div style='height:1px; font-size:14px;'>&nbsp;</div>"
+                   "<table align='center' border='"+border+"' width=100% style='font-family: "+dateFont+"; font-size: "+dateFontSize+"; font-weight: "+dateWeight+";'>"
+                   "<tr><th></th><th></th><th></th><th style='text-align: left;'>"+regular+"</th><th style='text-align: left;'>"+irregular+"</th></tr>"
+                   ;
 
     for(const auto &record : m_data.log.briefStatistics) {
+        const Money &received = record.second.common.received;
+        const Money &spent = record.second.common.spent;
+        const Money &regularReceived = record.second.regular.received;
+        const Money &regularSpent = record.second.regular.spent;
+        const Money irregularReceived = received - regularReceived;
+        const Money irregularSpent = spent - regularSpent;
+
         text += "<tr>"
                     "<td valign='middle' style='text-align: right; padding: 0 0 0 "+textPadding+"; color: "+dateColor+"'>"+record.first.toString()+"</td>"
                     "<td width='"+dateMoneySpacing+"'></td>"
+                    "<td width='115' style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
+                        "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>▲ "+formatMoney(received)+"</td></tr>"
+                        "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>▼ "+formatMoney(spent)+"</td></tr>"
+                    "</table></td>"
+                    "<td width='90' style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
+                        "<tr><td style='font-weight: normal; font-size: 8pt;'>= "+formatMoney(regularReceived)+"</td></tr>"
+                        "<tr><td style='font-weight: normal; font-size: 8pt;'>= "+formatMoney(regularSpent)+"</td></tr>"
+                    "</table></td>"
                     "<td style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
-                        "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>▲ "+formatMoney(record.second.received)+"</td></tr>"
-                        "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>▼ "+formatMoney(record.second.spent)+"</td></tr>"
+                       "<tr><td style='font-weight: normal; font-size: 8pt;'>+ "+formatMoney(irregularReceived)+"</td></tr>"
+                       "<tr><td style='font-weight: normal; font-size: 8pt;'>+ "+formatMoney(irregularSpent)+"</td></tr>"
                     "</table></td>"
                 "</tr>"
-                "<tr><td><br/></td></tr>";
+                "<tr><td><br/></td><td></td><td></td><td></td><td></td></tr>";
     }
 
     text += "</table>";
 
     ui->statisticsField->setText(text);
+}
+
+static void loadStatisticsTable(QTableWidget *table, const QVector<CategoryMoneyRow> &data) {
+    table->clearContents();
+
+    for(int i = 0; i<data.size(); ++i) {
+        const CategoryMoneyRow &row = data[i];
+
+        table->insertRow(i);
+        table->setItem(i, 0, new QTableWidgetItem(row.name));
+        table->setItem(i, 1, new QTableWidgetItem(formatMoney(row.amount)));
+    }
+
+    table->resizeColumnsToContents();
+}
+
+void MainWindow::loadStatistics()
+{
+    m_data.loadStatistics();
+
+    loadStatisticsTable(ui->topSpentTable, m_data.statistics.topSpent);
+    loadStatisticsTable(ui->topRegularSpentTable, m_data.statistics.topRegularSpent);
+    loadStatisticsTable(ui->topIrregularSpentTable, m_data.statistics.topIrregularSpent);
+}
+
+template <class View>
+void extendColumn (View *view, int column, int pad) {
+    view->setColumnWidth(column, view->columnWidth(column) + pad);
 }
 
 void MainWindow::loadFile(const QString &filename)
@@ -118,15 +180,23 @@ void MainWindow::loadFile(const QString &filename)
 
     cashbook::load(m_data, filename);
     loadBriefStatistics();
+    loadStatistics();
 
     ui->logTable->resizeColumnsToContents();
 
-    const int pad = 17;
+    int pad = 17;
+
     for(int i = 0; i<LogColumn::Count; ++i) {
-        ui->logTable->setColumnWidth(i, ui->logTable->columnWidth(i) + pad);
+        extendColumn(ui->logTable, i, pad);
     }
 
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
+    ui->inCategoriesTree->resizeColumnToContents(CategoriesColumn::Name);
+    ui->outCategoriesTree->resizeColumnToContents(CategoriesColumn::Name);
+
+    pad = 25;
+    extendColumn(ui->inCategoriesTree, CategoriesColumn::Name, pad);
+    extendColumn(ui->outCategoriesTree, CategoriesColumn::Name, pad);
 }
 
 void MainWindow::saveFile(const QString &filename)
@@ -354,6 +424,7 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 
     if(did) {
         loadBriefStatistics();
+        loadStatistics();
     }
 }
 
@@ -474,9 +545,9 @@ void cashbook::MainWindow::on_inOutCategoryButton_clicked()
 
 void cashbook::MainWindow::on_actionSave_triggered()
 {
-    if(!m_changed) {
+    /*if(!m_changed) {
         return;
-    }
+    }*/
 
     QDir().mkpath("backup");
     aske::copyFileForced(defaultBackupFile2, defaultBackupFile3);

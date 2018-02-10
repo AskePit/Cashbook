@@ -36,6 +36,7 @@ static void save(const Node<Category> *node, QJsonArray &jsonNodes)
     QJsonObject category;
     save(node->data, category);
     jsonNode[QLatin1String("category")] = category;
+    jsonNode[QLatin1String("regular")] = node->data.regular;
     jsonNode[QLatin1String("children")] = as<int>(node->childCount());
     jsonNodes.append(jsonNode);
 
@@ -227,6 +228,7 @@ static void load(CategoriesModel &data, QJsonArray arr)
     for(QJsonValue v : std::as_const(arr)) {
         QJsonObject nodeObj = v.toObject();
         QJsonObject categoryObj = nodeObj[QLatin1String("category")].toObject();
+        currNode->data.regular = nodeObj[QLatin1String("regular")].toBool();
         load(currNode->data, categoryObj);
         int ch = nodeObj[QLatin1String("children")].toInt();
         children.push(ch);
@@ -390,12 +392,24 @@ static void load(LogModel &logModel, QJsonArray json, Data &data){
 
         if(t.type == Transaction::Type::In) {
             Month month(t.date);
-            logModel.briefStatistics[month].received += t.amount;
+            logModel.briefStatistics[month].common.received += t.amount;
+            if(!t.category.empty()) {
+                const auto &archNode = t.category.first();
+                if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                    logModel.briefStatistics[month].regular.received += t.amount;
+                }
+            }
         }
 
         if(t.type == Transaction::Type::Out) {
             Month month(t.date);
-            logModel.briefStatistics[month].spent += t.amount;
+            logModel.briefStatistics[month].common.spent += t.amount;
+            if(!t.category.empty()) {
+                const auto &archNode = t.category.first();
+                if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                    logModel.briefStatistics[month].regular.spent += t.amount;
+                }
+            }
         }
     }
 }

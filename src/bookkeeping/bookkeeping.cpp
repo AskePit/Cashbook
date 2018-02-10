@@ -75,6 +75,73 @@ void Data::onWalletsRemove(QStringList paths)
     }
 }
 
+static void fillStatisticsVector(const std::map<QString, Money> &from, QVector<CategoryMoneyRow> &to)
+{
+    for(const auto &p : from) {
+        CategoryMoneyRow row;
+        row.name = p.first;
+        row.amount = p.second;
+        to.push_back(row);
+    }
+
+    auto cmp = [](const CategoryMoneyRow &a, const CategoryMoneyRow &b)
+    {
+         return a.amount > b.amount;
+    };
+
+    std::sort(to.begin(), to.end(), cmp);
+}
+
+void Data::loadStatistics()
+{
+    statistics.topSpent.clear();
+    statistics.topRegularSpent.clear();
+    statistics.topIrregularSpent.clear();
+
+    std::map<QString, Money> topSpent;
+    std::map<QString, Money> topRegularSpent;
+    std::map<QString, Money> topIrregularSpent;
+
+    if(log.log.empty()) {
+        return;
+    }
+
+    int month = log.log[0].date.month();
+
+    int i = 0;
+    while(i < log.log.size()) {
+        const Transaction &t = log.log[i++];
+        if(t.date.month() != month) {
+            break;
+        }
+
+        if(t.type == Transaction::Type::Out) {
+            if(!t.category.empty() && t.category.first().isValidPointer()) {
+                const ArchNode<Category> &archNode = t.category.first();
+                if(archNode.isValidPointer()) {
+                    const Node<Category> *node = archNode.toPointer();
+                    while(node) {
+                        QString path = pathToShortString(node);
+                        topSpent[path] += t.amount;
+
+                        if(node->data.regular) {
+                            topRegularSpent[path] += t.amount;
+                        } else {
+                            topIrregularSpent[path] += t.amount;
+                        }
+                        node = node->parent;
+                    }
+
+                }
+            }
+        }
+    }
+
+    fillStatisticsVector(topSpent, statistics.topSpent);
+    fillStatisticsVector(topRegularSpent, statistics.topRegularSpent);
+    fillStatisticsVector(topIrregularSpent, statistics.topIrregularSpent);
+}
+
 bool Data::anchoreTransactions()
 {
     bool did = log.anchoreTransactions();

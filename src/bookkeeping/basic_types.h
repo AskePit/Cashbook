@@ -122,7 +122,19 @@ struct Wallet : public Idable
 Q_DECLARE_METATYPE(Node<Wallet> *)
 Q_DECLARE_METATYPE(const Node<Wallet> *)
 
-using Category = IdableString;
+struct Category : public IdableString
+{
+    bool regular {false};
+
+    Category() : IdableString() {}
+    Category(const char *str) : IdableString(str) {}
+    Category(const QString &str) : IdableString(str) {}
+};
+
+Q_DECLARE_METATYPE(Category *)
+Q_DECLARE_METATYPE(const Category *)
+Q_DECLARE_METATYPE(Node<Category> *)
+Q_DECLARE_METATYPE(const Node<Category> *)
 
 /**
  * @brief Archiveable node.
@@ -191,6 +203,24 @@ QString pathToString(const Node<T> *node)
     }
 
     return l.join(pathConcat);
+}
+
+template <class T>
+QString pathToShortString(const Node<T> *node)
+{
+    if(!node) {
+        return "";
+    }
+
+    QString path = extractPathString(node);
+    if(node && node->parent) {
+        QString parentPath = extractPathString(node->parent);
+        if(!parentPath.isEmpty()) {
+            path += " (" + parentPath + ")";
+        }
+    }
+
+    return path;
 }
 
 QString formatMoney(const Money &money);

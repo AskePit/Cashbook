@@ -1,9 +1,11 @@
 #include "models.h"
 #include "bookkeeping.h"
 
-#include <QComboBox>
 #include <QSet>
 #include <functional>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QApplication>
 
 namespace cashbook
 {
@@ -201,7 +203,7 @@ CategoriesModel::~CategoriesModel()
 int CategoriesModel::columnCount(const QModelIndex &parent) const
 {
     UNUSED(parent);
-    return 1;
+    return CategoriesColumn::Count;
 }
 
 QVariant CategoriesModel::data(const QModelIndex &index, int role) const
@@ -216,11 +218,26 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 
     Node<Category> *item = getItem(index);
 
-    return item->data;
+    switch(index.column())
+    {
+        case CategoriesColumn::Name: return item->data;
+        case CategoriesColumn::Regular:
+            if(item->isLeaf()) {
+                return item->data.regular;
+            } else {
+                return QVariant();
+            }
+    }
+
+    return QVariant();
 }
 
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
+    if(index.column() == CategoriesColumn::Regular) {
+        return common::flags(this, index) | Qt::ItemIsUserCheckable;
+    }
+
     return common::flags(this, index);
 }
 
@@ -231,7 +248,15 @@ Node<Category> *CategoriesModel::getItem(const QModelIndex &index) const
 
 QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    return common::headerData(section, orientation, role);
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        switch(section)
+        {
+            case CategoriesColumn::Name: return tr("Категория");
+            case CategoriesColumn::Regular: return tr("Регулярная");
+        }
+    }
+
+    return QVariant();
 }
 
 QModelIndex CategoriesModel::index(int row, int column, const QModelIndex &parent) const
@@ -274,7 +299,11 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
     }
 
     Node<Category> *item = getItem(index);
-    item->data = value.toString();
+    switch(index.column())
+    {
+        case CategoriesColumn::Name: item->data = value.toString(); break;
+        case CategoriesColumn::Regular: item->data.regular = value.toBool(); break;
+    }
     emit dataChanged(index, index);
 
     return true;
@@ -529,7 +558,14 @@ bool LogModel::anchoreTransactions()
                 w->data.amount -= t.amount;
                 if(t.type == Transaction::Type::Out) {
                     Month month(t.date);
-                    briefStatistics[month].spent += t.amount;
+                    briefStatistics[month].common.spent += t.amount;
+
+                    if(!t.category.empty()) {
+                        const auto &archNode = t.category.first();
+                        if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                            briefStatistics[month].regular.spent += t.amount;
+                        }
+                    }
                 }
             }
 
@@ -541,7 +577,14 @@ bool LogModel::anchoreTransactions()
                 w->data.amount += t.amount;
                 if(t.type == Transaction::Type::In) {
                     Month month(t.date);
-                    briefStatistics[month].received += t.amount;
+                    briefStatistics[month].common.received += t.amount;
+
+                    if(!t.category.empty()) {
+                        const auto &archNode = t.category.first();
+                        if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                            briefStatistics[month].regular.received += t.amount;
+                        }
+                    }
                 }
             }
         }
@@ -563,17 +606,8 @@ static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
     if(role == Qt::DisplayRole) {
         if(archNode.isValidPointer()) {
-            //return pathToString(archNode.toPointer());
             const Node<T> *node = archNode.toPointer();
-            QString path = extractPathString(node);
-            if(node && node->parent) {
-                QString parentPath = extractPathString(node->parent);
-                if(!parentPath.isEmpty()) {
-                    path += " (" + parentPath + ")";
-                }
-            }
-
-            return path;
+            return pathToShortString(node);
         } else {
             return archNode.toString();
         }
@@ -799,6 +833,59 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     endRemoveRows();
     return true;
 }
+
+BoolDelegate::BoolDelegate(QObject *parent)
+    : QItemDelegate(parent)
+{}
+
+BoolDelegate::~BoolDelegate()
+{}
+
+void BoolDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    if(!index.data().isValid()) {
+        return QItemDelegate::paint(painter, option, index);
+    }
+
+    QStyleOptionButton style;
+    style.state = QStyle::State_Enabled;
+    style.state |= index.data().toBool() ? QStyle::State_On : QStyle::State_Off;
+    style.direction = QApplication::layoutDirection();
+    style.rect = option.rect;
+
+    QApplication::style()->drawControl(QStyle::CE_CheckBox, &style, painter);
+    QApplication::style()->drawControl(QStyle::CE_CheckBox, &style, painter);
+}
+
+QWidget *BoolDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    UNUSED(option, index);
+
+    if(!index.data().isValid()) {
+        return nullptr;
+    }
+
+    return new QCheckBox(parent);
+}
+
+void BoolDelegate::setEditorData(QWidget *editor, const QModelIndex& index) const
+{
+    if (QCheckBox *box = qobject_cast<QCheckBox*>(editor)) {
+        box->setChecked(index.data(Qt::EditRole).toBool());
+    } else {
+        QItemDelegate::setEditorData(editor, index);
+    }
+}
+
+void BoolDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+    if (QCheckBox* box = qobject_cast<QCheckBox*>(editor)) {
+        model->setData(index, box->isChecked(), Qt::EditRole);
+    } else {
+        QItemDelegate::setModelData(editor, model, index);
+    }
+}
+
 
 static const QSet<LogColumn::t> defaultColumns = {
     LogColumn::Date,

@@ -61,6 +61,7 @@ private:
     void saveFile(const QString &filename);
 
     void loadBriefStatistics();
+    void loadStatistics();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -69,6 +70,7 @@ private:
     Ui::MainWindow *ui;
     Data &m_data;
     LogItemDelegate m_logDelegate;
+    BoolDelegate m_boolDelegate;
 
     bool m_changed {false};
 };

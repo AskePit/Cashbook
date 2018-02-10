@@ -7,6 +7,7 @@
 #include <std/rvector.h>
 #include <QAbstractItemModel>
 #include <QStyledItemDelegate>
+#include <QItemDelegate>
 
 namespace cashbook
 {
@@ -61,6 +62,17 @@ public:
 signals:
     void nodesGonnaBeRemoved(QStringList nodeIds);
     void recalculated();
+};
+
+class CategoriesColumn
+{
+public:
+    enum t {
+        Name = 0,
+        Regular = 1,
+
+        Count
+    };
 };
 
 class CategoriesModel : public TreeModel
@@ -256,6 +268,20 @@ public:
         emit endResetModel();
         unanchored = 0;
     }
+};
+
+class BoolDelegate : public QItemDelegate
+{
+    Q_OBJECT
+
+public:
+    BoolDelegate(QObject* parent = nullptr);
+    ~BoolDelegate();
+
+    virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
 };
 
 class Data;

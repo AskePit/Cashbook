@@ -813,12 +813,15 @@
             </item>
             <item>
              <widget class="QTreeView" name="inCategoriesTree">
+              <property name="editTriggers">
+               <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+              </property>
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
-              <attribute name="headerVisible">
-               <bool>false</bool>
-              </attribute>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectItems</enum>
+              </property>
              </widget>
             </item>
            </layout>
@@ -1022,12 +1025,15 @@
             </item>
             <item>
              <widget class="QTreeView" name="outCategoriesTree">
+              <property name="editTriggers">
+               <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+              </property>
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
-              <attribute name="headerVisible">
-               <bool>false</bool>
-              </attribute>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectItems</enum>
+              </property>
              </widget>
             </item>
            </layout>
@@ -1159,6 +1165,92 @@
        <attribute name="title">
         <string>Статистика</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <widget class="QTabWidget" name="statsTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="topTab">
+           <attribute name="title">
+            <string>Топ-категории</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <item>
+             <widget class="QSplitter" name="splitter_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <widget class="QWidget" name="layoutWidget">
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <widget class="QLabel" name="topSpentLabel">
+                  <property name="text">
+                   <string>Рейтинг трат</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTableWidget" name="topSpentTable">
+                  <attribute name="verticalHeaderDefaultSectionSize">
+                   <number>23</number>
+                  </attribute>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="layoutWidget">
+               <layout class="QVBoxLayout" name="verticalLayout_11">
+                <item>
+                 <widget class="QLabel" name="topRegularSpentLabel">
+                  <property name="text">
+                   <string>Рейтинг регулярных трат</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTableWidget" name="topRegularSpentTable">
+                  <attribute name="verticalHeaderDefaultSectionSize">
+                   <number>23</number>
+                  </attribute>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="layoutWidget">
+               <layout class="QVBoxLayout" name="verticalLayout_12">
+                <item>
+                 <widget class="QLabel" name="topIrregularSpentLabel">
+                  <property name="text">
+                   <string>Рейтинг нерегулярных трат</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTableWidget" name="topIrregularSpentTable">
+                  <attribute name="verticalHeaderDefaultSectionSize">
+                   <number>23</number>
+                  </attribute>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
