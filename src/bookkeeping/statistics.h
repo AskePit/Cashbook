@@ -1,6 +1,7 @@
 #ifndef BOOKKEEPING_STATISTICS_H
 #define BOOKKEEPING_STATISTICS_H
 
+#include "basic_types.h"
 #include <QVector>
 #include <std/money.h>
 #include <map>
@@ -41,16 +42,24 @@ struct BriefStatisticsRecord
 };
 
 using BriefStatistics = std::map<Month, BriefStatisticsRecord, std::greater<Month>>;
+using CategoryMoneyMap = std::map<const Node<Category> *, Money>;
 
-struct CategoryMoneyRow {
-    QString name;
-    Money amount;
+struct CategoriesStatistics {
+    CategoryMoneyMap top;
+    CategoryMoneyMap topRegular;
+    CategoryMoneyMap topIrregular;
+
+    void clear() {
+        top.clear();
+        topRegular.clear();
+        topIrregular.clear();
+    }
 };
 
 struct Statistics {
-    QVector<CategoryMoneyRow> topSpent;
-    QVector<CategoryMoneyRow> topRegularSpent;
-    QVector<CategoryMoneyRow> topIrregularSpent;
+    BriefStatistics brief;
+    CategoriesStatistics received;
+    CategoriesStatistics spent;
 };
 
 } // namespace cashbook

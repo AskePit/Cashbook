@@ -423,6 +423,8 @@ static void load(Data &data, QJsonObject json)
     load(data.log, json[QLatin1String("log")].toArray(), data);
 
     data.log.unanchored = json[QLatin1String("unanchored")].toInt();
+
+    data.loadStatistics();
 }
 
 void load(Data &data, const QString &fileName)

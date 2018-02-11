@@ -18,14 +18,6 @@ static const QString defaultBackupFile1 {"backup/cashbook.backup.1"};
 static const QString defaultBackupFile2 {"backup/cashbook.backup.2"};
 static const QString defaultBackupFile3 {"backup/cashbook.backup.3"};
 
-static void setupStatisticsTable(QTableWidget *table) {
-    table->setColumnCount(2);
-    table->setShowGrid(true);
-    table->setHorizontalHeaderLabels({QObject::tr("Категория"), QObject::tr("Сумма")});
-    table->horizontalHeader()->setStretchLastSection(true);
-    table->verticalHeader()->hide();
-}
-
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -59,10 +51,6 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setColumnWidth(LogColumn::To, 145);
 
     connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
-
-    setupStatisticsTable(ui->topSpentTable);
-    setupStatisticsTable(ui->topRegularSpentTable);
-    setupStatisticsTable(ui->topIrregularSpentTable);
 
     showMaximized();
 
@@ -144,29 +132,6 @@ void MainWindow::loadBriefStatistics()
     ui->statisticsField->setText(text);
 }
 
-static void loadStatisticsTable(QTableWidget *table, const QVector<CategoryMoneyRow> &data) {
-    table->clearContents();
-
-    for(int i = 0; i<data.size(); ++i) {
-        const CategoryMoneyRow &row = data[i];
-
-        table->insertRow(i);
-        table->setItem(i, 0, new QTableWidgetItem(row.name));
-        table->setItem(i, 1, new QTableWidgetItem(formatMoney(row.amount)));
-    }
-
-    table->resizeColumnsToContents();
-}
-
-void MainWindow::loadStatistics()
-{
-    m_data.loadStatistics();
-
-    loadStatisticsTable(ui->topSpentTable, m_data.statistics.topSpent);
-    loadStatisticsTable(ui->topRegularSpentTable, m_data.statistics.topRegularSpent);
-    loadStatisticsTable(ui->topIrregularSpentTable, m_data.statistics.topIrregularSpent);
-}
-
 template <class View>
 void extendColumn (View *view, int column, int pad) {
     view->setColumnWidth(column, view->columnWidth(column) + pad);
@@ -180,7 +145,6 @@ void MainWindow::loadFile(const QString &filename)
 
     cashbook::load(m_data, filename);
     loadBriefStatistics();
-    loadStatistics();
 
     ui->logTable->resizeColumnsToContents();
 
@@ -424,7 +388,6 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 
     if(did) {
         loadBriefStatistics();
-        loadStatistics();
     }
 }
 

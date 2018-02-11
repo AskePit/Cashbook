@@ -4,6 +4,9 @@ namespace cashbook
 {
 
 Data::Data()
+    : inCategories(statistics.received)
+    , outCategories(statistics.spent)
+    , log(statistics.brief)
 {
     connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
     connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
@@ -75,32 +78,35 @@ void Data::onWalletsRemove(QStringList paths)
     }
 }
 
-static void fillStatisticsVector(const std::map<QString, Money> &from, QVector<CategoryMoneyRow> &to)
+/*static void fillStatisticsVector(const std::map<const Node<Category>*, Money> &from, QVector<MoneyTag> &to)
 {
     for(const auto &p : from) {
-        CategoryMoneyRow row;
-        row.name = p.first;
+        MoneyTag row;
+        row.node = p.first;
         row.amount = p.second;
         to.push_back(row);
     }
 
-    auto cmp = [](const CategoryMoneyRow &a, const CategoryMoneyRow &b)
+    auto cmp = [](const MoneyTag &a, const MoneyTag &b)
     {
          return a.amount > b.amount;
     };
 
     std::sort(to.begin(), to.end(), cmp);
-}
+}*/
 
 void Data::loadStatistics()
 {
-    statistics.topSpent.clear();
-    statistics.topRegularSpent.clear();
-    statistics.topIrregularSpent.clear();
+    statistics.spent.clear();
+    statistics.received.clear();
 
-    std::map<QString, Money> topSpent;
-    std::map<QString, Money> topRegularSpent;
-    std::map<QString, Money> topIrregularSpent;
+    /*std::map<const Node<Category>*, Money> topSpent;
+    std::map<const Node<Category>*, Money> topRegularSpent;
+    std::map<const Node<Category>*, Money> topIrregularSpent;
+
+    std::map<const Node<Category>*, Money> topReceived;
+    std::map<const Node<Category>*, Money> topRegularReceived;
+    std::map<const Node<Category>*, Money> topIrregularReceived;*/
 
     if(log.log.empty()) {
         return;
@@ -116,30 +122,50 @@ void Data::loadStatistics()
         }
 
         if(t.type == Transaction::Type::Out) {
-            if(!t.category.empty() && t.category.first().isValidPointer()) {
+            if(!t.category.empty()) {
                 const ArchNode<Category> &archNode = t.category.first();
                 if(archNode.isValidPointer()) {
                     const Node<Category> *node = archNode.toPointer();
                     while(node) {
-                        QString path = pathToShortString(node);
-                        topSpent[path] += t.amount;
+                        statistics.spent.top[node] += t.amount;
 
                         if(node->data.regular) {
-                            topRegularSpent[path] += t.amount;
+                            statistics.spent.topRegular[node] += t.amount;
                         } else {
-                            topIrregularSpent[path] += t.amount;
+                            statistics.spent.topIrregular[node] += t.amount;
                         }
                         node = node->parent;
                     }
+                }
+            }
+        }
 
+        if(t.type == Transaction::Type::In) {
+            if(!t.category.empty()) {
+                const ArchNode<Category> &archNode = t.category.first();
+                if(archNode.isValidPointer()) {
+                    const Node<Category> *node = archNode.toPointer();
+                    while(node) {
+                        statistics.received.top[node] += t.amount;
+
+                        if(node->data.regular) {
+                            statistics.received.topRegular[node] += t.amount;
+                        } else {
+                            statistics.received.topIrregular[node] += t.amount;
+                        }
+                        node = node->parent;
+                    }
                 }
             }
         }
     }
 
-    fillStatisticsVector(topSpent, statistics.topSpent);
-    fillStatisticsVector(topRegularSpent, statistics.topRegularSpent);
-    fillStatisticsVector(topIrregularSpent, statistics.topIrregularSpent);
+    /*fillStatisticsVector(topSpent, statistics.spent.top);
+    fillStatisticsVector(topRegularSpent, statistics.spent.topRegular);
+    fillStatisticsVector(topIrregularSpent, statistics.spent.topIrregular);
+    fillStatisticsVector(topReceived, statistics.received.top);
+    fillStatisticsVector(topRegularReceived, statistics.received.topRegular);
+    fillStatisticsVector(topIrregularReceived, statistics.received.topIrregular);*/
 }
 
 bool Data::anchoreTransactions()

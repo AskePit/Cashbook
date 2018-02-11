@@ -61,7 +61,6 @@ private:
     void saveFile(const QString &filename);
 
     void loadBriefStatistics();
-    void loadStatistics();
 
 protected:
     void closeEvent(QCloseEvent *event);

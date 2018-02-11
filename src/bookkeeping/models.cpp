@@ -10,6 +10,8 @@
 namespace cashbook
 {
 
+const Qt::ItemFlags disabledFlag {0}; // Read-only and Disabled
+
 //
 // Common templates
 //
@@ -19,7 +21,7 @@ template <class Model>
 static inline Qt::ItemFlags flags(const Model *model, const QModelIndex &index)
 {
     if (!index.isValid()) {
-        return 0;
+        return disabledFlag;
     }
 
     return Qt::ItemIsEditable | /*Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled |*/ model->QAbstractItemModel::flags(index);
@@ -189,8 +191,9 @@ static void destructor(Model *model)
 // Categories
 //
 
-CategoriesModel::CategoriesModel(QObject *parent)
+CategoriesModel::CategoriesModel(CategoriesStatistics &statistics, QObject *parent)
     : TreeModel(parent)
+    , statistics(statistics)
 {
     common::tree::constructor<CategoriesModel, Category>(this);
 }
@@ -227,6 +230,10 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
             } else {
                 return QVariant();
             }
+        case CategoriesColumn::Statistics: {
+            const Money &money = statistics.top[item];
+            return money == 0 ? QVariant() : formatMoney(statistics.top[item]);
+        }
     }
 
     return QVariant();
@@ -234,8 +241,8 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
-    if(index.column() == CategoriesColumn::Regular) {
-        return common::flags(this, index) | Qt::ItemIsUserCheckable;
+    if(index.column() == CategoriesColumn::Statistics) {
+        return disabledFlag;
     }
 
     return common::flags(this, index);
@@ -253,6 +260,7 @@ QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation, i
         {
             case CategoriesColumn::Name: return tr("Категория");
             case CategoriesColumn::Regular: return tr("Регулярная");
+            case CategoriesColumn::Statistics: return tr("Оборот");
         }
     }
 
@@ -537,8 +545,9 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 // Log
 //
 
-LogModel::LogModel(QObject *parent)
+LogModel::LogModel(BriefStatistics &briefStatistics, QObject *parent)
     : QAbstractTableModel(parent)
+    , briefStatistics(briefStatistics)
 {}
 
 LogModel::~LogModel()
@@ -715,8 +724,6 @@ static Qt::ItemFlags archNodeFlags(const QAbstractItemModel *model, const QModel
         return model->QAbstractItemModel::flags(index);
     }
 }
-
-const Qt::ItemFlags disabledFlag {0}; // Read-only and Disabled
 
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {

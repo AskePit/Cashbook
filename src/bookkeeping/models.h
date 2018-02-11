@@ -69,7 +69,8 @@ class CategoriesColumn
 public:
     enum t {
         Name = 0,
-        Regular = 1,
+        Regular,
+        Statistics,
 
         Count
     };
@@ -81,8 +82,9 @@ class CategoriesModel : public TreeModel
 
 public:
     Tree<Category> *rootItem;
+    CategoriesStatistics &statistics;
 
-    CategoriesModel(QObject *parent = 0);
+    CategoriesModel(CategoriesStatistics &statistics, QObject *parent = 0);
     ~CategoriesModel();
 
     Node<Category> *getItem(const QModelIndex &index) const;
@@ -241,10 +243,10 @@ class LogModel : public QAbstractTableModel
 
 public:
     aske::rvector<Transaction> log;
-    BriefStatistics briefStatistics;
+    BriefStatistics &briefStatistics;
     int unanchored {0};
 
-    LogModel(QObject *parent = 0);
+    LogModel(BriefStatistics &briefStatistics, QObject *parent = 0);
     ~LogModel();
 
     bool anchoreTransactions();
