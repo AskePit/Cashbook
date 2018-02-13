@@ -9,6 +9,8 @@
 #include <QStyledItemDelegate>
 #include <QItemDelegate>
 
+class QTreeView;
+
 namespace cashbook
 {
 
@@ -302,6 +304,17 @@ public:
 
 private:
     const Data &m_data;
+};
+
+class CategoriesViewEventFilter : public QObject {
+    Q_OBJECT
+
+public:
+    void setViews(QTreeView *in, QTreeView *out);
+    virtual bool eventFilter(QObject *watched, QEvent *event);
+
+private:
+    QTreeView *m_in, *m_out;
 };
 
 } // namespace cashbook

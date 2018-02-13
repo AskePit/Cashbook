@@ -50,6 +50,10 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setColumnWidth(LogColumn::From, 145);
     ui->logTable->setColumnWidth(LogColumn::To, 145);
 
+    m_categoriesEventFilter.setViews(ui->inCategoriesTree, ui->outCategoriesTree);
+    ui->inCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
+    ui->outCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
+
     connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
 
     showMaximized();

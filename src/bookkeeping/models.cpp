@@ -6,6 +6,8 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QApplication>
+#include <QTreeView>
+#include <QMouseEvent>
 
 namespace cashbook
 {
@@ -997,6 +999,38 @@ void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, c
     } else {
         QStyledItemDelegate::setModelData(editor, model, index);
     }
+}
+
+void CategoriesViewEventFilter::setViews(QTreeView *in, QTreeView *out)
+{
+    m_in = in;
+    m_out = out;
+}
+
+bool CategoriesViewEventFilter::eventFilter(QObject *watched, QEvent *event)
+{
+    if(event->type() != QEvent::MouseButtonPress) {
+        return QObject::eventFilter(watched, event);
+    }
+
+    QMouseEvent *e { dynamic_cast<QMouseEvent *>(event) };
+    if(!e) {
+        return QObject::eventFilter(watched, event);
+    }
+
+    QWidget *w = qobject_cast<QWidget *>(watched);
+
+    if(w && w == m_in->viewport() || w == m_out->viewport()) {
+        QTreeView *view = w == m_in->viewport() ? m_in : m_out;
+
+        QPoint pos = e->pos();
+        QModelIndex index = view->indexAt(pos);
+        if(index.column() == CategoriesColumn::Regular) {
+            view->edit(index);
+        }
+    }
+
+    return QObject::eventFilter(watched, event);
 }
 
 } // namespace cashbook

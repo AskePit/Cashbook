@@ -70,6 +70,7 @@ private:
     Data &m_data;
     LogItemDelegate m_logDelegate;
     BoolDelegate m_boolDelegate;
+    CategoriesViewEventFilter m_categoriesEventFilter;
 
     bool m_changed {false};
 };
