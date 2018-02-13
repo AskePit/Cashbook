@@ -964,7 +964,7 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
             }
 
             QComboBox* box = new QComboBox(parent);
-            const auto nodes = m_data.wallets.rootItem->toList();
+            const auto nodes = m_data.wallets.rootItem->getLeafs();
             for(const Node<Wallet> *n : nodes) {
                 box->addItem(pathToString(n), ArchNode<Wallet>(n));
             }
