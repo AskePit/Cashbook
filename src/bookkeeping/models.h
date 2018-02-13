@@ -69,8 +69,8 @@ class CategoriesColumn
 public:
     enum t {
         Name = 0,
-        Regular,
         Statistics,
+        Regular,
 
         Count
     };
