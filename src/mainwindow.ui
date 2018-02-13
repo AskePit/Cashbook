@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mainTab">
        <attribute name="title">
@@ -1242,12 +1242,6 @@
          <widget class="QListView" name="ownersList"/>
         </item>
        </layout>
-      </widget>
-      <widget class="QWidget" name="statsTab">
-       <attribute name="title">
-        <string>Статистика</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_9"/>
       </widget>
      </widget>
     </item>
