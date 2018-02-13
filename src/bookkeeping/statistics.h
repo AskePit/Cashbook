@@ -42,24 +42,22 @@ struct BriefStatisticsRecord
 };
 
 using BriefStatistics = std::map<Month, BriefStatisticsRecord, std::greater<Month>>;
-using CategoryMoneyMap = std::map<const Node<Category> *, Money>;
 
-struct CategoriesStatistics {
-    CategoryMoneyMap top;
-    CategoryMoneyMap topRegular;
-    CategoryMoneyMap topIrregular;
-
-    void clear() {
-        top.clear();
-        topRegular.clear();
-        topIrregular.clear();
+class CategoryMoneyMap : public std::map<const Node<Category> *, Money>
+{
+public:
+    void propagateMoney(const Node<Category> *node, const Money &amount) {
+        while(node) {
+            (*this)[node] += amount;
+            node = node->parent;
+        }
     }
 };
 
 struct Statistics {
     BriefStatistics brief;
-    CategoriesStatistics received;
-    CategoriesStatistics spent;
+    CategoryMoneyMap inCategories;
+    CategoryMoneyMap outCategories;
 };
 
 } // namespace cashbook

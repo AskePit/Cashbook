@@ -82,9 +82,9 @@ class CategoriesModel : public TreeModel
 
 public:
     Tree<Category> *rootItem;
-    CategoriesStatistics &statistics;
+    CategoryMoneyMap &statistics;
 
-    CategoriesModel(CategoriesStatistics &statistics, QObject *parent = 0);
+    CategoriesModel(CategoryMoneyMap &statistics, QObject *parent = 0);
     ~CategoriesModel();
 
     Node<Category> *getItem(const QModelIndex &index) const;
@@ -243,10 +243,10 @@ class LogModel : public QAbstractTableModel
 
 public:
     aske::rvector<Transaction> log;
-    BriefStatistics &briefStatistics;
+    Statistics &statistics;
     int unanchored {0};
 
-    LogModel(BriefStatistics &briefStatistics, QObject *parent = 0);
+    LogModel(Statistics &statistics, QObject *parent = 0);
     ~LogModel();
 
     bool anchoreTransactions();

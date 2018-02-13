@@ -4,9 +4,9 @@ namespace cashbook
 {
 
 Data::Data()
-    : inCategories(statistics.received)
-    , outCategories(statistics.spent)
-    , log(statistics.brief)
+    : inCategories(statistics.inCategories)
+    , outCategories(statistics.outCategories)
+    , log(statistics)
 {
     connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
     connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
@@ -78,35 +78,10 @@ void Data::onWalletsRemove(QStringList paths)
     }
 }
 
-/*static void fillStatisticsVector(const std::map<const Node<Category>*, Money> &from, QVector<MoneyTag> &to)
-{
-    for(const auto &p : from) {
-        MoneyTag row;
-        row.node = p.first;
-        row.amount = p.second;
-        to.push_back(row);
-    }
-
-    auto cmp = [](const MoneyTag &a, const MoneyTag &b)
-    {
-         return a.amount > b.amount;
-    };
-
-    std::sort(to.begin(), to.end(), cmp);
-}*/
-
 void Data::loadStatistics()
 {
-    statistics.spent.clear();
-    statistics.received.clear();
-
-    /*std::map<const Node<Category>*, Money> topSpent;
-    std::map<const Node<Category>*, Money> topRegularSpent;
-    std::map<const Node<Category>*, Money> topIrregularSpent;
-
-    std::map<const Node<Category>*, Money> topReceived;
-    std::map<const Node<Category>*, Money> topRegularReceived;
-    std::map<const Node<Category>*, Money> topIrregularReceived;*/
+    statistics.outCategories.clear();
+    statistics.inCategories.clear();
 
     if(log.log.empty()) {
         return;
@@ -114,7 +89,7 @@ void Data::loadStatistics()
 
     int month = log.log[0].date.month();
 
-    int i = 0;
+    size_t i = 0;
     while(i < log.log.size()) {
         const Transaction &t = log.log[i++];
         if(t.date.month() != month) {
@@ -126,16 +101,7 @@ void Data::loadStatistics()
                 const ArchNode<Category> &archNode = t.category.first();
                 if(archNode.isValidPointer()) {
                     const Node<Category> *node = archNode.toPointer();
-                    while(node) {
-                        statistics.spent.top[node] += t.amount;
-
-                        if(node->data.regular) {
-                            statistics.spent.topRegular[node] += t.amount;
-                        } else {
-                            statistics.spent.topIrregular[node] += t.amount;
-                        }
-                        node = node->parent;
-                    }
+                    statistics.outCategories.propagateMoney(node, t.amount);
                 }
             }
         }
@@ -145,27 +111,11 @@ void Data::loadStatistics()
                 const ArchNode<Category> &archNode = t.category.first();
                 if(archNode.isValidPointer()) {
                     const Node<Category> *node = archNode.toPointer();
-                    while(node) {
-                        statistics.received.top[node] += t.amount;
-
-                        if(node->data.regular) {
-                            statistics.received.topRegular[node] += t.amount;
-                        } else {
-                            statistics.received.topIrregular[node] += t.amount;
-                        }
-                        node = node->parent;
-                    }
+                    statistics.inCategories.propagateMoney(node, t.amount);
                 }
             }
         }
     }
-
-    /*fillStatisticsVector(topSpent, statistics.spent.top);
-    fillStatisticsVector(topRegularSpent, statistics.spent.topRegular);
-    fillStatisticsVector(topIrregularSpent, statistics.spent.topIrregular);
-    fillStatisticsVector(topReceived, statistics.received.top);
-    fillStatisticsVector(topRegularReceived, statistics.received.topRegular);
-    fillStatisticsVector(topIrregularReceived, statistics.received.topIrregular);*/
 }
 
 bool Data::anchoreTransactions()

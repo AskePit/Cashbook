@@ -191,7 +191,7 @@ static void destructor(Model *model)
 // Categories
 //
 
-CategoriesModel::CategoriesModel(CategoriesStatistics &statistics, QObject *parent)
+CategoriesModel::CategoriesModel(CategoryMoneyMap &statistics, QObject *parent)
     : TreeModel(parent)
     , statistics(statistics)
 {
@@ -231,8 +231,8 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
                 return QVariant();
             }
         case CategoriesColumn::Statistics: {
-            const Money &money = statistics.top[item];
-            return money == 0 ? QVariant() : formatMoney(statistics.top[item]);
+            const Money &money = statistics[item];
+            return money == 0 ? QVariant() : formatMoney(statistics[item]);
         }
     }
 
@@ -545,9 +545,9 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 // Log
 //
 
-LogModel::LogModel(BriefStatistics &briefStatistics, QObject *parent)
+LogModel::LogModel(Statistics &statistics, QObject *parent)
     : QAbstractTableModel(parent)
-    , briefStatistics(briefStatistics)
+    , statistics(statistics)
 {}
 
 LogModel::~LogModel()
@@ -565,34 +565,43 @@ bool LogModel::anchoreTransactions()
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
             if(w) {
                 w->data.amount -= t.amount;
-                if(t.type == Transaction::Type::Out) {
-                    Month month(t.date);
-                    briefStatistics[month].common.spent += t.amount;
+            }
+            if(t.type == Transaction::Type::Out) {
+                Month month(t.date);
+                statistics.brief[month].common.spent += t.amount;
 
-                    if(!t.category.empty()) {
-                        const auto &archNode = t.category.first();
-                        if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
-                            briefStatistics[month].regular.spent += t.amount;
+                if(!t.category.empty()) {
+                    const auto &archNode = t.category.first();
+                    if(archNode.isValidPointer()) {
+                        const Node<Category> *category = archNode.toPointer();
+                        if(category->data.regular) {
+                            statistics.brief[month].regular.spent += t.amount;
                         }
+
+                        statistics.outCategories.propagateMoney(category, t.amount);
                     }
                 }
             }
-
         }
 
         if(t.type != Transaction::Type::Out && t.to.isValidPointer()) {
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.to.toPointer());
             if(w) {
                 w->data.amount += t.amount;
-                if(t.type == Transaction::Type::In) {
-                    Month month(t.date);
-                    briefStatistics[month].common.received += t.amount;
+            }
+            if(t.type == Transaction::Type::In) {
+                Month month(t.date);
+                statistics.brief[month].common.received += t.amount;
 
-                    if(!t.category.empty()) {
-                        const auto &archNode = t.category.first();
-                        if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
-                            briefStatistics[month].regular.received += t.amount;
+                if(!t.category.empty()) {
+                    const auto &archNode = t.category.first();
+                    if(archNode.isValidPointer()) {
+                        const Node<Category> *category = archNode.toPointer();
+                        if(category->data.regular) {
+                            statistics.brief[month].regular.received += t.amount;
                         }
+
+                        statistics.inCategories.propagateMoney(category, t.amount);
                     }
                 }
             }

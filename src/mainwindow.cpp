@@ -100,7 +100,7 @@ void MainWindow::loadBriefStatistics()
                    "<tr><th></th><th></th><th></th><th style='text-align: left;'>"+regular+"</th><th style='text-align: left;'>"+irregular+"</th></tr>"
                    ;
 
-    for(const auto &record : m_data.log.briefStatistics) {
+    for(const auto &record : m_data.log.statistics.brief) {
         const Money &received = record.second.common.received;
         const Money &spent = record.second.common.spent;
         const Money &regularReceived = record.second.regular.received;
