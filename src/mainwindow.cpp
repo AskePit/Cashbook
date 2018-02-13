@@ -62,6 +62,20 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     if(f.exists()) {
         loadFile(defaultDataFile);
     }
+
+    ui->dateTo->setMaximumDate(m_data.statistics.categoriesTo); // should be today day
+
+    connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
+        m_data.loadCategoriesStatistics(from, m_data.statistics.categoriesTo);
+        m_data.inCategories.update();
+        m_data.outCategories.update();
+    });
+
+    connect(ui->dateTo, &QDateEdit::dateChanged, [this](const QDate &to) {
+        m_data.loadCategoriesStatistics(m_data.statistics.categoriesFrom, to);
+        m_data.inCategories.update();
+        m_data.outCategories.update();
+    });
 }
 
 MainWindow::~MainWindow()
@@ -149,6 +163,9 @@ void MainWindow::loadFile(const QString &filename)
 
     cashbook::load(m_data, filename);
     loadBriefStatistics();
+
+    ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
+    ui->dateTo->setDate(m_data.statistics.categoriesTo);
 
     ui->logTable->resizeColumnsToContents();
 

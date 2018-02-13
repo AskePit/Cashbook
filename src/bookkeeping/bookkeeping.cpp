@@ -78,21 +78,26 @@ void Data::onWalletsRemove(QStringList paths)
     }
 }
 
-void Data::loadStatistics()
+void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
 {
     statistics.outCategories.clear();
     statistics.inCategories.clear();
+
+    statistics.categoriesFrom = from;
+    statistics.categoriesTo = to;
 
     if(log.log.empty()) {
         return;
     }
 
-    int month = log.log[0].date.month();
-
     size_t i = 0;
     while(i < log.log.size()) {
         const Transaction &t = log.log[i++];
-        if(t.date.month() != month) {
+        if(t.date > statistics.categoriesTo) {
+            continue;
+        }
+
+        if(t.date < statistics.categoriesFrom) {
             break;
         }
 

@@ -25,7 +25,7 @@ public:
     Node<Category> *inCategoryFromPath(const QString &path);
     Node<Category> *outCategoryFromPath(const QString &path);
 
-    void loadStatistics();
+    void loadCategoriesStatistics(const QDate &from, const QDate &to);
     bool anchoreTransactions();
     void clear();
 

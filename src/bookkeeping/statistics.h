@@ -58,6 +58,8 @@ struct Statistics {
     BriefStatistics brief;
     CategoryMoneyMap inCategories;
     CategoryMoneyMap outCategories;
+    QDate categoriesFrom;
+    QDate categoriesTo;
 };
 
 } // namespace cashbook
