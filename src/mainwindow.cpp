@@ -26,6 +26,9 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->menuLayout->setContentsMargins(0, 0, 0, 0);
+    ui->stackedWidget->setContentsMargins(0, 0, 0, 0);
+
     ui->logTable->setItemDelegate(&m_logDelegate);
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
@@ -570,4 +573,19 @@ void cashbook::MainWindow::closeEvent(QCloseEvent *event)
             on_actionSave_triggered();
         }
     }
+}
+
+void cashbook::MainWindow::on_mainButton_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void cashbook::MainWindow::on_categoriesButton_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void cashbook::MainWindow::on_usersButton_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(2);
 }

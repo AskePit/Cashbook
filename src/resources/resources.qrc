@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>save_file.png</file>
+        <file>mainTab.png</file>
+        <file>categoriesTab.png</file>
+        <file>usersTab.png</file>
+        <file>mainTab_active.png</file>
+        <file>categoriesTab_active.png</file>
+        <file>usersTab_active.png</file>
     </qresource>
 </RCC>

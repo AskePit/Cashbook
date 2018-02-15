@@ -56,6 +56,12 @@ private slots:
     void on_actionSave_triggered();
     void on_actionOpen_triggered();
 
+    void on_mainButton_clicked();
+
+    void on_categoriesButton_clicked();
+
+    void on_usersButton_clicked();
+
 private:
     void loadFile(const QString &filename);
     void saveFile(const QString &filename);

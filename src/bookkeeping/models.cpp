@@ -217,6 +217,11 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    if(index.column() == CategoriesColumn::Statistics && role == Qt::ForegroundRole) {
+        return QColor(100, 100, 100);
+    }
+
+
     if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
     }
