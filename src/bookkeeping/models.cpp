@@ -1024,11 +1024,23 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
 
 void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
+    // Transaction type case
+    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
+        QVariant value = index.data(Qt::EditRole);
+        int i = box->findData(value);
+        if(i >= 0) {
+            box->setCurrentIndex(i);
+        }
+        return;
+    }
+
+    // trees case
     NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
     NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(editor);
 
     QVariant value = index.data(Qt::EditRole);
 
+    // Categories tree
     if(cat) {
        const ArchNode<Category> archNode = value;
        if(!archNode.isValidPointer()) {
@@ -1039,6 +1051,8 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
        const Node<Category> *node = archNode.toPointer();
        cat->setNode(node);
        return;
+
+    // Wallets tree
     } else if(wal) {
         ArchNode<Wallet> archNode = value;
         if(!archNode.isValidPointer()) {
@@ -1056,13 +1070,16 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
 
 void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
+    // Transaction type case
     if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
         model->setData(index, box->currentData(), Qt::EditRole);
         return;
     }
 
+    // trees case
     int col = index.column();
     switch(col) {
+        // Categories tree
         case LogColumn::Category: {
             if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
                 model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
@@ -1071,6 +1088,7 @@ void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, c
 
         } break;
 
+        // Wallets tree
         case LogColumn::From:
         case LogColumn::To: {
             if (NodeButton<Wallet> *button = dynamic_cast<NodeButton<Wallet> *>(editor)) {
