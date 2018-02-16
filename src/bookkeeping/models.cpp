@@ -1,13 +1,13 @@
 #include "models.h"
 #include "bookkeeping.h"
+#include "widgets.h"
 
 #include <QSet>
 #include <functional>
+#include <stack>
 #include <QComboBox>
 #include <QCheckBox>
 #include <QApplication>
-#include <QTreeView>
-#include <QMouseEvent>
 
 namespace cashbook
 {
@@ -58,6 +58,32 @@ static Node<DataType> *getItem(const Model *model, const QModelIndex &index)
         }
     }
     return model->rootItem;
+}
+
+template<class Model, class DataType>
+QModelIndex itemIndex(const Model *model, const Node<DataType> *item)
+{
+    std::stack<const Node<DataType> *> path;
+
+
+    while(item != model->rootItem) {
+        path.push(item);
+        item = item->parent;
+    }
+
+    QModelIndex index;
+    while(!path.empty()) {
+        for(int i = 0; i<model->rowCount(index); ++i) {
+            QModelIndex tmp = model->index(i, 0, index);
+            if(tmp.internalPointer() == path.top()) {
+                index = tmp;
+                path.pop();
+                break;
+            }
+        }
+    }
+
+    return index;
 }
 
 template<class Model>
@@ -260,6 +286,11 @@ Node<Category> *CategoriesModel::getItem(const QModelIndex &index) const
     return common::tree::getItem<CategoriesModel, Category>(this, index);
 }
 
+QModelIndex CategoriesModel::itemIndex(const Node<Category> *item) const
+{
+    return common::tree::itemIndex<CategoriesModel, Category>(this, item);
+}
+
 QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
@@ -383,6 +414,11 @@ Qt::ItemFlags WalletsModel::flags(const QModelIndex &index) const
 Node<Wallet> *WalletsModel::getItem(const QModelIndex &index) const
 {
     return common::tree::getItem<WalletsModel, Wallet>(this, index);
+}
+
+QModelIndex WalletsModel::itemIndex(const Node<Wallet> *item) const
+{
+    return common::tree::itemIndex<WalletsModel, Wallet>(this, item);
 }
 
 QVariant WalletsModel::headerData(int section, Qt::Orientation orientation,
@@ -949,17 +985,18 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
                 return nullptr;
             }
 
-            const CategoriesModel &categories =
+            CategoriesModel &categories =
                     record.type == Transaction::Type::In ?
                         m_data.inCategories :
                         m_data.outCategories;
 
-            QComboBox* box = new QComboBox(parent);
-            auto nodes = categories.rootItem->toList();
-            for(const Node<Category> *n : nodes) {
-                box->addItem(pathToString(n), ArchNode<Category>(n));
-            }
-            return box;
+            NodeButton<Category> *button = new NodeButton<Category>(parent);
+            connect(button, &QPushButton::clicked, [=, &categories]() {
+                button->setState(NodeButtonState::Expanded);
+                QTreeView *view = new PopupTree<Category>(&categories, button, parent);
+                UNUSED(view);
+            });
+            return button;
 
         } break;
 
@@ -970,12 +1007,13 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
                 return nullptr;
             }
 
-            QComboBox* box = new QComboBox(parent);
-            const auto nodes = m_data.wallets.rootItem->getLeafs();
-            for(const Node<Wallet> *n : nodes) {
-                box->addItem(pathToString(n), ArchNode<Wallet>(n));
-            }
-            return box;
+            NodeButton<Wallet> *button = new NodeButton<Wallet>(parent);
+            connect(button, &QPushButton::clicked, [=, this]() {
+                button->setState(NodeButtonState::Expanded);
+                QTreeView *view = new PopupTree<Wallet>(&m_data.wallets, button, parent);
+                UNUSED(view);
+            });
+            return button;
 
         } break;
     }
@@ -986,24 +1024,78 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
 
 void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
-        QVariant value = index.data(Qt::EditRole);
-        int i = box->findData(value);
-        if(i >= 0) {
-            box->setCurrentIndex(i);
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
+    NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(editor);
+
+    QVariant value = index.data(Qt::EditRole);
+
+    if(cat) {
+       const ArchNode<Category> archNode = value;
+       if(!archNode.isValidPointer()) {
+           QStyledItemDelegate::setEditorData(editor, index);
+           return;
+       }
+
+       const Node<Category> *node = archNode.toPointer();
+       cat->setNode(node);
+       return;
+    } else if(wal) {
+        ArchNode<Wallet> archNode = value;
+        if(!archNode.isValidPointer()) {
+            QStyledItemDelegate::setEditorData(editor, index);
+            return;
         }
-    } else {
-        QStyledItemDelegate::setEditorData(editor, index);
+
+        const Node<Wallet> *node = archNode.toPointer();
+        wal->setNode(node);
+        return;
     }
+
+    QStyledItemDelegate::setEditorData(editor, index);
 }
 
 void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
     if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
         model->setData(index, box->currentData(), Qt::EditRole);
-    } else {
-        QStyledItemDelegate::setModelData(editor, model, index);
+        return;
     }
+
+    int col = index.column();
+    switch(col) {
+        case LogColumn::Category: {
+            if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
+                model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
+                return;
+            }
+
+        } break;
+
+        case LogColumn::From:
+        case LogColumn::To: {
+            if (NodeButton<Wallet> *button = dynamic_cast<NodeButton<Wallet> *>(editor)) {
+                model->setData(index, ArchNode<Wallet>(button->node()), Qt::EditRole);
+                return;
+            }
+
+        } break;
+    }
+
+    QStyledItemDelegate::setModelData(editor, model, index);
+}
+
+bool LogItemDelegate::eventFilter(QObject *object, QEvent *event)
+{
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
+    NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(object);
+
+    NodeButtonState state {cat ? cat->state() : wal ? wal->state() : NodeButtonState::Folded};
+
+    if(state == NodeButtonState::Expanded && event->type() == QEvent::FocusOut) { // for expaned case we do not want to close editor
+        return true;
+    }
+
+    return QStyledItemDelegate::eventFilter(object, event);
 }
 
 void CategoriesViewEventFilter::setViews(QTreeView *in, QTreeView *out)

@@ -90,6 +90,7 @@ public:
     ~CategoriesModel();
 
     Node<Category> *getItem(const QModelIndex &index) const;
+    QModelIndex itemIndex(const Node<Category> *item) const;
 
     Node<Category> *addChild(const Category &data) {
         auto node = new Node<Category>(data, rootItem);
@@ -153,6 +154,7 @@ public:
     ~WalletsModel();
 
     Node<Wallet> *getItem(const QModelIndex &index) const;
+    QModelIndex itemIndex(const Node<Wallet> *item) const;
 
     Node<Wallet> *addChild(const Wallet &data) {
         auto node = new Node<Wallet>(data, rootItem);
@@ -298,12 +300,13 @@ public:
     LogItemDelegate(Data &data, QObject* parent = nullptr);
     ~LogItemDelegate();
 
-    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    virtual bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
-    const Data &m_data;
+    Data &m_data;
 };
 
 class CategoriesViewEventFilter : public QObject {

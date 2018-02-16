@@ -136,7 +136,7 @@ void MainWindow::loadBriefStatistics()
                         "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>▲ "+formatMoney(received)+"</td></tr>"
                         "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>▼ "+formatMoney(spent)+"</td></tr>"
                     "</table></td>"
-                    "<td width='90' style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
+                    "<td width='115' style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
                         "<tr><td style='font-weight: normal;'>= "+formatMoney(regularReceived)+"</td></tr>"
                         "<tr><td style='font-weight: normal;'>= "+formatMoney(regularSpent)+"</td></tr>"
                     "</table></td>"
@@ -319,7 +319,7 @@ static bool inNode(QTreeView &view, TreeModel &model)
     int row = index.row();
     auto srcParent = index.parent();
 
-    InNodeDialog d(model);
+    cashbook::InNodeDialog d(model);
     if(d.exec()) {
         auto dstParent = d.getIndex();
 

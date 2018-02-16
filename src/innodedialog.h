@@ -10,6 +10,8 @@ namespace Ui {
 class InNodeDialog;
 }
 
+namespace cashbook {
+
 class InNodeDialog : public QDialog
 {
     Q_OBJECT
@@ -24,5 +26,7 @@ private:
     Ui::InNodeDialog *ui;
     QAbstractItemModel &m_model;
 };
+
+} // namespace cashbook
 
 #endif // INNODEDIALOG_H

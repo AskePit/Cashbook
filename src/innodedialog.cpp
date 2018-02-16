@@ -1,7 +1,11 @@
 #include "innodedialog.h"
 #include "ui_innodedialog.h"
 
+#include "bookkeeping/models.h"
+
 #include <QAbstractItemModel>
+
+namespace cashbook {
 
 InNodeDialog::InNodeDialog(QAbstractItemModel &model, QWidget *parent) :
     QDialog(parent),
@@ -10,6 +14,10 @@ InNodeDialog::InNodeDialog(QAbstractItemModel &model, QWidget *parent) :
 {
     ui->setupUi(this);
     ui->treeView->setModel(&m_model);
+    ui->treeView->setEditTriggers(QTreeView::NoEditTriggers);
+    for(int i = CategoriesColumn::Name+1; i<CategoriesColumn::Count; ++i) {
+        ui->treeView->hideColumn(i);
+    }
     ui->treeView->expandAll();
 }
 
@@ -22,3 +30,5 @@ QModelIndex InNodeDialog::getIndex()
 {
     return ui->treeView->currentIndex();
 }
+
+} // namespace cashbook

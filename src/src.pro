@@ -22,20 +22,21 @@ FORMS += \
     innodedialog.ui
 
 HEADERS += \
-	bookkeeping/basic_types.h \
-        bookkeeping/models.h \
-	bookkeeping/statistics.h \
-	bookkeeping/bookkeeping.h \
+    bookkeeping/basic_types.h \
+    bookkeeping/models.h \
+    bookkeeping/statistics.h \
+    bookkeeping/bookkeeping.h \
+    bookkeeping/widgets.h \
     mainwindow.h \
     common.h \
     innodedialog.h \
     serialization.h
 
 SOURCES += \
-	bookkeeping/basic_types.cpp \
-        bookkeeping/models.cpp \
-	bookkeeping/statistics.cpp \
-	bookkeeping/bookkeeping.cpp \
+    bookkeeping/basic_types.cpp \
+    bookkeeping/models.cpp \
+    bookkeeping/statistics.cpp \
+    bookkeeping/bookkeeping.cpp \
     mainwindow.cpp \
     main.cpp \
     innodedialog.cpp \
