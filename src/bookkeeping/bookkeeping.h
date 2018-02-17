@@ -29,6 +29,9 @@ public:
     bool anchoreTransactions();
     void clear();
 
+signals:
+    void categoriesStatisticsUpdated();
+
 private:
     template<class T, class Model>
     Node<T> *nodeFromPath(const Model &model, const QString &path) {

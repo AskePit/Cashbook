@@ -76,11 +76,6 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 
     showMaximized();
 
-    QFileInfo f(defaultDataFile);
-    if(f.exists()) {
-        loadFile(defaultDataFile);
-    }
-
     ui->dateTo->setMaximumDate(m_data.statistics.categoriesTo); // should be today day
 
     connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
@@ -97,78 +92,27 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 
     ui->thisMonthButton->setText(months[today.month()-1]);
     ui->thisYearButton->setText(QString::number(today.year()));
+
+    connect(&m_data, &Data::categoriesStatisticsUpdated, [this]() {
+        const auto *inRoot = m_data.inCategories.rootItem;
+        const auto *outRoot = m_data.outCategories.rootItem;
+
+        const Money &in = m_data.statistics.inCategories[inRoot];
+        const Money &out = m_data.statistics.outCategories[outRoot];
+
+        ui->inTotalLabel->setText(formatMoney(in));
+        ui->outTotalLabel->setText(formatMoney(out));
+    });
+
+    QFileInfo f(defaultDataFile);
+    if(f.exists()) {
+        loadFile(defaultDataFile);
+    }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::loadBriefStatistics()
-{
-    const QString title {tr("Краткая статистика")};
-    const QString regular {tr("Регулярные")};
-    const QString irregular {tr("Нерегулярные")};
-
-    const QString titleFont {"\"Segoe UI\""};
-    const QString titleAlign {"center"};
-    const QString titleColor {"black"};
-    const QString titleFontSize {"11pt"};
-    const QString titleWeight {"normal"};
-
-    const QString border {"0"};
-    const QString textPadding {"0"};
-
-    const QString dateFont {"\"Segoe UI\""};
-    const QString dateFontSize {"9pt"};
-    const QString dateColor {"black"};
-    const QString dateWeight {""};
-
-    const QString moneyFont {"\"Segoe UI\""};
-    const QString moneyFontSize {"9pt"};
-    const QString moneyOutColor {"#be3922"};
-    const QString moneyInColor {"green"};
-    const QString moneyWeight {"bold"};
-
-    const QString dateMoneySpacing {"10"};
-
-    QString text = "<div style='height:1px; font-size:14px;'>&nbsp;</div>"
-                   "<p style='text-align: "+titleAlign+"; color: "+titleColor+"; font-family: "+titleFont+"; font-size: "+titleFontSize+"; font-weight: "+titleWeight+";'>"+title+"</p>"
-                   "<div style='height:1px; font-size:14px;'>&nbsp;</div>"
-                   "<table align='center' border='"+border+"' width=100% style='font-family: "+dateFont+"; font-size: "+dateFontSize+"; font-weight: "+dateWeight+";'>"
-                   "<tr><th></th><th></th><th></th><th style='text-align: left;'>"+regular+"</th><th style='text-align: left;'>"+irregular+"</th></tr>"
-                   ;
-
-    for(const auto &record : m_data.log.statistics.brief) {
-        const Money &received = record.second.common.received;
-        const Money &spent = record.second.common.spent;
-        const Money &regularReceived = record.second.regular.received;
-        const Money &regularSpent = record.second.regular.spent;
-        const Money irregularReceived = received - regularReceived;
-        const Money irregularSpent = spent - regularSpent;
-
-        text += "<tr>"
-                    "<td valign='middle' style='text-align: right; padding: 0 0 0 "+textPadding+"; color: "+dateColor+"'>"+record.first.toString()+"</td>"
-                    "<td width='"+dateMoneySpacing+"'></td>"
-                    "<td width='115' style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
-                        "<tr><td style='text-align: left; color: "+moneyInColor+"; padding: 0 "+textPadding+" 0 0'>▲ "+formatMoney(received)+"</td></tr>"
-                        "<tr><td style='text-align: left; color: "+moneyOutColor+"; padding: 0 "+textPadding+" 0 0'>▼ "+formatMoney(spent)+"</td></tr>"
-                    "</table></td>"
-                    "<td width='115' style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
-                        "<tr><td style='font-weight: normal;'>= "+formatMoney(regularReceived)+"</td></tr>"
-                        "<tr><td style='font-weight: normal;'>= "+formatMoney(regularSpent)+"</td></tr>"
-                    "</table></td>"
-                    "<td style='text-align: left;'><table border='"+border+"' style='font-family: "+moneyFont+"; font-weight: "+moneyWeight+"; font-size: "+moneyFontSize+";'>"
-                       "<tr><td style='font-weight: normal;'>+ "+formatMoney(irregularReceived)+"</td></tr>"
-                       "<tr><td style='font-weight: normal;'>+ "+formatMoney(irregularSpent)+"</td></tr>"
-                    "</table></td>"
-                "</tr>"
-                "<tr><td><br/></td><td></td><td></td><td></td><td></td></tr>";
-    }
-
-    text += "</table>";
-
-    ui->statisticsField->setText(text);
 }
 
 template <class View>
@@ -183,7 +127,6 @@ void MainWindow::loadFile(const QString &filename)
     }
 
     cashbook::load(m_data, filename);
-    loadBriefStatistics();
 
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
     ui->dateTo->setDate(m_data.statistics.categoriesTo);
@@ -427,10 +370,6 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
     bool did = m_data.anchoreTransactions();
     m_changed |= did;
-
-    if(did) {
-        loadBriefStatistics();
-    }
 }
 
 

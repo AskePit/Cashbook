@@ -57,24 +57,17 @@ private slots:
     void on_actionOpen_triggered();
 
     void on_mainButton_clicked();
-
     void on_categoriesButton_clicked();
-
     void on_usersButton_clicked();
 
     void on_thisMonthButton_clicked();
-
     void on_thisYearButton_clicked();
-
     void on_monthButton_clicked();
-
     void on_yearButton_clicked();
 
 private:
     void loadFile(const QString &filename);
     void saveFile(const QString &filename);
-
-    void loadBriefStatistics();
 
 protected:
     void closeEvent(QCloseEvent *event);

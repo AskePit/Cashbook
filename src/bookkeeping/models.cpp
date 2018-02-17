@@ -610,16 +610,9 @@ bool LogModel::anchoreTransactions()
                 w->data.amount -= t.amount;
             }
             if(t.type == Transaction::Type::Out) {
-                Month month(t.date);
-                statistics.brief[month].common.spent += t.amount;
-
                 const auto &archNode = t.category;
                 if(archNode.isValidPointer()) {
                     const Node<Category> *category = archNode.toPointer();
-                    if(category && category->data.regular) {
-                        statistics.brief[month].regular.spent += t.amount;
-                    }
-
                     statistics.outCategories.propagateMoney(category, t.amount);
                 }
             }
@@ -631,16 +624,9 @@ bool LogModel::anchoreTransactions()
                 w->data.amount += t.amount;
             }
             if(t.type == Transaction::Type::In) {
-                Month month(t.date);
-                statistics.brief[month].common.received += t.amount;
-
                 const auto &archNode = t.category;
                 if(archNode.isValidPointer()) {
                     const Node<Category> *category = archNode.toPointer();
-                    if(category && category->data.regular) {
-                        statistics.brief[month].regular.received += t.amount;
-                    }
-
                     statistics.inCategories.propagateMoney(category, t.amount);
                 }
             }

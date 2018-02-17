@@ -108,6 +108,8 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
             }
         }
     }
+
+    emit categoriesStatisticsUpdated();
 }
 
 bool Data::anchoreTransactions()
