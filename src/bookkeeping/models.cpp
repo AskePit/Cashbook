@@ -613,16 +613,14 @@ bool LogModel::anchoreTransactions()
                 Month month(t.date);
                 statistics.brief[month].common.spent += t.amount;
 
-                if(!t.category.empty()) {
-                    const auto &archNode = t.category.first();
-                    if(archNode.isValidPointer()) {
-                        const Node<Category> *category = archNode.toPointer();
-                        if(category->data.regular) {
-                            statistics.brief[month].regular.spent += t.amount;
-                        }
-
-                        statistics.outCategories.propagateMoney(category, t.amount);
+                const auto &archNode = t.category;
+                if(archNode.isValidPointer()) {
+                    const Node<Category> *category = archNode.toPointer();
+                    if(category->data.regular) {
+                        statistics.brief[month].regular.spent += t.amount;
                     }
+
+                    statistics.outCategories.propagateMoney(category, t.amount);
                 }
             }
         }
@@ -636,16 +634,14 @@ bool LogModel::anchoreTransactions()
                 Month month(t.date);
                 statistics.brief[month].common.received += t.amount;
 
-                if(!t.category.empty()) {
-                    const auto &archNode = t.category.first();
-                    if(archNode.isValidPointer()) {
-                        const Node<Category> *category = archNode.toPointer();
-                        if(category->data.regular) {
-                            statistics.brief[month].regular.received += t.amount;
-                        }
-
-                        statistics.inCategories.propagateMoney(category, t.amount);
+                const auto &archNode = t.category;
+                if(archNode.isValidPointer()) {
+                    const Node<Category> *category = archNode.toPointer();
+                    if(category->data.regular) {
+                        statistics.brief[month].regular.received += t.amount;
                     }
+
+                    statistics.inCategories.propagateMoney(category, t.amount);
                 }
             }
         }
@@ -706,12 +702,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             }
         } break;
         case LogColumn::Category: {
-            if(t.category.empty()) {
-                return QVariant();
-            } else {
-                const ArchNode<Category> &archNode = t.category.first();
-                return archNodeData(archNode, role);
-            }
+            return archNodeData(t.category, role);
         } break;
         case LogColumn::Money: {
             if(role == Qt::DisplayRole) {
@@ -799,11 +790,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
                     return disabledFlag;
                 }
 
-                if(!t.category.empty()) {
-                    return archNodeFlags(this, index, t.category.first());
-                } else {
-                    return common::flags(this, index);
-                }
+                return archNodeFlags(this, index, t.category);
             }
 
             case LogColumn::From: {
@@ -854,10 +841,8 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             }
         } break;
         case LogColumn::Category: {
-            t.category.clear();
-
             if(!value.isNull()) {
-                t.category.push_back(value);
+                t.category = value;
             }
         } break;
         case LogColumn::Money: t.amount = value.toDouble(); break;

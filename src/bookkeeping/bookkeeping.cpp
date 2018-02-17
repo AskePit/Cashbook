@@ -18,12 +18,11 @@ void Data::onOwnersRemove(QStringList paths)
 {
     auto nodes = wallets.rootItem->toList();
     for(auto *node : nodes) {
-        for(ArchPointer<Owner> &owner : node->data.owners) {
-            if(owner.isValidPointer()) {
-                QString name = *owner.toPointer();
-                if(paths.contains(name)) {
-                    owner = name; // invalidate ArchPointer by assigning QString to it.
-                }
+        ArchPointer<Owner> &owner = node->data.owner;
+        if(owner.isValidPointer()) {
+            QString name = *owner.toPointer();
+            if(paths.contains(name)) {
+                owner = name; // invalidate ArchPointer by assigning QString to it.
             }
         }
     }
@@ -47,11 +46,7 @@ void Data::onInCategoriesRemove(QStringList paths)
             continue;
         }
 
-        if(t.category.empty()) {
-            continue;
-        }
-
-        invalidateArchNode(t.category.first(), paths);
+        invalidateArchNode(t.category, paths);
     }
 }
 
@@ -62,11 +57,7 @@ void Data::onOutCategoriesRemove(QStringList paths)
             continue;
         }
 
-        if(t.category.empty()) {
-            continue;
-        }
-
-        invalidateArchNode(t.category.first(), paths);
+        invalidateArchNode(t.category, paths);
     }
 }
 
@@ -102,22 +93,18 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
         }
 
         if(t.type == Transaction::Type::Out) {
-            if(!t.category.empty()) {
-                const ArchNode<Category> &archNode = t.category.first();
-                if(archNode.isValidPointer()) {
-                    const Node<Category> *node = archNode.toPointer();
-                    statistics.outCategories.propagateMoney(node, t.amount);
-                }
+            const ArchNode<Category> &archNode = t.category;
+            if(archNode.isValidPointer()) {
+                const Node<Category> *node = archNode.toPointer();
+                statistics.outCategories.propagateMoney(node, t.amount);
             }
         }
 
         if(t.type == Transaction::Type::In) {
-            if(!t.category.empty()) {
-                const ArchNode<Category> &archNode = t.category.first();
-                if(archNode.isValidPointer()) {
-                    const Node<Category> *node = archNode.toPointer();
-                    statistics.inCategories.propagateMoney(node, t.amount);
-                }
+            const ArchNode<Category> &archNode = t.category;
+            if(archNode.isValidPointer()) {
+                const Node<Category> *node = archNode.toPointer();
+                statistics.inCategories.propagateMoney(node, t.amount);
             }
         }
     }

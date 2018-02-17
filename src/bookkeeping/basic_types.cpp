@@ -82,7 +82,7 @@ bool Wallet::operator==(const Wallet &other) const
         && amount == other.amount
         && type == other.type
         && canBeNegative == other.canBeNegative
-        && owners == other.owners;
+        && owner == other.owner;
 }
 
 QString Transaction::Type::toString(Type::t type) {

@@ -74,14 +74,9 @@ static void save(const Wallet &wallet, QJsonObject &json)
     json[QLatin1String("canBeNegative")] = wallet.canBeNegative;
     json[QLatin1String("amount")] = wallet.amount.as_cents();
 
-    QJsonArray ownersJson;
-    for(const ArchPointer<Owner> &owner : wallet.owners) {
-        QJsonObject ownerJson;
-        save(owner, ownerJson);
-        ownersJson.append(ownerJson);
-    }
-
-    json[QLatin1String("owners")] = ownersJson;
+    QJsonObject ownerJson;
+    save(wallet.owner, ownerJson);
+    json[QLatin1String("owner")] = ownerJson;
 }
 
 static void save(const Node<Wallet> *node, QJsonArray &jsonNodes)
@@ -127,14 +122,9 @@ static void save(const Transaction &t, QJsonObject &json)
     json[QLatin1String("note")] = t.note;
     json[QLatin1String("type")] = Transaction::Type::toConfigString(t.type);
 
-    QJsonArray categories;
-    for(const ArchNode<Category> &c : t.category) {
-        QJsonObject obj;
-        save(c, obj);
-        categories.append(obj);
-    }
-
-    json[QLatin1String("categories")] = categories;
+    QJsonObject category;
+    save(t.category, category);
+    json[QLatin1String("category")] = category;
     json[QLatin1String("amount")] = t.amount.as_cents();
     QJsonObject from;
     save(t.from, from);
@@ -277,13 +267,8 @@ static void load(Wallet &wallet, QJsonObject json, const OwnersModel &ownersMode
     wallet.canBeNegative = json[QLatin1String("canBeNegative")].toBool();
     wallet.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
 
-    QJsonArray ownersJson = json[QLatin1String("owners")].toArray();
-    for(QJsonValue ownerVal : std::as_const(ownersJson)) {
-        QJsonObject ownerObj = ownerVal.toObject();
-        ArchPointer<Owner> owner;
-        load(owner, ownerObj, ownersModel);
-        wallet.owners.push_back(owner);
-    }
+    QJsonObject ownerObj = json[QLatin1String("owner")].toObject();
+    load(wallet.owner, ownerObj, ownersModel);
 }
 
 static void load(WalletsModel &data, QJsonArray arr, const OwnersModel &ownersModel)
@@ -359,17 +344,14 @@ static void load(Transaction &t, QJsonObject json,
     t.type = Transaction::Type::fromConfigString( json[QLatin1String("type")].toString() );
     t.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
 
-    QJsonArray categories = json[QLatin1String("categories")].toArray();
-    for(QJsonValue v : std::as_const(categories)) {
-        QJsonObject obj = v.toObject();
-        ArchNode<Category> category;
-        if(t.type == Transaction::Type::In) {
-            load(category, obj, inCategories);
-        } else if(t.type == Transaction::Type::Out) {
-            load(category, obj, outCategories);
-        }
-        t.category.push_back(category);
+    QJsonObject categoryObj = json[QLatin1String("category")].toObject();
+    ArchNode<Category> category;
+    if(t.type == Transaction::Type::In) {
+        load(category, categoryObj, inCategories);
+    } else if(t.type == Transaction::Type::Out) {
+        load(category, categoryObj, outCategories);
     }
+    t.category = category;
 
     if(t.type != Transaction::Type::In) {
         QJsonObject from = json[QLatin1String("from")].toObject();
@@ -393,22 +375,18 @@ static void load(LogModel &logModel, QJsonArray json, Data &data){
         if(t.type == Transaction::Type::In) {
             Month month(t.date);
             logModel.statistics.brief[month].common.received += t.amount;
-            if(!t.category.empty()) {
-                const auto &archNode = t.category.first();
-                if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
-                    logModel.statistics.brief[month].regular.received += t.amount;
-                }
+            const auto &archNode = t.category;
+            if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                logModel.statistics.brief[month].regular.received += t.amount;
             }
         }
 
         if(t.type == Transaction::Type::Out) {
             Month month(t.date);
             logModel.statistics.brief[month].common.spent += t.amount;
-            if(!t.category.empty()) {
-                const auto &archNode = t.category.first();
-                if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
-                    logModel.statistics.brief[month].regular.spent += t.amount;
-                }
+            const auto &archNode = t.category;
+            if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                logModel.statistics.brief[month].regular.spent += t.amount;
             }
         }
     }

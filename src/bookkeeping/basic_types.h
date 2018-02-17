@@ -114,7 +114,7 @@ struct Wallet : public Idable
 
     Type::t type {Type::Common};
     QString name;
-    QVector<ArchPointer<Owner>> owners;
+    ArchPointer<Owner> owner;
     bool canBeNegative {false};
     Money amount;
 };
@@ -172,7 +172,7 @@ struct Transaction
     QDate date;
     QString note;
     Type::t type {Type::Out};
-    QVector< ArchNode<Category> > category;
+    ArchNode<Category> category;
     Money amount;
     ArchNode<Wallet> from { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
     ArchNode<Wallet> to { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
