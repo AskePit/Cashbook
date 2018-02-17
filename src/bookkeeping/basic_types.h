@@ -172,7 +172,7 @@ struct Transaction
     QDate date;
     QString note;
     Type::t type {Type::Out};
-    ArchNode<Category> category;
+    ArchNode<Category> category { QVariant::fromValue<const Node<Category>*>(nullptr) };
     Money amount;
     ArchNode<Wallet> from { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
     ArchNode<Wallet> to { QVariant::fromValue<const Node<Wallet>*>(nullptr) };

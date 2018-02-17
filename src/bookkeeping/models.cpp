@@ -616,7 +616,7 @@ bool LogModel::anchoreTransactions()
                 const auto &archNode = t.category;
                 if(archNode.isValidPointer()) {
                     const Node<Category> *category = archNode.toPointer();
-                    if(category->data.regular) {
+                    if(category && category->data.regular) {
                         statistics.brief[month].regular.spent += t.amount;
                     }
 
@@ -637,7 +637,7 @@ bool LogModel::anchoreTransactions()
                 const auto &archNode = t.category;
                 if(archNode.isValidPointer()) {
                     const Node<Category> *category = archNode.toPointer();
-                    if(category->data.regular) {
+                    if(category && category->data.regular) {
                         statistics.brief[month].regular.received += t.amount;
                     }
 
