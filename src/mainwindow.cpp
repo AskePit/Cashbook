@@ -18,6 +18,21 @@ static const QString defaultBackupFile1 {"backup/cashbook.backup.1"};
 static const QString defaultBackupFile2 {"backup/cashbook.backup.2"};
 static const QString defaultBackupFile3 {"backup/cashbook.backup.3"};
 
+static const QStringList months = {
+    QObject::tr("Январь"),
+    QObject::tr("Февраль"),
+    QObject::tr("Март"),
+    QObject::tr("Апрель"),
+    QObject::tr("Май"),
+    QObject::tr("Июнь"),
+    QObject::tr("Июль"),
+    QObject::tr("Август"),
+    QObject::tr("Сентябрь"),
+    QObject::tr("Октябрь"),
+    QObject::tr("Ноябрь"),
+    QObject::tr("Декабрь"),
+};
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -79,6 +94,9 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
         m_data.inCategories.update();
         m_data.outCategories.update();
     });
+
+    ui->thisMonthButton->setText(months[today.month()-1]);
+    ui->thisYearButton->setText(QString::number(today.year()));
 }
 
 MainWindow::~MainWindow()
@@ -575,17 +593,58 @@ void cashbook::MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+class Tab {
+public:
+    enum t {
+        Main = 0,
+        Categories,
+        Users
+    };
+};
+
 void cashbook::MainWindow::on_mainButton_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentIndex(Tab::Main);
 }
 
 void cashbook::MainWindow::on_categoriesButton_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentIndex(Tab::Categories);
 }
 
 void cashbook::MainWindow::on_usersButton_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(2);
+    ui->stackedWidget->setCurrentIndex(Tab::Users);
+}
+
+void cashbook::MainWindow::on_thisMonthButton_clicked()
+{
+    QDate start(today.year(), today.month(), 1);
+
+    ui->dateFrom->setDate(start);
+    ui->dateTo->setDate(today);
+}
+
+void cashbook::MainWindow::on_thisYearButton_clicked()
+{
+    QDate start(today.year(), 1, 1);
+
+    ui->dateFrom->setDate(start);
+    ui->dateTo->setDate(today);
+}
+
+void cashbook::MainWindow::on_monthButton_clicked()
+{
+    QDate start {today.addDays(-30)};
+
+    ui->dateFrom->setDate(start);
+    ui->dateTo->setDate(today);
+}
+
+void cashbook::MainWindow::on_yearButton_clicked()
+{
+    QDate start {today.addYears(-1)};
+
+    ui->dateFrom->setDate(start);
+    ui->dateTo->setDate(today);
 }

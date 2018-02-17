@@ -424,10 +424,9 @@ static void load(Data &data, QJsonObject json)
 
     data.log.unanchored = json[QLatin1String("unanchored")].toInt();
 
-    QDate now = QDate::currentDate();
-    QDate monthBegin(now.year(), now.month(), 1);
+    QDate monthBegin(today.year(), today.month(), 1);
 
-    data.loadCategoriesStatistics(monthBegin, now);
+    data.loadCategoriesStatistics(monthBegin, today);
 }
 
 void load(Data &data, const QString &fileName)

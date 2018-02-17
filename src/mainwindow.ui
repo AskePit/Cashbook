@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1114</width>
+    <height>740</height>
    </rect>
   </property>
   <property name="palette">
@@ -410,7 +410,7 @@ QToolButton:hover:!checked {
         <item>
          <widget class="QSplitter" name="splitter">
           <property name="lineWidth">
-           <number>0</number>
+           <number>1</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -590,7 +590,7 @@ QToolButton:hover:!checked {
                </palette>
               </property>
               <property name="frameShape">
-               <enum>QFrame::Box</enum>
+               <enum>QFrame::StyledPanel</enum>
               </property>
               <property name="editTriggers">
                <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
@@ -888,7 +888,7 @@ QToolButton:hover:!checked {
                 <string notr="true">QTreeView::item { height: 18px;}</string>
                </property>
                <property name="frameShape">
-                <enum>QFrame::Box</enum>
+                <enum>QFrame::StyledPanel</enum>
                </property>
                <property name="alternatingRowColors">
                 <bool>true</bool>
@@ -905,7 +905,7 @@ QToolButton:hover:!checked {
            </widget>
            <widget class="QTextEdit" name="statisticsField">
             <property name="frameShape">
-             <enum>QFrame::Box</enum>
+             <enum>QFrame::StyledPanel</enum>
             </property>
             <property name="lineWidth">
              <number>1</number>
@@ -1596,6 +1596,34 @@ QToolButton:hover:!checked {
             </property>
            </spacer>
           </item>
+          <item>
+           <widget class="QPushButton" name="thisMonthButton">
+            <property name="text">
+             <string>Этот месяц</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="thisYearButton">
+            <property name="text">
+             <string>Этот год</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="monthButton">
+            <property name="text">
+             <string>30 дней</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="yearButton">
+            <property name="text">
+             <string>365 дней</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
@@ -1728,7 +1756,7 @@ QToolButton:hover:!checked {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1114</width>
      <height>21</height>
     </rect>
    </property>

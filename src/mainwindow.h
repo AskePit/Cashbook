@@ -62,6 +62,14 @@ private slots:
 
     void on_usersButton_clicked();
 
+    void on_thisMonthButton_clicked();
+
+    void on_thisYearButton_clicked();
+
+    void on_monthButton_clicked();
+
+    void on_yearButton_clicked();
+
 private:
     void loadFile(const QString &filename);
     void saveFile(const QString &filename);
