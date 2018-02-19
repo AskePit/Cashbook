@@ -289,6 +289,20 @@ public:
     };
 };
 
+class BriefRow
+{
+public:
+    enum t {
+        Space1 = 0,
+        Header = Space1,
+        Space2,
+        Received,
+        Spent,
+
+        Count
+    };
+};
+
 class BriefModel : public QAbstractTableModel
 {
     Q_OBJECT

@@ -7,6 +7,7 @@ Data::Data()
     : inCategories(statistics.inCategories)
     , outCategories(statistics.outCategories)
     , log(statistics)
+    , briefModel(statistics.brief)
 {
     connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
     connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);

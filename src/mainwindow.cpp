@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QHeaderView>
 
 namespace cashbook
 {
@@ -47,16 +48,6 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setItemDelegate(&m_logDelegate);
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
-
-    ui->outCategoriesTree->setModel(&m_data.outCategories);
-    ui->inCategoriesTree->setModel(&m_data.inCategories);
-    ui->walletsTree->setModel(&m_data.wallets);
-    ui->ownersList->setModel(&m_data.owners);
-    ui->logTable->setModel(&m_data.log);
-
-    ui->walletsTree->expandAll();
-    ui->inCategoriesTree->expandAll();
-    ui->outCategoriesTree->expandAll();
 
     ui->logSplitter->setStretchFactor(0, 100);
     ui->logSplitter->setStretchFactor(1, 50);
@@ -104,10 +95,24 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
         ui->outTotalLabel->setText(formatMoney(out));
     });
 
+    ui->outCategoriesTree->setModel(&m_data.outCategories);
+    ui->inCategoriesTree->setModel(&m_data.inCategories);
+    ui->walletsTree->setModel(&m_data.wallets);
+    ui->ownersList->setModel(&m_data.owners);
+    ui->logTable->setModel(&m_data.log);
+
     QFileInfo f(defaultDataFile);
     if(f.exists()) {
         loadFile(defaultDataFile);
     }
+
+    ui->briefTable->setModel(&m_data.briefModel);
+    for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
+        ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
+    }
+
+    QHeaderView *headerView = ui->briefTable->horizontalHeader();
+    headerView->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 MainWindow::~MainWindow()

@@ -18,6 +18,7 @@ public:
     CategoriesModel inCategories;
     CategoriesModel outCategories;
     LogModel log;
+    BriefModel briefModel;
 
     Statistics statistics;
 

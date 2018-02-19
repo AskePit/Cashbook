@@ -892,23 +892,97 @@ BriefModel::~BriefModel()
 
 int BriefModel::rowCount(const QModelIndex &parent) const
 {
-    return brief.size()*2;
+    UNUSED(parent);
+    return brief.size()*BriefRow::Count;
 }
 
 int BriefModel::columnCount(const QModelIndex &parent) const
 {
+    UNUSED(parent);
     return BriefColumn::Count;
 }
 
 
 Qt::ItemFlags BriefModel::flags(const QModelIndex &index) const
 {
-    return disabledFlag;
+    UNUSED(index);
+    return 0;
 }
 
 QVariant BriefModel::data(const QModelIndex &index, int role) const
 {
-    int i = index.row()*2;
+    if (!index.isValid()) {
+        return QVariant();
+    }
+
+    int col = index.column();
+    int realRow = index.row()/BriefRow::Count;
+    BriefRow::t rowType = as<BriefRow::t>(index.row()%BriefRow::Count);
+    Month month {today.addMonths(-1*realRow)};
+
+    if(role == Qt::DisplayRole) {
+        switch(col)
+        {
+            default: return QVariant();
+
+            case BriefColumn::Date: {
+                if(rowType != BriefRow::Space1 && rowType != BriefRow::Space2) {
+                    return month.toString();
+                }
+            } break;
+            case BriefColumn::Common: {
+                const auto &common = brief.at(month).common;
+                switch(rowType) {
+                    default: return QVariant();
+                    case BriefRow::Received: return "▲ " + formatMoney(common.received);
+                    case BriefRow::Spent: return "▼ " + formatMoney(common.spent);
+                }
+            } break;
+            case BriefColumn::Regular: {
+                const auto &regular = brief.at(month).regular;
+                switch(rowType) {
+                    default: return QVariant();
+                    case BriefRow::Received: return "= " + formatMoney(regular.received);
+                    case BriefRow::Spent: return "= " + formatMoney(regular.spent);
+                }
+            } break;
+            case BriefColumn::Nonregular: {
+                const auto &common = brief.at(month).common;
+                const auto &regular = brief.at(month).regular;
+                switch(rowType) {
+                    default: return QVariant();
+                    case BriefRow::Received: return "+ " + formatMoney(common.received - regular.received);
+                    case BriefRow::Spent: return "+ " + formatMoney(common.spent - regular.spent);
+                }
+            }
+        }
+    }
+
+    if(role == Qt::ForegroundRole) {
+        if(col == BriefColumn::Common) {
+            return rowType == BriefRow::Received ? QColor(14, 100, 33) : QColor(Qt::red);
+        } else {
+            return QColor(Qt::black);
+        }
+    }
+
+    if(role == Qt::FontRole) {
+        if(col == BriefColumn::Common) {
+            QFont f("Tahoma", 9);
+            f.setBold(true);
+            return f;
+        } else {
+            return QFont("Segoe UI", 9);
+        }
+    }
+
+    if(role == Qt::TextAlignmentRole) {
+        if(col == BriefColumn::Date) {
+            return QVariant(Qt::AlignHCenter | Qt::AlignVCenter);
+        } else {
+            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+        }
+    }
 
     return QVariant();
 }
