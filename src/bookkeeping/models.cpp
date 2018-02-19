@@ -893,7 +893,7 @@ BriefModel::~BriefModel()
 int BriefModel::rowCount(const QModelIndex &parent) const
 {
     UNUSED(parent);
-    return brief.size()*BriefRow::Count;
+    return as<int>(brief.size())*BriefRow::Count;
 }
 
 int BriefModel::columnCount(const QModelIndex &parent) const
@@ -920,6 +920,8 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
     BriefRow::t rowType = as<BriefRow::t>(index.row()%BriefRow::Count);
     Month month {today.addMonths(-1*realRow)};
 
+    bool header = index.row() == BriefRow::Space2*1;
+
     if(role == Qt::DisplayRole) {
         switch(col)
         {
@@ -939,7 +941,12 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                 }
             } break;
             case BriefColumn::Regular: {
+                if(header) {
+                    return tr("Регулярные");
+                }
+
                 const auto &regular = brief.at(month).regular;
+
                 switch(rowType) {
                     default: return QVariant();
                     case BriefRow::Received: return "= " + formatMoney(regular.received);
@@ -947,6 +954,10 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                 }
             } break;
             case BriefColumn::Nonregular: {
+                if(header) {
+                    return tr("Нерегулярные");
+                }
+
                 const auto &common = brief.at(month).common;
                 const auto &regular = brief.at(month).regular;
                 switch(rowType) {
@@ -960,15 +971,21 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
 
     if(role == Qt::ForegroundRole) {
         if(col == BriefColumn::Common) {
-            return rowType == BriefRow::Received ? QColor(14, 100, 33) : QColor(Qt::red);
+            return rowType == BriefRow::Received ? QColor(34, 120, 53) : QColor(220, 47, 67);
         } else {
             return QColor(Qt::black);
         }
     }
 
     if(role == Qt::FontRole) {
+        if(header) {
+            QFont f("Segoe UI", 8);
+            f.setBold(true);
+            return f;
+        }
+
         if(col == BriefColumn::Common) {
-            QFont f("Tahoma", 9);
+            QFont f("Segoe UI", 9);
             f.setBold(true);
             return f;
         } else {

@@ -50,7 +50,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
 
     ui->logSplitter->setStretchFactor(0, 100);
-    ui->logSplitter->setStretchFactor(1, 50);
+    ui->logSplitter->setStretchFactor(1, 30);
 
     ui->logTable->setColumnWidth(LogColumn::Date, 55);
     ui->logTable->setColumnWidth(LogColumn::Type, 70);

@@ -418,6 +418,9 @@ QToolButton:hover:!checked {
           <property name="handleWidth">
            <number>0</number>
           </property>
+          <property name="childrenCollapsible">
+           <bool>false</bool>
+          </property>
           <widget class="QWidget" name="layoutWidget">
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
@@ -620,6 +623,9 @@ QToolButton:hover:!checked {
            </property>
            <property name="handleWidth">
             <number>0</number>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
            </property>
            <widget class="QWidget" name="layoutWidget">
             <layout class="QVBoxLayout" name="walletsLayout">
@@ -984,7 +990,7 @@ QToolButton:hover:!checked {
                 <bool>false</bool>
                </attribute>
                <attribute name="verticalHeaderDefaultSectionSize">
-                <number>23</number>
+                <number>20</number>
                </attribute>
               </widget>
              </item>
