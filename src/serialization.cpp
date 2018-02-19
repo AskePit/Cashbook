@@ -371,6 +371,25 @@ static void load(LogModel &logModel, QJsonArray json, Data &data){
         Transaction t;
         load(t, tObj, data.wallets, data.inCategories, data.outCategories);
         logModel.log.push_front(t);
+
+        // update brief statistics
+        if(t.type == Transaction::Type::In) {
+            Month month(t.date);
+            logModel.statistics.brief[month].common.received += t.amount;
+            const auto &archNode = t.category;
+            if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                logModel.statistics.brief[month].regular.received += t.amount;
+            }
+        }
+
+        if(t.type == Transaction::Type::Out) {
+            Month month(t.date);
+            logModel.statistics.brief[month].common.spent += t.amount;
+            const auto &archNode = t.category;
+            if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+                logModel.statistics.brief[month].regular.spent += t.amount;
+            }
+        }
     }
 }
 

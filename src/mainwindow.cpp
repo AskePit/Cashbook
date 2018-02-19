@@ -58,8 +58,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->inCategoriesTree->expandAll();
     ui->outCategoriesTree->expandAll();
 
-    ui->splitter->setStretchFactor(0, 100);
-    ui->splitter->setStretchFactor(1, 50);
+    ui->logSplitter->setStretchFactor(0, 100);
+    ui->logSplitter->setStretchFactor(1, 50);
 
     ui->logTable->setColumnWidth(LogColumn::Date, 55);
     ui->logTable->setColumnWidth(LogColumn::Type, 70);

@@ -12,7 +12,7 @@
 namespace cashbook
 {
 
-const Qt::ItemFlags disabledFlag {0}; // Read-only and Disabled
+const Qt::ItemFlags disabledFlag {Qt::NoItemFlags}; // Read-only and Disabled
 
 //
 // Common templates
@@ -610,9 +610,16 @@ bool LogModel::anchoreTransactions()
                 w->data.amount -= t.amount;
             }
             if(t.type == Transaction::Type::Out) {
+                Month month(t.date);
+                statistics.brief[month].common.spent += t.amount;
+
                 const auto &archNode = t.category;
                 if(archNode.isValidPointer()) {
                     const Node<Category> *category = archNode.toPointer();
+                    if(category && category->data.regular) {
+                        statistics.brief[month].regular.spent += t.amount;
+                    }
+
                     statistics.outCategories.propagateMoney(category, t.amount);
                 }
             }
@@ -624,9 +631,16 @@ bool LogModel::anchoreTransactions()
                 w->data.amount += t.amount;
             }
             if(t.type == Transaction::Type::In) {
+                Month month(t.date);
+                statistics.brief[month].common.received += t.amount;
+
                 const auto &archNode = t.category;
                 if(archNode.isValidPointer()) {
                     const Node<Category> *category = archNode.toPointer();
+                    if(category && category->data.regular) {
+                        statistics.brief[month].regular.received += t.amount;
+                    }
+
                     statistics.inCategories.propagateMoney(category, t.amount);
                 }
             }
@@ -863,6 +877,57 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     endRemoveRows();
     return true;
 }
+
+//
+// Brief
+//
+
+BriefModel::BriefModel(BriefStatistics &brief, QObject *parent)
+    : QAbstractTableModel(parent)
+    , brief(brief)
+{}
+
+BriefModel::~BriefModel()
+{}
+
+int BriefModel::rowCount(const QModelIndex &parent) const
+{
+    return brief.size()*2;
+}
+
+int BriefModel::columnCount(const QModelIndex &parent) const
+{
+    return BriefColumn::Count;
+}
+
+
+Qt::ItemFlags BriefModel::flags(const QModelIndex &index) const
+{
+    return disabledFlag;
+}
+
+QVariant BriefModel::data(const QModelIndex &index, int role) const
+{
+    int i = index.row()*2;
+
+    return QVariant();
+}
+
+QVariant BriefModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        switch(section)
+        {
+            case BriefColumn::Date: return tr("Месяц");
+            case BriefColumn::Common: return tr("Всего");
+            case BriefColumn::Regular: return tr("Регулярные");
+            case BriefColumn::Nonregular: return tr("Нерегулярные");
+        }
+    }
+
+    return QVariant();
+}
+
 
 BoolDelegate::BoolDelegate(QObject *parent)
     : QItemDelegate(parent)
