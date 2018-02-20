@@ -12,8 +12,6 @@
 namespace cashbook
 {
 
-const Qt::ItemFlags disabledFlag {Qt::NoItemFlags}; // Read-only and Disabled
-
 //
 // Common templates
 //
@@ -23,7 +21,7 @@ template <class Model>
 static inline Qt::ItemFlags flags(const Model *model, const QModelIndex &index)
 {
     if (!index.isValid()) {
-        return disabledFlag;
+        return Qt::NoItemFlags;
     }
 
     return Qt::ItemIsEditable | /*Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled |*/ model->QAbstractItemModel::flags(index);
@@ -275,7 +273,7 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
     if(index.column() == CategoriesColumn::Statistics) {
-        return disabledFlag;
+        return Qt::NoItemFlags;
     }
 
     return common::flags(this, index);
@@ -771,7 +769,7 @@ static Qt::ItemFlags archNodeFlags(const QAbstractItemModel *model, const QModel
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
     if(index.row() > unanchored-1) {
-        return disabledFlag;
+        return Qt::NoItemFlags;
     }
 
     if (!index.isValid()) {
@@ -787,7 +785,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
         switch(column) {
             case LogColumn::Category: {
                 if(t.type == Transaction::Type::Transfer) {
-                    return disabledFlag;
+                    return Qt::NoItemFlags;
                 }
 
                 return archNodeFlags(this, index, t.category);
@@ -795,13 +793,13 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 
             case LogColumn::From: {
                 if(t.type == Transaction::Type::In) {
-                    return disabledFlag;
+                    return Qt::NoItemFlags;
                 }
                 return archNodeFlags(this, index, t.from);
             }
             case LogColumn::To: {
                 if(t.type == Transaction::Type::Out) {
-                    return disabledFlag;
+                    return Qt::NoItemFlags;
                 }
                 return archNodeFlags(this, index, t.to);
             }
@@ -826,8 +824,9 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             auto oldType = t.type;
             t.type = as<Transaction::Type::t>(value.toInt());
             if(t.type != oldType) {
-                t.category.clear();
-                t.from = t.to = as<const Node<Wallet>*>(nullptr);
+                t.category.setNull();
+                t.from.setNull();
+                t.to.setNull();
                 emit dataChanged(
                   createIndex(index.row(), LogColumn::Category),
                   createIndex(index.row(), LogColumn::Category),

@@ -45,8 +45,8 @@ template <class T>
 class ArchPointer : public QVariant
 {
 public:
-    ArchPointer()
-        : QVariant()
+    ArchPointer() // valid null pointer by default
+        : QVariant(QVariant::fromValue<const T*>(nullptr))
     {}
 
     ArchPointer(const QVariant &v)
@@ -83,6 +83,10 @@ public:
 
     bool isArchived() const {
         return !isValidPointer();
+    }
+
+    void setNull() {
+        this->QVariant::operator =(QVariant::fromValue<const T*>(nullptr));
     }
 };
 
@@ -172,10 +176,10 @@ struct Transaction
     QDate date;
     QString note;
     Type::t type {Type::Out};
-    ArchNode<Category> category { QVariant::fromValue<const Node<Category>*>(nullptr) };
+    ArchNode<Category> category;
     Money amount;
-    ArchNode<Wallet> from { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
-    ArchNode<Wallet> to { QVariant::fromValue<const Node<Wallet>*>(nullptr) };
+    ArchNode<Wallet> from;
+    ArchNode<Wallet> to;
 };
 
 const QString pathConcat {"/"};
