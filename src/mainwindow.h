@@ -65,6 +65,10 @@ private slots:
     void on_monthButton_clicked();
     void on_yearButton_clicked();
 
+    void showOutCategoryMenu(const QPoint& point);
+
+    void on_actionStatement_triggered();
+
 private:
     void loadFile(const QString &filename);
     void saveFile(const QString &filename);

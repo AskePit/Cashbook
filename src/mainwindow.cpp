@@ -10,6 +10,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QHeaderView>
+#include <QDebug>
 
 namespace cashbook
 {
@@ -48,6 +49,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setItemDelegate(&m_logDelegate);
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
+
+    connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);
 
     ui->logSplitter->setStretchFactor(0, 100);
     ui->logSplitter->setStretchFactor(1, 30);
@@ -591,4 +594,25 @@ void cashbook::MainWindow::on_yearButton_clicked()
 
     ui->dateFrom->setDate(start);
     ui->dateTo->setDate(today);
+}
+
+void cashbook::MainWindow::showOutCategoryMenu(const QPoint& point)
+{
+    QPoint globalPos = ui->outCategoriesTree->mapToGlobal(point);
+    QMenu menu(ui->outCategoriesTree);
+    menu.addAction(ui->actionStatement);
+
+    auto index = ui->outCategoriesTree->indexAt(point);
+    ui->actionStatement->setEnabled(index.isValid());
+
+    menu.exec(globalPos);
+}
+
+void cashbook::MainWindow::on_actionStatement_triggered()
+{
+    QModelIndex index = ui->outCategoriesTree->currentIndex();
+    Node<Category> *node = m_data.outCategories.getItem(index);
+    if(node) {
+        qDebug() << formatMoney(m_data.statistics.outCategories[node]);
+    }
 }

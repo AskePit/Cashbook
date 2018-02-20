@@ -839,7 +839,7 @@ QToolButton:hover:!checked {
                 <bool>false</bool>
                </property>
                <attribute name="headerVisible">
-                <bool>true</bool>
+                <bool>false</bool>
                </attribute>
               </widget>
              </item>
@@ -1222,6 +1222,9 @@ QToolButton:hover:!checked {
             </item>
             <item>
              <widget class="QTreeView" name="inCategoriesTree">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="styleSheet">
                <string notr="true">QTreeView::item { height: 18px;}</string>
               </property>
@@ -1650,6 +1653,9 @@ QToolButton:hover:!checked {
             </item>
             <item>
              <widget class="QTreeView" name="outCategoriesTree">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="styleSheet">
                <string notr="true">QTreeView::item { height: 18px;}</string>
               </property>
@@ -2302,6 +2308,14 @@ QToolButton:hover:!checked {
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionStatement">
+   <property name="text">
+    <string>Выписка</string>
+   </property>
+   <property name="toolTip">
+    <string>Statement</string>
    </property>
   </action>
  </widget>
