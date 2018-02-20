@@ -2310,7 +2310,15 @@ QToolButton:hover:!checked {
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionStatement">
+  <action name="actionOutStatement">
+   <property name="text">
+    <string>Выписка</string>
+   </property>
+   <property name="toolTip">
+    <string>Statement</string>
+   </property>
+  </action>
+  <action name="actionInStatement">
    <property name="text">
     <string>Выписка</string>
    </property>

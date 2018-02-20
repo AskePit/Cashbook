@@ -10,7 +10,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QHeaderView>
-#include <QDebug>
+#include <QPalette>
 
 namespace cashbook
 {
@@ -50,6 +50,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
 
+    connect(ui->inCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showInCategoryMenu);
     connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);
 
     ui->logSplitter->setStretchFactor(0, 100);
@@ -596,23 +597,70 @@ void cashbook::MainWindow::on_yearButton_clicked()
     ui->dateTo->setDate(today);
 }
 
-void cashbook::MainWindow::showOutCategoryMenu(const QPoint& point)
+static void showCategoryContextMenu(const cashbook::CategoriesModel &model, QTreeView *view, QAction *action, const QPoint &point)
 {
-    QPoint globalPos = ui->outCategoriesTree->mapToGlobal(point);
-    QMenu menu(ui->outCategoriesTree);
-    menu.addAction(ui->actionStatement);
+    QPoint globalPos = view->mapToGlobal(point);
+    auto index = view->indexAt(point);
 
-    auto index = ui->outCategoriesTree->indexAt(point);
-    ui->actionStatement->setEnabled(index.isValid());
+    const Node<cashbook::Category> *node = model.getItem(index);
+    bool ok = false;
+    if(node) {
+        ok = model.statistics[node].as_cents() != 0;
+    }
 
+    if(!ok) {
+        return;
+    }
+
+    QMenu menu(view);
+    menu.addAction(action);
     menu.exec(globalPos);
 }
 
-void cashbook::MainWindow::on_actionStatement_triggered()
+void cashbook::MainWindow::showInCategoryMenu(const QPoint& point)
 {
-    QModelIndex index = ui->outCategoriesTree->currentIndex();
-    Node<Category> *node = m_data.outCategories.getItem(index);
-    if(node) {
-        qDebug() << formatMoney(m_data.statistics.outCategories[node]);
+    showCategoryContextMenu(m_data.inCategories, ui->inCategoriesTree, ui->actionInStatement, point);
+}
+
+void cashbook::MainWindow::showOutCategoryMenu(const QPoint& point)
+{
+    showCategoryContextMenu(m_data.outCategories, ui->outCategoriesTree, ui->actionOutStatement, point);
+}
+
+void cashbook::MainWindow::onActionStatementTriggered(Transaction::Type::t type)
+{
+    bool in = type == Transaction::Type::In;
+
+    QTreeView *categoryTree = in ? ui->inCategoriesTree : ui->outCategoriesTree;
+    CategoriesModel &categoryModel = in ? m_data.inCategories : m_data.outCategories;
+
+    QModelIndex index = categoryTree->currentIndex();
+    Node<Category> *node = categoryModel.getItem(index);
+    if(!node) {
+        return;
     }
+
+    FilteredLogModel *filterModel = new FilteredLogModel(ui->dateFrom->date(), ui->dateTo->date(), type, node, categoryTree);
+    filterModel->setSourceModel(&m_data.log);
+    QTableView *table = new QTableView();
+    table->setWindowFlags(Qt::WindowCloseButtonHint);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->verticalHeader()->hide();
+    table->verticalHeader()->setDefaultSectionSize(23);
+    table->setModel(filterModel);
+    table->setGeometry(QRect(categoryTree->mapToGlobal(categoryTree->pos()), categoryTree->size()));
+    table->show();
+    table->resizeColumnsToContents();
+    table->hideColumn(LogColumn::Type);
+    table->hideColumn(in ? LogColumn::From : LogColumn::To);
+}
+
+void cashbook::MainWindow::on_actionInStatement_triggered()
+{
+    onActionStatementTriggered(Transaction::Type::In);
+}
+
+void cashbook::MainWindow::on_actionOutStatement_triggered()
+{
+    onActionStatementTriggered(Transaction::Type::Out);
 }

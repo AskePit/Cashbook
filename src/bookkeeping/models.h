@@ -6,6 +6,7 @@
 
 #include <std/rvector.h>
 #include <QAbstractItemModel>
+#include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QItemDelegate>
 
@@ -274,6 +275,21 @@ public:
         emit endResetModel();
         unanchored = 0;
     }
+};
+
+class FilteredLogModel : public QSortFilterProxyModel
+{
+    Q_OBJECT
+
+public:
+    FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent = 0);
+    virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+
+private:
+    QDate m_from;
+    QDate m_to;
+    Transaction::Type::t m_type;
+    const Node<Category> *m_category {nullptr};
 };
 
 class BriefColumn

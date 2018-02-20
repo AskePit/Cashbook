@@ -677,6 +677,14 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    if(role == Qt::ForegroundRole) {
+        if(index.row() >= unanchored) {
+            return QColor(120, 120, 120);
+        } else {
+            return QColor(Qt::black);
+        }
+    }
+
     if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
     }
@@ -875,6 +883,46 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     unanchored -= 1;
     endRemoveRows();
     return true;
+}
+
+FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)
+    : QSortFilterProxyModel(parent)
+    , m_from(from)
+    , m_to(to)
+    , m_type(type)
+    , m_category(category)
+{}
+
+bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
+    UNUSED(sourceParent);
+
+    LogModel *model = qobject_cast<LogModel*>(sourceModel());
+
+    const Transaction &t = model->log[sourceRow];
+    if(t.type != m_type) {
+        return false;
+    }
+
+    if(t.date < m_from || t.date > m_to) {
+        return false;
+    }
+
+    if(!t.category.isValidPointer()) {
+        return false;
+    }
+
+    const Node<Category> *node = t.category.toPointer();
+
+    while(node) {
+        if(node == m_category) {
+            return true;
+        }
+
+        node = node->parent;
+    }
+
+    return false;
 }
 
 //

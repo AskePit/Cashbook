@@ -65,13 +65,17 @@ private slots:
     void on_monthButton_clicked();
     void on_yearButton_clicked();
 
+    void showInCategoryMenu(const QPoint& point);
     void showOutCategoryMenu(const QPoint& point);
 
-    void on_actionStatement_triggered();
+    void on_actionInStatement_triggered();
+    void on_actionOutStatement_triggered();
 
 private:
     void loadFile(const QString &filename);
     void saveFile(const QString &filename);
+
+    void onActionStatementTriggered(Transaction::Type::t type);
 
 protected:
     void closeEvent(QCloseEvent *event);
