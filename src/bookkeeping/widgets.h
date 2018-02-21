@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QHeaderView>
+#include <QScrollBar>
 
 namespace cashbook
 {
@@ -133,6 +134,23 @@ public:
 protected:
     void mouseDoubleClickEvent(QMouseEvent *event);
     void focusOutEvent(QFocusEvent *event);
+
+    // do not forward scroll to parents in case of nonscrolling state
+    void wheelEvent(QWheelEvent* event) {
+        bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
+        bool atTop = verticalScrollBar()->value() == verticalScrollBar()->minimum();
+
+        bool scrollDown = event->delta() < 0;
+        bool scrollUp = !scrollDown;
+
+        bool noWay = atBottom && scrollDown || atTop && scrollUp;
+
+        if(noWay) {
+            event->accept();
+        } else {
+            QTreeView::wheelEvent(event);
+        }
+    }
 
 private:
     NodeButton<T> *m_button;
