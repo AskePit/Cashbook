@@ -275,6 +275,8 @@ public:
         emit endResetModel();
         unanchored = 0;
     }
+
+    void updateNote(int row, const QString &note);
 };
 
 class FilteredLogModel : public QSortFilterProxyModel

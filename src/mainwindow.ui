@@ -592,6 +592,9 @@ QToolButton:hover:!checked {
                 </disabled>
                </palette>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
               </property>
@@ -2324,6 +2327,14 @@ QToolButton:hover:!checked {
    </property>
    <property name="toolTip">
     <string>Statement</string>
+   </property>
+  </action>
+  <action name="actionEditNote">
+   <property name="text">
+    <string>Редактировать примечание...</string>
+   </property>
+   <property name="toolTip">
+    <string>Редактировать примечание</string>
    </property>
   </action>
  </widget>

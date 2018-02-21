@@ -10,7 +10,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QHeaderView>
-#include <QPalette>
+#include <QInputDialog>
 
 namespace cashbook
 {
@@ -52,9 +52,10 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 
     connect(ui->inCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showInCategoryMenu);
     connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);
+    connect(ui->logTable, &QTableView::customContextMenuRequested, this, &MainWindow::showLogContextMenu);
 
     ui->logSplitter->setStretchFactor(0, 100);
-    ui->logSplitter->setStretchFactor(1, 30);
+    ui->logSplitter->setStretchFactor(1, 35);
 
     ui->logTable->setColumnWidth(LogColumn::Date, 55);
     ui->logTable->setColumnWidth(LogColumn::Type, 70);
@@ -644,6 +645,7 @@ void cashbook::MainWindow::onActionStatementTriggered(Transaction::Type::t type)
     filterModel->setSourceModel(&m_data.log);
     QTableView *table = new QTableView();
     table->setWindowFlags(Qt::WindowCloseButtonHint);
+    table->setAttribute(Qt::WA_DeleteOnClose);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->verticalHeader()->hide();
     table->verticalHeader()->setDefaultSectionSize(23);
@@ -663,4 +665,40 @@ void cashbook::MainWindow::on_actionInStatement_triggered()
 void cashbook::MainWindow::on_actionOutStatement_triggered()
 {
     onActionStatementTriggered(Transaction::Type::Out);
+}
+
+void cashbook::MainWindow::showLogContextMenu(const QPoint& point)
+{
+    QPoint globalPos = ui->logTable->mapToGlobal(point);
+    auto index = ui->logTable->indexAt(point);
+
+    if(index.column() != LogColumn::Note) {
+        return;
+    }
+
+    m_noteContextIndex = index;
+    QMenu menu(ui->logTable);
+    menu.addAction(ui->actionEditNote);
+    menu.exec(globalPos);
+}
+
+static QString getTextDialog(const QString &title, const QString &message, const QString &text, QWidget *parent)
+{
+    bool ok = false;
+    QString answer = QInputDialog::getText(parent, title, message, QLineEdit::Normal, text, &ok);
+    return ok ? answer : QString::null;
+}
+
+void cashbook::MainWindow::on_actionEditNote_triggered()
+{
+    if(!m_noteContextIndex.isValid()) {
+        return;
+    }
+
+    const Transaction &t = m_data.log.log[m_noteContextIndex.row()];
+
+    QString note = getTextDialog(tr("Примечание"), tr("Примечание"), t.note, this);
+    if(!note.isNull()) {
+        m_data.log.updateNote(m_noteContextIndex.row(), note);
+    }
 }

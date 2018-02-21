@@ -67,9 +67,11 @@ private slots:
 
     void showInCategoryMenu(const QPoint& point);
     void showOutCategoryMenu(const QPoint& point);
+    void showLogContextMenu(const QPoint& point);
 
     void on_actionInStatement_triggered();
     void on_actionOutStatement_triggered();
+    void on_actionEditNote_triggered();
 
 private:
     void loadFile(const QString &filename);
@@ -88,6 +90,7 @@ private:
     CategoriesViewEventFilter m_categoriesEventFilter;
 
     bool m_changed {false};
+    QModelIndex m_noteContextIndex;
 };
 
 } // namespace cashbook

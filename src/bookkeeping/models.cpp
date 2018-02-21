@@ -885,6 +885,14 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     return true;
 }
 
+void LogModel::updateNote(int row, const QString &note)
+{
+    log[row].note = note;
+
+    QModelIndex i = index(row, LogColumn::Note);
+    emit dataChanged(i, i, {Qt::DisplayRole});
+}
+
 FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)
     : QSortFilterProxyModel(parent)
     , m_from(from)
