@@ -37,7 +37,11 @@ static void save(const Node<Category> *node, QJsonArray &jsonNodes)
     save(node->data, category);
     jsonNode[QLatin1String("category")] = category;
     jsonNode[QLatin1String("regular")] = node->data.regular;
-    jsonNode[QLatin1String("children")] = as<int>(node->childCount());
+
+    int children = as<int>(node->childCount());
+    if(children) {
+        jsonNode[QLatin1String("children")] = children;
+    }
     jsonNodes.append(jsonNode);
 
     for(const auto &child : node->children) {
@@ -86,7 +90,12 @@ static void save(const Node<Wallet> *node, QJsonArray &jsonNodes)
     QJsonObject wallet;
     save(node->data, wallet);
     jsonNode[QLatin1String("wallet")] = wallet;
-    jsonNode[QLatin1String("children")] = as<int>(node->childCount());
+
+    int children = as<int>(node->childCount());
+    if(children) {
+        jsonNode[QLatin1String("children")] = children;
+    }
+
     jsonNodes.append(jsonNode);
 
     for(const Node<Wallet> *child : node->children) {
@@ -119,12 +128,17 @@ static void save(const ArchNode<T> &data, QJsonObject &json)
 static void save(const Transaction &t, QJsonObject &json)
 {
     json[QLatin1String("date")] = t.date.toString(QStringLiteral("dd.MM.yyyy"));
-    json[QLatin1String("note")] = t.note;
+
+    if(!t.note.isEmpty()) {
+        json[QLatin1String("note")] = t.note;
+    }
     json[QLatin1String("type")] = Transaction::Type::toConfigString(t.type);
 
     QJsonObject category;
     save(t.category, category);
-    json[QLatin1String("category")] = category;
+    if(t.type != Transaction::Type::Transfer) {
+        json[QLatin1String("category")] = category;
+    }
     json[QLatin1String("amount")] = t.amount.as_cents();
     QJsonObject from;
     save(t.from, from);
@@ -220,7 +234,7 @@ static void load(CategoriesModel &data, QJsonArray arr)
         QJsonObject categoryObj = nodeObj[QLatin1String("category")].toObject();
         currNode->data.regular = nodeObj[QLatin1String("regular")].toBool();
         load(currNode->data, categoryObj);
-        int ch = nodeObj[QLatin1String("children")].toInt();
+        int ch = nodeObj[QLatin1String("children")].toInt(0);
         children.push(ch);
 
         while(!children.empty() && children.top() == 0) {
@@ -280,7 +294,7 @@ static void load(WalletsModel &data, QJsonArray arr, const OwnersModel &ownersMo
         QJsonObject nodeObj = v.toObject();
         QJsonObject walletObj = nodeObj[QLatin1String("wallet")].toObject();
         load(currNode->data, walletObj, ownersModel);
-        int ch = nodeObj[QLatin1String("children")].toInt();
+        int ch = nodeObj[QLatin1String("children")].toInt(0);
         children.push(ch);
 
         while(!children.empty() && children.top() == 0) {
@@ -344,14 +358,16 @@ static void load(Transaction &t, QJsonObject json,
     t.type = Transaction::Type::fromConfigString( json[QLatin1String("type")].toString() );
     t.amount = Money(as<intmax_t>(json[QLatin1String("amount")].toInt()));
 
-    QJsonObject categoryObj = json[QLatin1String("category")].toObject();
-    ArchNode<Category> category;
-    if(t.type == Transaction::Type::In) {
-        load(category, categoryObj, inCategories);
-    } else if(t.type == Transaction::Type::Out) {
-        load(category, categoryObj, outCategories);
+    if(t.type != Transaction::Type::Transfer) {
+        QJsonObject categoryObj = json[QLatin1String("category")].toObject();
+        ArchNode<Category> category;
+        if(t.type == Transaction::Type::In) {
+            load(category, categoryObj, inCategories);
+        } else if(t.type == Transaction::Type::Out) {
+            load(category, categoryObj, outCategories);
+        }
+        t.category = category;
     }
-    t.category = category;
 
     if(t.type != Transaction::Type::In) {
         QJsonObject from = json[QLatin1String("from")].toObject();
