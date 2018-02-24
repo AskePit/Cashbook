@@ -1,8 +1,6 @@
 #ifndef SERIALIZATION_H
 #define SERIALIZATION_H
 
-#include <QByteArray>
-
 class QString;
 
 namespace cashbook

@@ -15,7 +15,7 @@
 namespace cashbook
 {
 
-static const QString defaultDataFile {"cashbook.json"};
+static const QString defaultDataFile {"cashbook.pitm"};
 static const QString defaultBackupFile1 {"backup/cashbook.backup.1"};
 static const QString defaultBackupFile2 {"backup/cashbook.backup.2"};
 static const QString defaultBackupFile3 {"backup/cashbook.backup.3"};
