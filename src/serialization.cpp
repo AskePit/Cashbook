@@ -4,11 +4,38 @@
 #include "std/pitm/pitmarray.h"
 #include "std/pitm/pitmobject.h"
 #include "std/pitm/pitmdocument.h"
-#include <QFile>
+#include "std/fs.h"
+#include <QFileInfo>
+#include <QDir>
+#include <QDirIterator>
 #include <utility>
 #include <stack>
 
 namespace cashbook {
+
+namespace storage
+{
+
+static const int backupCount        {3};
+static const QString dateFormat     {"yyyy.MM"};
+static const QString ext            {".pitm"};
+static const QString backupExt      {".backup"};
+static const QString rootDir        {"data"};
+static const QString backupDir      {"backup"};
+static const QString headName       {"_head"};
+static const QString headFile       { QString("%1/%2%3").arg(rootDir, headName, ext) };
+static const QString headBackupFile { QString("%1/%2/%3%4").arg(rootDir, backupDir, headName, backupExt) };
+
+static QString monthFile(const QDate &month) {
+    return QString("%1/%2%3").arg(rootDir, month.toString(dateFormat), ext);
+}
+
+static QString monthBackupFile(const QDate &month, int n) {
+    return QString("%1/%2/%3%4.%5").arg(rootDir, backupDir, month.toString(dateFormat), backupExt, QString::number(n));
+}
+
+} // namespace storage
+
 
 //
 // Save
@@ -163,45 +190,107 @@ static void save(const LogModel &data, PitmArray &pitm)
     }
 }
 
-static void save(const Data &data, PitmObject &pitm)
+static void saveLog(const Data &data, PitmObject &pitm)
+{
+    PitmArray log;
+
+    save(data.log, log);
+    pitm[QLatin1String("log")] = log;
+}
+
+static bool isSameMonth(const QDate &d1, const QDate &d2)
+{
+    return d1.year() == d2.year() && d1.month() == d2.month();
+}
+
+static void saveMonth(const PitmArray &array, const QDate &date)
+{
+    QFile f(storage::monthFile(date));
+    f.open(QIODevice::WriteOnly);
+
+    PitmDocument saveDoc(array);
+
+    f.write(saveDoc.toPitm());
+    f.close();
+}
+
+static void saveLog(const Data &data)
+{
+    if(data.log.log.empty()) {
+        return;
+    }
+
+    QDate monthDate = data.log.log[0].date;
+    PitmArray monthArray;
+
+    for(const Transaction &t : data.log.log) {
+        if(!isSameMonth(t.date, monthDate)) {
+            saveMonth(monthArray, monthDate);
+            monthArray = PitmArray(); // clear
+            monthDate = t.date;
+        }
+
+        PitmObject obj;
+        save(t, obj);
+        monthArray.append(obj);
+    }
+
+    saveMonth(monthArray, monthDate); // most earlier month
+}
+
+static void saveHead(const Data &data, PitmObject &pitm)
 {
     PitmArray owners;
     PitmArray wallets;
     PitmArray inCategories;
     PitmArray outCategories;
-    PitmArray log;
 
     save(data.owners, owners);
     save(data.wallets, wallets);
     save(data.inCategories, inCategories);
     save(data.outCategories, outCategories);
-    save(data.log, log);
-
 
     pitm[QLatin1String("owners")] = owners;
     pitm[QLatin1String("wallets")] = wallets;
     pitm[QLatin1String("inCategories")] = inCategories;
     pitm[QLatin1String("outCategories")] = outCategories;
-    pitm[QLatin1String("log")] = log;
-
     pitm[QLatin1String("unanchored")] = data.log.unanchored;
 }
 
-static QByteArray save(const Data &data)
+void saveHead(const Data &data)
 {
+    QFile f(storage::headFile);
+    f.open(QIODevice::WriteOnly);
+
     PitmObject pitm;
-    save(data, pitm);
+    saveHead(data, pitm);
 
     PitmDocument saveDoc(pitm);
-    return saveDoc.toPitm();
+
+    f.write(saveDoc.toPitm());
+    f.close();
 }
 
-void save(const Data &data, const QString &fileName)
+void saveBackups()
 {
-    QFile f(fileName);
-    f.open(QIODevice::WriteOnly);
-    f.write(save(data));
-    f.close();
+    QDirIterator it(storage::rootDir, {QStringLiteral("*.pitm")} , QDir::Files);
+    while (it.hasNext()) {
+        it.next();
+        QFileInfo info = it.fileInfo();
+        QString backup = QString("%1/%2/%3").arg(info.path(), storage::backupDir, info.fileName());
+        aske::copyFileForced(it.filePath(), backup);
+    }
+}
+
+void save(const Data &data)
+{
+    // TODO: make proper multilevel backup
+    QDir().mkpath(QString("%1/%2").arg(storage::rootDir, storage::backupDir));
+
+    saveBackups();
+
+    saveHead(data);
+    saveLog(data);
 }
 
 //
@@ -424,11 +513,51 @@ static void load(Data &data, PitmObject pitm)
     data.loadCategoriesStatistics(monthBegin, today);
 }
 
-void load(Data &data, const QString &fileName)
+static void loadHead(Data &data, PitmObject pitm)
+{
+    load(data.owners, pitm[QLatin1String("owners")].toArray());
+    load(data.wallets, pitm[QLatin1String("wallets")].toArray(), data.owners);
+    load(data.inCategories, pitm[QLatin1String("inCategories")].toArray());
+    load(data.outCategories, pitm[QLatin1String("outCategories")].toArray());
+    data.log.unanchored = pitm[QLatin1String("unanchored")].toInt();
+}
+
+void loadMonths(Data &data)
+{
+
+
+}
+
+void loadHead(Data &data)
+{
+    QFileInfo f(storage::headFile);
+    if(!f.exists()) {
+        return;
+    }
+
+    QFile f(storage::headFile);
+    f.open(QIODevice::ReadOnly);
+    QByteArray bytes = f.readAll();
+    f.close();
+
+    PitmDocument loadDoc(PitmDocument::fromPitm(bytes));
+    PitmObject pitm = loadDoc.object();
+    loadHead(data, pitm);
+}
+
+void load(Data &data)
 {
     data.clear();
 
-    QFile f(fileName);
+    loadHead(data);
+    loadMonths(data);
+}
+
+/*void load(Data &data)
+{
+    data.clear();
+
+    QFile f("cashbook.pitm");
     f.open(QIODevice::ReadOnly);
     QByteArray bytes = f.readAll();
     f.close();
@@ -436,6 +565,6 @@ void load(Data &data, const QString &fileName)
     PitmDocument loadDoc(PitmDocument::fromPitm(bytes));
     PitmObject pitm = loadDoc.object();
     load(data, pitm);
-}
+}*/
 
 } // namespace cashbook

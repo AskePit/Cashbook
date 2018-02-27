@@ -15,11 +15,6 @@
 namespace cashbook
 {
 
-static const QString defaultDataFile {"cashbook.pitm"};
-static const QString defaultBackupFile1 {"backup/cashbook.backup.1"};
-static const QString defaultBackupFile2 {"backup/cashbook.backup.2"};
-static const QString defaultBackupFile3 {"backup/cashbook.backup.3"};
-
 static const QStringList months = {
     QObject::tr("Январь"),
     QObject::tr("Февраль"),
@@ -106,10 +101,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->ownersList->setModel(&m_data.owners);
     ui->logTable->setModel(&m_data.log);
 
-    QFileInfo f(defaultDataFile);
-    if(f.exists()) {
-        loadFile(defaultDataFile);
-    }
+    loadFile();
 
     ui->briefTable->setModel(&m_data.briefModel);
     for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
@@ -130,13 +122,9 @@ void extendColumn (View *view, int column, int pad) {
     view->setColumnWidth(column, view->columnWidth(column) + pad);
 }
 
-void MainWindow::loadFile(const QString &filename)
+void MainWindow::loadFile()
 {
-    if(filename.isEmpty()) {
-        return;
-    }
-
-    cashbook::load(m_data, filename);
+    cashbook::load(m_data);
 
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
     ui->dateTo->setDate(m_data.statistics.categoriesTo);
@@ -158,13 +146,9 @@ void MainWindow::loadFile(const QString &filename)
     extendColumn(ui->outCategoriesTree, CategoriesColumn::Name, pad);
 }
 
-void MainWindow::saveFile(const QString &filename)
+void MainWindow::saveFile()
 {
-    if(filename.isEmpty()) {
-        return;
-    }
-
-    cashbook::save(m_data, filename);
+    cashbook::save(m_data);
 }
 
 } // namespace cashbook
@@ -503,12 +487,12 @@ void cashbook::MainWindow::on_actionSave_triggered()
         return;
     }*/
 
-    QDir().mkpath("backup");
+    /*QDir().mkpath("backup");
     aske::copyFileForced(defaultBackupFile2, defaultBackupFile3);
     aske::copyFileForced(defaultBackupFile1, defaultBackupFile2);
-    aske::copyFileForced(defaultDataFile, defaultBackupFile1);
+    aske::copyFileForced(defaultDataFile, defaultBackupFile1);*/
 
-    saveFile(defaultDataFile);
+    saveFile();
     m_changed = false;
 }
 
@@ -517,7 +501,7 @@ void cashbook::MainWindow::on_actionOpen_triggered()
     QString filename =
                 QFileDialog::getOpenFileName(this, tr("Открыть файл"), "", tr("Json файлы (*.json)"));
 
-    loadFile(filename);
+    loadFile();
 }
 
 int callQuestionDialog(const QString &message, QWidget *parent)

@@ -74,8 +74,8 @@ private slots:
     void on_actionEditNote_triggered();
 
 private:
-    void loadFile(const QString &filename);
-    void saveFile(const QString &filename);
+    void loadFile();
+    void saveFile();
 
     void onActionStatementTriggered(Transaction::Type::t type);
 

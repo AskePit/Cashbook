@@ -8,8 +8,8 @@ namespace cashbook
 
 class Data;
 
-void save(const Data &data, const QString &fileName);
-void load(Data &data, const QString &fileName);
+void save(const Data &data);
+void load(Data &data);
 
 } // namespace cashbook
 
