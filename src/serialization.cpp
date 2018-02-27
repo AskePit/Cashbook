@@ -203,7 +203,7 @@ static bool isSameMonth(const QDate &d1, const QDate &d2)
     return d1.year() == d2.year() && d1.month() == d2.month();
 }
 
-static void saveMonth(const PitmArray &array, const QDate &date)
+static void saveMonth(PitmArray array, const QDate &date)
 {
     QFile f(storage::monthFile(date));
     f.open(QIODevice::WriteOnly);
@@ -257,7 +257,7 @@ static void saveHead(const Data &data, PitmObject &pitm)
     pitm[QLatin1String("unanchored")] = data.log.unanchored;
 }
 
-void saveHead(const Data &data)
+static void saveHead(const Data &data)
 {
     QFile f(storage::headFile);
     f.open(QIODevice::WriteOnly);
@@ -271,9 +271,9 @@ void saveHead(const Data &data)
     f.close();
 }
 
-void saveBackups()
+static void saveBackups()
 {
-    QDirIterator it(storage::rootDir, {QStringLiteral("*.pitm")} , QDir::Files);
+    QDirIterator it(storage::rootDir, {QStringLiteral("*")+storage::ext}, QDir::Files);
     while (it.hasNext()) {
         it.next();
         QFileInfo info = it.fileInfo();
@@ -498,19 +498,9 @@ static void load(LogModel &logModel, PitmArray pitm, Data &data){
     }
 }
 
-static void load(Data &data, PitmObject pitm)
+static void loadMonth(Data &data, PitmArray pitm)
 {
-    load(data.owners, pitm[QLatin1String("owners")].toArray());
-    load(data.wallets, pitm[QLatin1String("wallets")].toArray(), data.owners);
-    load(data.inCategories, pitm[QLatin1String("inCategories")].toArray());
-    load(data.outCategories, pitm[QLatin1String("outCategories")].toArray());
-    load(data.log, pitm[QLatin1String("log")].toArray(), data);
-
-    data.log.unanchored = pitm[QLatin1String("unanchored")].toInt();
-
-    QDate monthBegin(today.year(), today.month(), 1);
-
-    data.loadCategoriesStatistics(monthBegin, today);
+    load(data.log, pitm, data);
 }
 
 static void loadHead(Data &data, PitmObject pitm)
@@ -522,16 +512,30 @@ static void loadHead(Data &data, PitmObject pitm)
     data.log.unanchored = pitm[QLatin1String("unanchored")].toInt();
 }
 
-void loadMonths(Data &data)
+static void loadLog(Data &data)
 {
+    QDirIterator it(storage::rootDir, {QStringLiteral("*")+storage::ext}, QDir::Files);
+    while (it.hasNext()) {
+        it.next();
 
+        QFile f(it.filePath());
+        f.open(QIODevice::ReadOnly);
+        QByteArray bytes = f.readAll();
+        f.close();
 
+        PitmDocument loadDoc(PitmDocument::fromPitm(bytes));
+        PitmArray pitm = loadDoc.array();
+        loadMonth(data, pitm);
+    }
+
+    QDate monthBegin(today.year(), today.month(), 1);
+    data.loadCategoriesStatistics(monthBegin, today);
 }
 
-void loadHead(Data &data)
+static void loadHead(Data &data)
 {
-    QFileInfo f(storage::headFile);
-    if(!f.exists()) {
+    QFileInfo info(storage::headFile);
+    if(!info.exists()) {
         return;
     }
 
@@ -550,21 +554,7 @@ void load(Data &data)
     data.clear();
 
     loadHead(data);
-    loadMonths(data);
+    loadLog(data);
 }
-
-/*void load(Data &data)
-{
-    data.clear();
-
-    QFile f("cashbook.pitm");
-    f.open(QIODevice::ReadOnly);
-    QByteArray bytes = f.readAll();
-    f.close();
-
-    PitmDocument loadDoc(PitmDocument::fromPitm(bytes));
-    PitmObject pitm = loadDoc.object();
-    load(data, pitm);
-}*/
 
 } // namespace cashbook
