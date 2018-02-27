@@ -482,7 +482,7 @@ static void load(LogModel &logModel, PitmArray pitm, Data &data){
             Month month(t.date);
             logModel.statistics.brief[month].common.received += t.amount;
             const auto &archNode = t.category;
-            if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+            if(archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular) {
                 logModel.statistics.brief[month].regular.received += t.amount;
             }
         }
@@ -491,7 +491,7 @@ static void load(LogModel &logModel, PitmArray pitm, Data &data){
             Month month(t.date);
             logModel.statistics.brief[month].common.spent += t.amount;
             const auto &archNode = t.category;
-            if(archNode.isValidPointer() && archNode.toPointer()->data.regular) {
+            if(archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular) {
                 logModel.statistics.brief[month].regular.spent += t.amount;
             }
         }
