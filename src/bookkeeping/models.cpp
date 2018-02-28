@@ -7,6 +7,7 @@
 #include <stack>
 #include <QComboBox>
 #include <QCheckBox>
+#include <QDateEdit>
 #include <QApplication>
 
 namespace cashbook
@@ -1132,7 +1133,6 @@ void BoolDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, cons
 
 
 static const QSet<LogColumn::t> defaultColumns = {
-    LogColumn::Date,
     LogColumn::Money,
     LogColumn::Note,
 };
@@ -1157,8 +1157,26 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
     int col = index.column();
 
     switch(col) {
+        case LogColumn::Date: {
+            QDate min;
+            QDate max {today};
+            if(as<int>(m_data.log.log.size()) > index.row()+1) {
+                min = m_data.log.log[index.row()+1].date;
+            }
+
+            if(min == max) {
+                return nullptr;
+            }
+
+            QDateEdit *edit = new QDateEdit(parent);
+            edit->setMinimumDate(min);
+            edit->setMaximumDate(max);
+            edit->setCalendarPopup(true);
+            return edit;
+        } break;
+
         case LogColumn::Type: {
-            QComboBox* box = new QComboBox(parent);
+            QComboBox *box = new QComboBox(parent);
             for(auto t : Transaction::Type::enumerate()) {
                 box->addItem(Transaction::Type::toString(t), as<int>(t));
             }
@@ -1209,8 +1227,15 @@ QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIt
 
 void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
+    // Date case
+    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
+        QDate date = index.data(Qt::EditRole).toDate();
+        edit->setDate(date);
+        return;
+    }
+
     // Transaction type case
-    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
+    if (QComboBox *box = qobject_cast<QComboBox*>(editor)) {
         QVariant value = index.data(Qt::EditRole);
         int i = box->findData(value);
         if(i >= 0) {
@@ -1255,6 +1280,12 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
 
 void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
+    // Date case
+    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
+        model->setData(index, edit->date(), Qt::EditRole);
+        return;
+    }
+
     // Transaction type case
     if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
         model->setData(index, box->currentData(), Qt::EditRole);
