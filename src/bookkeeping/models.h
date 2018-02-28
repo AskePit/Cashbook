@@ -309,6 +309,50 @@ public:
     };
 };
 
+class PlansColumn
+{
+public:
+    enum t {
+        Name = 0,
+        Type,
+        Category,
+        Money,
+        Date,
+
+        Count
+    };
+};
+
+class PlansModel : public QAbstractTableModel
+{
+    Q_OBJECT
+
+public:
+    QList<PlannedItem> plans;
+
+    PlansModel(QObject *parent = 0);
+    ~PlansModel();
+
+    QVariant data(const QModelIndex &index, int role) const override;
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+
+    bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+
+    void clear() {
+        emit beginResetModel();
+        plans.clear();
+        emit endResetModel();
+    }
+};
+
 class BriefRow
 {
 public:

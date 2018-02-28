@@ -204,6 +204,15 @@ struct Transaction
     ArchNode<Wallet> to;
 };
 
+struct PlannedItem
+{
+    QString name;
+    Transaction::Type::t type {Transaction::Type::Out};
+    ArchNode<Category> category;
+    Money amount;
+    QDate date;
+};
+
 const QString pathConcat {"/"};
 
 template <class T>

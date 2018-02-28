@@ -944,6 +944,197 @@ bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &source
 }
 
 //
+// Plans
+//
+PlansModel::PlansModel(QObject *parent)
+    : QAbstractTableModel(parent)
+{}
+
+PlansModel::~PlansModel()
+{}
+
+/*template <class T>
+static QVariant archNodeData(const ArchNode<T> &archNode, int role)
+{
+    if(role == Qt::DisplayRole) {
+        if(archNode.isValidPointer()) {
+            const Node<T> *node = archNode.toPointer();
+            return pathToShortString(node);
+        } else {
+            return archNode.toString();
+        }
+    } else { // Qt::EditRole
+        return archNode;
+    }
+}*/
+
+QVariant PlansModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid()) {
+        return QVariant();
+    }
+
+    if(role == Qt::ForegroundRole) {
+        return QColor(Qt::black);
+    }
+
+    if (role != Qt::DisplayRole && role != Qt::EditRole) {
+        return QVariant();
+    }
+
+    const PlannedItem &item = plans[index.row()];
+
+    switch(index.column())
+    {
+        case PlansColumn::Date: {
+            if(role == Qt::DisplayRole) {
+                return item.date.toString("dd.MM.yy");
+            } else {
+                return item.date;
+            }
+        }
+        case PlansColumn::Type: {
+            if(role == Qt::DisplayRole) {
+                return Transaction::Type::toString(item.type);
+            } else {
+                return as<int>(item.type);
+            }
+        } break;
+        case PlansColumn::Category: {
+            return archNodeData(item.category, role);
+        } break;
+        case PlansColumn::Money: {
+            if(role == Qt::DisplayRole) {
+                return formatMoney(item.amount);
+            } else { // Qt::EditRole
+                return as<double>(item.amount);
+            }
+        }
+        case PlansColumn::Name: return item.name;
+    }
+
+    return QVariant();
+}
+
+QVariant PlansModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        switch(section)
+        {
+            case PlansColumn::Date: return tr("Дата");
+            case PlansColumn::Type: return tr("Тип");
+            case PlansColumn::Category: return tr("Категория");
+            case PlansColumn::Money: return tr("Сумма");
+            case PlansColumn::Name: return tr("Название");
+        }
+    }
+
+    return QVariant();
+}
+
+int PlansModel::rowCount(const QModelIndex &parent) const
+{
+    return common::list::rowCount(plans, parent);
+}
+
+int PlansModel::columnCount(const QModelIndex &parent) const
+{
+    UNUSED(parent);
+    return PlansColumn::Count;
+}
+
+static const QSet<PlansColumn::t> planArchNodeColumns = {
+    PlansColumn::Category,
+};
+
+Qt::ItemFlags PlansModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid()) {
+        return 0;
+    }
+
+    auto column = as<PlansColumn::t>(index.column());
+
+    if(!planArchNodeColumns.contains(column)) {
+        return common::flags(this, index);
+    } else {
+        const PlannedItem &item = plans[index.row()];
+        switch(column) {
+            case PlansColumn::Category: {
+                if(item.type == Transaction::Type::Transfer) {
+                    return Qt::NoItemFlags;
+                }
+
+                return archNodeFlags(this, index, item.category);
+            }
+        }
+    }
+
+    return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
+}
+
+bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (role != Qt::EditRole) {
+        return false;
+    }
+
+    PlannedItem &item = plans[index.row()];
+
+    switch(index.column())
+    {
+        case PlansColumn::Date: item.date = value.toDate(); break;
+        case PlansColumn::Type: {
+            auto oldType = item.type;
+            item.type = as<Transaction::Type::t>(value.toInt());
+            if(item.type != oldType) {
+                item.category.setNull();
+                emit dataChanged(
+                  createIndex(index.row(), PlansColumn::Category),
+                  createIndex(index.row(), PlansColumn::Category),
+                  {Qt::DisplayRole, Qt::EditRole}
+                );
+            }
+        } break;
+        case PlansColumn::Category: {
+            if(!value.isNull()) {
+                item.category = value;
+            }
+        } break;
+        case PlansColumn::Money: item.amount = value.toDouble(); break;
+        case PlansColumn::Name: item.name = value.toString(); break;
+    }
+
+    emit dataChanged(index, index);
+
+    return true;
+}
+
+bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
+{
+    // always assume that rows == 1
+
+    UNUSED(parent);
+    beginInsertRows(parent, position, position + rows - 1);
+    PlannedItem item;
+    item.date = QDate::currentDate();
+    plans.insert(position, item);
+    endInsertRows();
+    return true;
+}
+
+bool PlansModel::removeRows(int position, int rows, const QModelIndex &parent)
+{
+    // always assume that rows == 1
+
+    UNUSED(parent);
+    beginRemoveRows(parent, position, position + rows - 1);
+    plans.removeAt(position);
+    endRemoveRows();
+    return true;
+}
+
+//
 // Brief
 //
 

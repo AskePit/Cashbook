@@ -531,7 +531,8 @@ public:
     enum t {
         Main = 0,
         Categories,
-        Users
+        Users,
+        Plans
     };
 };
 
@@ -548,6 +549,11 @@ void cashbook::MainWindow::on_categoriesButton_clicked()
 void cashbook::MainWindow::on_usersButton_clicked()
 {
     ui->stackedWidget->setCurrentIndex(Tab::Users);
+}
+
+void cashbook::MainWindow::on_plansButton_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(Tab::Plans);
 }
 
 void cashbook::MainWindow::on_thisMonthButton_clicked()
