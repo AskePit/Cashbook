@@ -8,7 +8,7 @@ namespace cashbook
 
 class Data;
 
-void save(const Data &data);
+void save(Data &data);
 void load(Data &data);
 
 } // namespace cashbook

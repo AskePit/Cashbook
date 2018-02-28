@@ -9,6 +9,7 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QItemDelegate>
+#include <set>
 
 class QTreeView;
 
@@ -250,6 +251,7 @@ public:
     aske::rvector<Transaction> log;
     Statistics &statistics;
     int unanchored {0};
+    std::set<Month> changedMonths;
 
     LogModel(Statistics &statistics, QObject *parent = 0);
     ~LogModel();

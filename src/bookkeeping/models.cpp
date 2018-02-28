@@ -860,6 +860,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
     }
 
     emit dataChanged(index, index);
+    changedMonths.insert(Month(t.date));
 
     return true;
 }
@@ -872,24 +873,32 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     t.date = QDate::currentDate();
     log.insert(position, rows, t);
     unanchored += rows;
+    changedMonths.insert(Month(t.date));
     endInsertRows();
     return true;
 }
 
 bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
+    // always assume that rows == 1
+
     UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
+
+    changedMonths.insert(Month(log[position].date));
     log.remove(position, rows);
     unanchored -= 1;
+
     endRemoveRows();
     return true;
 }
 
 void LogModel::updateNote(int row, const QString &note)
 {
-    log[row].note = note;
+    Transaction &t = log[row];
+    t.note = note;
 
+    changedMonths.insert(Month(t.date));
     QModelIndex i = index(row, LogColumn::Note);
     emit dataChanged(i, i, {Qt::DisplayRole});
 }

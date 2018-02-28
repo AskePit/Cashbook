@@ -193,16 +193,12 @@ static void saveLog(const Data &data, PitmObject &pitm)
     pitm[QLatin1String("log")] = log;
 }
 
-static bool isSameMonth(const QDate &d1, const QDate &d2)
-{
-    return d1.year() == d2.year() && d1.month() == d2.month();
-}
-
 static QString backupFile(const QString &originalFile, int number)
 {
     QFileInfo info(originalFile);
     QString filePath = info.path();
-    QString fileBase = info.fileName().left(originalFile.lastIndexOf('.'));
+    QString fileName = info.fileName();
+    QString fileBase = fileName.left(fileName.lastIndexOf('.'));
 
     return QString("%1/%2/%3%4.%5").arg(filePath, storage::backupDir, fileBase, storage::backupExt, QString::number(number));
 }
@@ -234,28 +230,37 @@ static void saveFile(const QString &fileName, ObjectOrArray data)
     f.close();
 }
 
-static void saveLog(const Data &data)
+static void saveLog(Data &data)
 {
-    if(data.log.log.empty()) {
+    const auto &log = data.log.log;
+    auto &changedMonths = data.log.changedMonths;
+
+    if(log.empty()) {
         return;
     }
 
-    QDate monthDate = data.log.log[0].date;
-    PitmArray monthArray;
-
-    for(const Transaction &t : data.log.log) {
-        if(!isSameMonth(t.date, monthDate)) {
-            saveFile(storage::monthFile(monthDate), monthArray);
-            monthArray = PitmArray(); // clear
-            monthDate = t.date;
-        }
-
-        PitmObject obj;
-        save(t, obj);
-        monthArray.append(obj);
+    if(changedMonths.empty()) {
+        return;
     }
 
-    saveFile(storage::monthFile(monthDate), monthArray); // most earlier month
+    for(const Month &month : changedMonths) {
+        PitmArray monthArray;
+        for(const Transaction &t : log) {
+            Month tMonth {t.date};
+
+            if(tMonth != month) {
+                continue;
+            }
+
+            PitmObject obj;
+            save(t, obj);
+            monthArray.append(obj);
+        }
+
+        saveFile(storage::monthFile(month.toDate()), monthArray);
+    }
+
+    changedMonths.clear();
 }
 
 static void saveHead(const Data &data, PitmObject &pitm)
@@ -285,7 +290,7 @@ static void saveHead(const Data &data)
     saveFile(storage::headFile, pitm);
 }
 
-void save(const Data &data)
+void save(Data &data)
 {
     // make sure that we have existing root and backup directories (i.e. "data/backup")
     QDir().mkpath(QString("%1/%2").arg(storage::rootDir, storage::backupDir));

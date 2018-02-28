@@ -12,23 +12,6 @@ class QDate;
 namespace cashbook
 {
 
-struct Month
-{
-    Month(const QDate &date);
-
-    int year {0};
-    int month {0};
-
-    bool operator<(const Month &other);
-    QString toString() const;
-
-private:
-    static QString monthToString(int m);
-};
-
-bool operator<(const Month &m1, const Month &m2);
-bool operator>(const Month &m1, const Month &m2);
-
 struct SpentReceived
 {
     Money spent;
