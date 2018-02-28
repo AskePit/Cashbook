@@ -973,7 +973,10 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
     int col = index.column();
     int realRow = index.row()/BriefRow::Count;
     BriefRow::t rowType = as<BriefRow::t>(index.row()%BriefRow::Count);
-    Month month {today.addMonths(-1*realRow)};
+
+    const auto &monthIt = std::next(brief.begin(), realRow);
+    const auto &month = monthIt->first;
+    const auto &record = monthIt->second;
 
     bool header = index.row() == BriefRow::Space2*1;
 
@@ -988,7 +991,7 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                 }
             } break;
             case BriefColumn::Common: {
-                const auto &common = brief.at(month).common;
+                const auto &common = record.common;
                 switch(rowType) {
                     default: return QVariant();
                     case BriefRow::Received: return "▲ " + formatMoney(common.received);
@@ -1000,7 +1003,7 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                     return tr("Регулярные");
                 }
 
-                const auto &regular = brief.at(month).regular;
+                const auto &regular = record.regular;
 
                 switch(rowType) {
                     default: return QVariant();
@@ -1013,8 +1016,8 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                     return tr("Нерегулярные");
                 }
 
-                const auto &common = brief.at(month).common;
-                const auto &regular = brief.at(month).regular;
+                const auto &common = record.common;
+                const auto &regular = record.regular;
                 switch(rowType) {
                     default: return QVariant();
                     case BriefRow::Received: return "+ " + formatMoney(common.received - regular.received);

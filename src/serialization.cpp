@@ -24,14 +24,9 @@ static const QString rootDir        {"data"};
 static const QString backupDir      {"backup"};
 static const QString headName       {"_head"};
 static const QString headFile       { QString("%1/%2%3").arg(rootDir, headName, ext) };
-static const QString headBackupFile { QString("%1/%2/%3%4").arg(rootDir, backupDir, headName, backupExt) };
 
 static QString monthFile(const QDate &month) {
     return QString("%1/%2%3").arg(rootDir, month.toString(dateFormat), ext);
-}
-
-static QString monthBackupFile(const QDate &month, int n) {
-    return QString("%1/%2/%3%4.%5").arg(rootDir, backupDir, month.toString(dateFormat), backupExt, QString::number(n));
 }
 
 } // namespace storage
@@ -203,13 +198,38 @@ static bool isSameMonth(const QDate &d1, const QDate &d2)
     return d1.year() == d2.year() && d1.month() == d2.month();
 }
 
-static void saveMonth(PitmArray array, const QDate &date)
+static QString backupFile(const QString &originalFile, int number)
 {
-    QFile f(storage::monthFile(date));
+    QFileInfo info(originalFile);
+    QString filePath = info.path();
+    QString fileBase = info.fileName().left(originalFile.lastIndexOf('.'));
+
+    return QString("%1/%2/%3%4.%5").arg(filePath, storage::backupDir, fileBase, storage::backupExt, QString::number(number));
+}
+
+template <class ObjectOrArray>
+static void saveFile(const QString &fileName, ObjectOrArray data)
+{
+    // 1. backup file
+
+    // if storage::backupCount == 3 then
+    // file.backup.2 -> file.backup.3
+    // file.backup.1 -> file.backup.2
+    for(int i = storage::backupCount; i>=2; --i) {
+        QString from { backupFile(fileName, i-1) };
+        QString to   { backupFile(fileName, i)   };
+        aske::copyFileForced(from, to);
+    }
+
+    // file.pitm -> file.backup.1
+    if(storage::backupCount >= 1) {
+        aske::copyFileForced(fileName, backupFile(fileName, 1));
+    }
+
+    // 2. save file
+    PitmDocument saveDoc(data);
+    QFile f(fileName);
     f.open(QIODevice::WriteOnly);
-
-    PitmDocument saveDoc(array);
-
     f.write(saveDoc.toPitm());
     f.close();
 }
@@ -225,7 +245,7 @@ static void saveLog(const Data &data)
 
     for(const Transaction &t : data.log.log) {
         if(!isSameMonth(t.date, monthDate)) {
-            saveMonth(monthArray, monthDate);
+            saveFile(storage::monthFile(monthDate), monthArray);
             monthArray = PitmArray(); // clear
             monthDate = t.date;
         }
@@ -235,7 +255,7 @@ static void saveLog(const Data &data)
         monthArray.append(obj);
     }
 
-    saveMonth(monthArray, monthDate); // most earlier month
+    saveFile(storage::monthFile(monthDate), monthArray); // most earlier month
 }
 
 static void saveHead(const Data &data, PitmObject &pitm)
@@ -259,35 +279,16 @@ static void saveHead(const Data &data, PitmObject &pitm)
 
 static void saveHead(const Data &data)
 {
-    QFile f(storage::headFile);
-    f.open(QIODevice::WriteOnly);
-
     PitmObject pitm;
     saveHead(data, pitm);
 
-    PitmDocument saveDoc(pitm);
-
-    f.write(saveDoc.toPitm());
-    f.close();
-}
-
-static void saveBackups()
-{
-    QDirIterator it(storage::rootDir, {QStringLiteral("*")+storage::ext}, QDir::Files);
-    while (it.hasNext()) {
-        it.next();
-        QFileInfo info = it.fileInfo();
-        QString backup = QString("%1/%2/%3").arg(info.path(), storage::backupDir, info.fileName());
-        aske::copyFileForced(it.filePath(), backup);
-    }
+    saveFile(storage::headFile, pitm);
 }
 
 void save(const Data &data)
 {
-    // TODO: make proper multilevel backup
+    // make sure that we have existing root and backup directories (i.e. "data/backup")
     QDir().mkpath(QString("%1/%2").arg(storage::rootDir, storage::backupDir));
-
-    saveBackups();
 
     saveHead(data);
     saveLog(data);
