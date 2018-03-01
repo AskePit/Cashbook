@@ -7,5 +7,7 @@
         <file>mainTab_active.png</file>
         <file>categoriesTab_active.png</file>
         <file>usersTab_active.png</file>
+        <file>plansTab.png</file>
+        <file>plansTab_active.png</file>
     </qresource>
 </RCC>

@@ -412,14 +412,14 @@ QToolButton:hover:!checked {
         </property>
         <property name="icon">
          <iconset resource="resources/resources.qrc">
-          <normaloff>:/mainTab.png</normaloff>
-          <normalon>:/mainTab_active.png</normalon>
-          <activeon>:/mainTab_active.png</activeon>:/mainTab.png</iconset>
+          <normaloff>:/plansTab.png</normaloff>
+          <normalon>:/plansTab_active.png</normalon>
+          <activeon>:/plansTab_active.png</activeon>:/plansTab.png</iconset>
         </property>
         <property name="iconSize">
          <size>
-          <width>28</width>
-          <height>28</height>
+          <width>32</width>
+          <height>32</height>
          </size>
         </property>
         <property name="checkable">
@@ -454,7 +454,7 @@ QToolButton:hover:!checked {
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <layout class="QVBoxLayout" name="verticalLayout_6">
