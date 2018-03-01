@@ -9,5 +9,7 @@
         <file>usersTab_active.png</file>
         <file>plansTab.png</file>
         <file>plansTab_active.png</file>
+        <file>statistics.png</file>
+        <file>statistics_active.png</file>
     </qresource>
 </RCC>

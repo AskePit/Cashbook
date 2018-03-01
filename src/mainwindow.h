@@ -62,6 +62,7 @@ private slots:
 
     void on_mainButton_clicked();
     void on_categoriesButton_clicked();
+    void on_statisticsButton_clicked();
     void on_usersButton_clicked();
     void on_plansButton_clicked();
 

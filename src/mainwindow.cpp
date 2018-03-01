@@ -30,6 +30,25 @@ static const QStringList months = {
     QObject::tr("Декабрь"),
 };
 
+template <class View>
+static void extendColumn (View *view, int column, int pad) {
+    view->setColumnWidth(column, view->columnWidth(column) + pad);
+}
+
+template <class View>
+static void resizeContentsWithPadding(View *view, int columns, int pad) {
+    view->resizeColumnsToContents();
+    for(int i = 0; i<columns; ++i) {
+        extendColumn(view, i, pad);
+    }
+}
+
+template <class View>
+static void resizeCellWithPadding(View *view, int column, int pad) {
+    view->resizeColumnToContents(column);
+    extendColumn(view, column, pad);
+}
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -112,18 +131,12 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
     }
 
-    QHeaderView *headerView = ui->briefTable->horizontalHeader();
-    headerView->setSectionResizeMode(QHeaderView::Stretch);
+    resizeContentsWithPadding(ui->briefTable, BriefColumn::Count, 30);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-template <class View>
-void extendColumn (View *view, int column, int pad) {
-    view->setColumnWidth(column, view->columnWidth(column) + pad);
 }
 
 void MainWindow::loadFile()
@@ -133,26 +146,15 @@ void MainWindow::loadFile()
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
     ui->dateTo->setDate(m_data.statistics.categoriesTo);
 
-    ui->logTable->resizeColumnsToContents();
-    ui->plansTable->resizeColumnsToContents();
-
     int pad = 17;
-
-    for(int i = 0; i<LogColumn::Count; ++i) {
-        extendColumn(ui->logTable, i, pad);
-    }
-
-    for(int i = 0; i<PlansColumn::Count; ++i) {
-        extendColumn(ui->plansTable, i, pad);
-    }
+    resizeContentsWithPadding(ui->logTable, LogColumn::Count, pad);
+    resizeContentsWithPadding(ui->plansTable, PlansColumn::Count, pad);
 
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
-    ui->inCategoriesTree->resizeColumnToContents(CategoriesColumn::Name);
-    ui->outCategoriesTree->resizeColumnToContents(CategoriesColumn::Name);
 
     pad = 25;
-    extendColumn(ui->inCategoriesTree, CategoriesColumn::Name, pad);
-    extendColumn(ui->outCategoriesTree, CategoriesColumn::Name, pad);
+    resizeCellWithPadding(ui->inCategoriesTree, CategoriesColumn::Name, pad);
+    resizeCellWithPadding(ui->outCategoriesTree, CategoriesColumn::Name, pad);
 }
 
 void MainWindow::saveFile()
@@ -582,6 +584,7 @@ public:
     enum t {
         Main = 0,
         Categories,
+        Statistics,
         Users,
         Plans
     };
@@ -595,6 +598,11 @@ void cashbook::MainWindow::on_mainButton_clicked()
 void cashbook::MainWindow::on_categoriesButton_clicked()
 {
     ui->stackedWidget->setCurrentIndex(Tab::Categories);
+}
+
+void cashbook::MainWindow::on_statisticsButton_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(Tab::Statistics);
 }
 
 void cashbook::MainWindow::on_usersButton_clicked()
