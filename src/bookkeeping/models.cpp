@@ -9,6 +9,7 @@
 #include <QCheckBox>
 #include <QDateEdit>
 #include <QApplication>
+#include <QPainter>
 
 namespace cashbook
 {
@@ -274,7 +275,7 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
     if(index.column() == CategoriesColumn::Statistics) {
-        return Qt::NoItemFlags;
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     }
 
     return common::flags(this, index);
@@ -700,7 +701,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             } else {
                 return t.date;
             }
-        }
+        } break;
         case LogColumn::Type: {
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(t.type);
@@ -953,21 +954,6 @@ PlansModel::PlansModel(QObject *parent)
 PlansModel::~PlansModel()
 {}
 
-/*template <class T>
-static QVariant archNodeData(const ArchNode<T> &archNode, int role)
-{
-    if(role == Qt::DisplayRole) {
-        if(archNode.isValidPointer()) {
-            const Node<T> *node = archNode.toPointer();
-            return pathToShortString(node);
-        } else {
-            return archNode.toString();
-        }
-    } else { // Qt::EditRole
-        return archNode;
-    }
-}*/
-
 QVariant PlansModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) {
@@ -986,13 +972,7 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
 
     switch(index.column())
     {
-        case PlansColumn::Date: {
-            if(role == Qt::DisplayRole) {
-                return item.date.toString("dd.MM.yy");
-            } else {
-                return item.date;
-            }
-        }
+        case PlansColumn::Name: return item.name;
         case PlansColumn::Type: {
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(item.type);
@@ -1009,8 +989,14 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
             } else { // Qt::EditRole
                 return as<double>(item.amount);
             }
+        } break;
+        case PlansColumn::Date: {
+            if(role == Qt::DisplayRole) {
+                return item.date.toString("dd.MM.yy");
+            } else {
+                return item.date;
+            }
         }
-        case PlansColumn::Name: return item.name;
     }
 
     return QVariant();
@@ -1021,11 +1007,11 @@ QVariant PlansModel::headerData(int section, Qt::Orientation orientation, int ro
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch(section)
         {
-            case PlansColumn::Date: return tr("Дата");
+            case PlansColumn::Name: return tr("Название");
             case PlansColumn::Type: return tr("Тип");
             case PlansColumn::Category: return tr("Категория");
             case PlansColumn::Money: return tr("Сумма");
-            case PlansColumn::Name: return tr("Название");
+            case PlansColumn::Date: return tr("Дата");
         }
     }
 
@@ -1083,7 +1069,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
     switch(index.column())
     {
-        case PlansColumn::Date: item.date = value.toDate(); break;
+        case PlansColumn::Name: item.name = value.toString(); break;
         case PlansColumn::Type: {
             auto oldType = item.type;
             item.type = as<Transaction::Type::t>(value.toInt());
@@ -1102,7 +1088,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
             }
         } break;
         case PlansColumn::Money: item.amount = value.toDouble(); break;
-        case PlansColumn::Name: item.name = value.toString(); break;
+        case PlansColumn::Date: item.date = value.toDate(); break;
     }
 
     emit dataChanged(index, index);
@@ -1131,6 +1117,21 @@ bool PlansModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     plans.removeAt(position);
     endRemoveRows();
+    return true;
+}
+
+bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
+{
+    if(!beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild)) {
+        return false;
+    }
+
+    bool down = sourceRow < destinationChild;
+    int shift = as<int>(down);
+    plans.move(sourceRow, destinationChild - shift);
+
+    endMoveRows();
+
     return true;
 }
 
@@ -1208,8 +1209,8 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
 
                 switch(rowType) {
                     default: return QVariant();
-                    case BriefRow::Received: return "= " + formatMoney(regular.received);
-                    case BriefRow::Spent: return "= " + formatMoney(regular.spent);
+                    case BriefRow::Received: return formatMoney(regular.received);
+                    case BriefRow::Spent: return formatMoney(regular.spent);
                 }
             } break;
             case BriefColumn::Nonregular: {
@@ -1221,8 +1222,8 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                 const auto &regular = record.regular;
                 switch(rowType) {
                     default: return QVariant();
-                    case BriefRow::Received: return "+ " + formatMoney(common.received - regular.received);
-                    case BriefRow::Spent: return "+ " + formatMoney(common.spent - regular.spent);
+                    case BriefRow::Received: return formatMoney(common.received - regular.received);
+                    case BriefRow::Spent: return formatMoney(common.spent - regular.spent);
                 }
             }
         }
@@ -1289,7 +1290,8 @@ BoolDelegate::~BoolDelegate()
 void BoolDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     if(!index.data().isValid()) {
-        return QItemDelegate::paint(painter, option, index);
+        QItemDelegate::paint(painter, option, index);
+        return;
     }
 
     QStyleOptionButton style;
@@ -1298,7 +1300,9 @@ void BoolDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     style.direction = QApplication::layoutDirection();
     style.rect = option.rect;
 
-    QApplication::style()->drawControl(QStyle::CE_CheckBox, &style, painter);
+    if (option.state & QStyle::State_Selected) {
+        painter->fillRect(option.rect, option.palette.highlight());
+    }
     QApplication::style()->drawControl(QStyle::CE_CheckBox, &style, painter);
 }
 
@@ -1524,6 +1528,152 @@ bool LogItemDelegate::eventFilter(QObject *object, QEvent *event)
     NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(object);
 
     NodeButtonState state {cat ? cat->state() : wal ? wal->state() : NodeButtonState::Folded};
+
+    if(state == NodeButtonState::Expanded && event->type() == QEvent::FocusOut) { // for expaned case we do not want to close editor
+        return true;
+    }
+
+    return QStyledItemDelegate::eventFilter(object, event);
+}
+
+static const QSet<PlansColumn::t> defaultPlanColumns = {
+    PlansColumn::Name,
+    PlansColumn::Money,
+};
+
+PlannedItemDelegate::PlannedItemDelegate(Data &data, QObject* parent)
+    : QStyledItemDelegate(parent)
+    , m_data(data)
+{}
+
+PlannedItemDelegate::~PlannedItemDelegate()
+{}
+
+QWidget* PlannedItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    auto column = as<PlansColumn::t>(index.column());
+    if (defaultPlanColumns.contains(column)) {
+        return QStyledItemDelegate::createEditor(parent, option, index);
+    }
+
+    const PlannedItem &item = m_data.plans.plans[index.row()];
+
+    int col = index.column();
+
+    switch(col) {
+        case PlansColumn::Date: {
+            QDateEdit *edit = new QDateEdit(parent);
+            edit->setCalendarPopup(true);
+            return edit;
+        } break;
+
+        case PlansColumn::Type: {
+            QComboBox *box = new QComboBox(parent);
+            for(auto t : Transaction::Type::enumerate()) {
+                box->addItem(Transaction::Type::toString(t), as<int>(t));
+            }
+            return box;
+        } break;
+
+        case PlansColumn::Category: {
+            if(item.type == Transaction::Type::Transfer) {
+                return nullptr;
+            }
+
+            CategoriesModel &categories =
+                    item.type == Transaction::Type::In ?
+                        m_data.inCategories :
+                        m_data.outCategories;
+
+            NodeButton<Category> *button = new NodeButton<Category>(parent);
+            connect(button, &QPushButton::clicked, [=, &categories]() {
+                button->setState(NodeButtonState::Expanded);
+                QTreeView *view = new PopupTree<Category>(&categories, button, parent);
+                UNUSED(view);
+            });
+            return button;
+
+        } break;
+    }
+
+    // should not reach this code, but just to be sure
+    return QStyledItemDelegate::createEditor(parent, option, index);
+}
+
+void PlannedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+    // Date case
+    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
+        QDate date = index.data(Qt::EditRole).toDate();
+        edit->setDate(date);
+        return;
+    }
+
+    // Transaction type case
+    if (QComboBox *box = qobject_cast<QComboBox*>(editor)) {
+        QVariant value = index.data(Qt::EditRole);
+        int i = box->findData(value);
+        if(i >= 0) {
+            box->setCurrentIndex(i);
+        }
+        return;
+    }
+
+    // trees case
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
+
+    QVariant value = index.data(Qt::EditRole);
+
+    // Categories tree
+    if(cat) {
+       const ArchNode<Category> archNode = value;
+       if(!archNode.isValidPointer()) {
+           QStyledItemDelegate::setEditorData(editor, index);
+           return;
+       }
+
+       const Node<Category> *node = archNode.toPointer();
+       cat->setNode(node);
+       return;
+    }
+
+    QStyledItemDelegate::setEditorData(editor, index);
+}
+
+void PlannedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+    // Date case
+    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
+        model->setData(index, edit->date(), Qt::EditRole);
+        return;
+    }
+
+    // Transaction type case
+    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
+        model->setData(index, box->currentData(), Qt::EditRole);
+        return;
+    }
+
+    // trees case
+    int col = index.column();
+    switch(col) {
+        // Categories tree
+        case PlansColumn::Category: {
+            if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
+                model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
+                return;
+            }
+
+        } break;
+    }
+
+    QStyledItemDelegate::setModelData(editor, model, index);
+}
+
+bool PlannedItemDelegate::eventFilter(QObject *object, QEvent *event)
+{
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
+    NodeButtonState state {cat ? cat->state() : NodeButtonState::Folded};
 
     if(state == NodeButtonState::Expanded && event->type() == QEvent::FocusOut) { // for expaned case we do not want to close editor
         return true;

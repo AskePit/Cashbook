@@ -53,8 +53,12 @@ private slots:
     void on_outOutCategoryButton_clicked();
     void on_inOutCategoryButton_clicked();
 
+    void on_addPlanButton_clicked();
+    void on_removePlanButton_clicked();
+    void on_upPlanButton_clicked();
+    void on_downPlanButton_clicked();
+
     void on_actionSave_triggered();
-    void on_actionOpen_triggered();
 
     void on_mainButton_clicked();
     void on_categoriesButton_clicked();
@@ -87,6 +91,7 @@ private:
     Ui::MainWindow *ui;
     Data &m_data;
     LogItemDelegate m_logDelegate;
+    PlannedItemDelegate m_plansDelegate;
     BoolDelegate m_boolDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
 

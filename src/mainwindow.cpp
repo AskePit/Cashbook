@@ -35,6 +35,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_data(data)
     , m_logDelegate(m_data)
+    , m_plansDelegate(m_data)
 {
     ui->setupUi(this);
 
@@ -42,6 +43,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->stackedWidget->setContentsMargins(0, 0, 0, 0);
 
     ui->logTable->setItemDelegate(&m_logDelegate);
+    ui->plansTable->setItemDelegate(&m_plansDelegate);
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
 
@@ -100,6 +102,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->walletsTree->setModel(&m_data.wallets);
     ui->ownersList->setModel(&m_data.owners);
     ui->logTable->setModel(&m_data.log);
+    ui->plansTable->setModel(&m_data.plans);
 
     loadFile();
 
@@ -130,11 +133,16 @@ void MainWindow::loadFile()
     ui->dateTo->setDate(m_data.statistics.categoriesTo);
 
     ui->logTable->resizeColumnsToContents();
+    ui->plansTable->resizeColumnsToContents();
 
     int pad = 17;
 
     for(int i = 0; i<LogColumn::Count; ++i) {
         extendColumn(ui->logTable, i, pad);
+    }
+
+    for(int i = 0; i<PlansColumn::Count; ++i) {
+        extendColumn(ui->plansTable, i, pad);
     }
 
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
@@ -481,27 +489,69 @@ void cashbook::MainWindow::on_inOutCategoryButton_clicked()
     m_changed |= inNode(*ui->outCategoriesTree, m_data.outCategories);
 }
 
+//
+// Plans
+//
+void cashbook::MainWindow::on_addPlanButton_clicked()
+{
+    m_changed |= m_data.plans.insertRow(m_data.plans.rowCount());
+}
+
+void cashbook::MainWindow::on_removePlanButton_clicked()
+{
+    auto index = ui->plansTable->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+    m_changed |= m_data.plans.removeRow(row);
+}
+
+void cashbook::MainWindow::on_upPlanButton_clicked()
+{
+    auto index = ui->plansTable->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+
+    if(row == 0) {
+        return;
+    }
+
+    m_changed |= m_data.plans.moveRow(QModelIndex(), row, QModelIndex(), row-1);
+}
+
+void cashbook::MainWindow::on_downPlanButton_clicked()
+{
+    auto index = ui->plansTable->currentIndex();
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+
+    if(row == m_data.plans.rowCount()-1) {
+        return;
+    }
+
+    m_changed |= m_data.plans.moveRow(QModelIndex(), row, QModelIndex(), row+2);
+}
+
+
 void cashbook::MainWindow::on_actionSave_triggered()
 {
     /*if(!m_changed) {
         return;
     }*/
 
-    /*QDir().mkpath("backup");
-    aske::copyFileForced(defaultBackupFile2, defaultBackupFile3);
-    aske::copyFileForced(defaultBackupFile1, defaultBackupFile2);
-    aske::copyFileForced(defaultDataFile, defaultBackupFile1);*/
-
     saveFile();
     m_changed = false;
-}
-
-void cashbook::MainWindow::on_actionOpen_triggered()
-{
-    QString filename =
-                QFileDialog::getOpenFileName(this, tr("Открыть файл"), "", tr("Json файлы (*.json)"));
-
-    loadFile();
 }
 
 int callQuestionDialog(const QString &message, QWidget *parent)

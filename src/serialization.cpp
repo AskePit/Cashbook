@@ -185,6 +185,32 @@ static void save(const LogModel &data, PitmArray &pitm)
     }
 }
 
+static void save(const PlannedItem &item, PitmObject &pitm)
+{
+    if(!item.name.isEmpty()) {
+        pitm[QLatin1String("name")] = item.name;
+    }
+
+    pitm[QLatin1String("type")] = Transaction::Type::toConfigString(item.type);
+
+    PitmObject category;
+    save(item.category, category);
+    if(item.type != Transaction::Type::Transfer) {
+        pitm[QLatin1String("category")] = category;
+    }
+    pitm[QLatin1String("amount")] = item.amount.as_cents();
+    pitm[QLatin1String("date")] = item.date.toString(QStringLiteral("dd.MM.yyyy"));
+}
+
+static void save(const PlansModel &data, PitmArray &pitm)
+{
+    for(const PlannedItem &t : data.plans) {
+        PitmObject obj;
+        save(t, obj);
+        pitm.append(obj);
+    }
+}
+
 static void saveLog(const Data &data, PitmObject &pitm)
 {
     PitmArray log;
@@ -269,16 +295,19 @@ static void saveHead(const Data &data, PitmObject &pitm)
     PitmArray wallets;
     PitmArray inCategories;
     PitmArray outCategories;
+    PitmArray plans;
 
     save(data.owners, owners);
     save(data.wallets, wallets);
     save(data.inCategories, inCategories);
     save(data.outCategories, outCategories);
+    save(data.plans, plans);
 
     pitm[QLatin1String("owners")] = owners;
     pitm[QLatin1String("wallets")] = wallets;
     pitm[QLatin1String("inCategories")] = inCategories;
     pitm[QLatin1String("outCategories")] = outCategories;
+    pitm[QLatin1String("plans")] = plans;
     pitm[QLatin1String("unanchored")] = data.log.unanchored;
 }
 
@@ -504,9 +533,39 @@ static void load(LogModel &logModel, PitmArray pitm, Data &data){
     }
 }
 
-static void loadMonth(Data &data, PitmArray pitm)
+static void load(PlannedItem &item, PitmObject pitm,
+                 const CategoriesModel &inCategories,
+                 const CategoriesModel &outCategories
+) {
+    item.name = pitm[QLatin1String("name")].toString();
+    item.type = Transaction::Type::fromConfigString( pitm[QLatin1String("type")].toString() );
+
+    if(item.type != Transaction::Type::Transfer) {
+        PitmObject categoryObj = pitm[QLatin1String("category")].toObject();
+        ArchNode<Category> category;
+        if(item.type == Transaction::Type::In) {
+            load(category, categoryObj, inCategories);
+        } else if(item.type == Transaction::Type::Out) {
+            load(category, categoryObj, outCategories);
+        }
+        item.category = category;
+    }
+
+    item.amount = Money(as<intmax_t>(pitm[QLatin1String("amount")].toInt()));
+    item.date = QDate::fromString(pitm[QLatin1String("date")].toString(), "dd.MM.yyyy");
+}
+
+static void load(PlansModel &data, PitmArray arr,
+                 const CategoriesModel &inCategories,
+                 const CategoriesModel &outCategories
+)
 {
-    load(data.log, pitm, data);
+    for(PitmValue v : std::as_const(arr)) {
+        PitmObject obj = v.toObject();
+        PlannedItem item;
+        load(item, obj, inCategories, outCategories);
+        data.plans.push_back(item);
+    }
 }
 
 static void loadHead(Data &data, PitmObject pitm)
@@ -515,7 +574,13 @@ static void loadHead(Data &data, PitmObject pitm)
     load(data.wallets, pitm[QLatin1String("wallets")].toArray(), data.owners);
     load(data.inCategories, pitm[QLatin1String("inCategories")].toArray());
     load(data.outCategories, pitm[QLatin1String("outCategories")].toArray());
+    load(data.plans, pitm[QLatin1String("plans")].toArray(), data.inCategories, data.outCategories);
     data.log.unanchored = pitm[QLatin1String("unanchored")].toInt();
+}
+
+static void loadMonth(Data &data, PitmArray pitm)
+{
+    load(data.log, pitm, data);
 }
 
 static void loadLog(Data &data)

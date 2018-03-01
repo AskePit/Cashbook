@@ -328,7 +328,7 @@ class PlansModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    QList<PlannedItem> plans;
+    QVector<PlannedItem> plans;
 
     PlansModel(QObject *parent = 0);
     ~PlansModel();
@@ -345,6 +345,7 @@ public:
 
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
 
     void clear() {
         emit beginResetModel();
@@ -410,6 +411,23 @@ class LogItemDelegate : public QStyledItemDelegate
 public:
     LogItemDelegate(Data &data, QObject* parent = nullptr);
     ~LogItemDelegate();
+
+    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    virtual bool eventFilter(QObject *object, QEvent *event) override;
+
+private:
+    Data &m_data;
+};
+
+class PlannedItemDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+public:
+    PlannedItemDelegate(Data &data, QObject* parent = nullptr);
+    ~PlannedItemDelegate();
 
     virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
