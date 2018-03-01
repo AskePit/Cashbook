@@ -296,19 +296,6 @@ private:
     const Node<Category> *m_category {nullptr};
 };
 
-class BriefColumn
-{
-public:
-    enum t {
-        Date = 0,
-        Common,
-        Regular,
-        Nonregular,
-
-        Count
-    };
-};
-
 class PlansColumn
 {
 public:
@@ -352,6 +339,20 @@ public:
         plans.clear();
         emit endResetModel();
     }
+};
+
+class BriefColumn
+{
+public:
+    enum t {
+        Date = 0,
+        Common,
+        Balance,
+        Regular,
+        Nonregular,
+
+        Count
+    };
 };
 
 class BriefRow

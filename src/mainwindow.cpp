@@ -109,6 +109,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->briefTable->setModel(&m_data.briefModel);
     for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
+        ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
     }
 
     QHeaderView *headerView = ui->briefTable->horizontalHeader();

@@ -1138,7 +1138,6 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 //
 // Brief
 //
-
 BriefModel::BriefModel(BriefStatistics &brief, QObject *parent)
     : QAbstractTableModel(parent)
     , brief(brief)
@@ -1199,6 +1198,18 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                     case BriefRow::Received: return "▲ " + formatMoney(common.received);
                     case BriefRow::Spent: return "▼ " + formatMoney(common.spent);
                 }
+            } break;
+            case BriefColumn::Balance: {
+                if(header) {
+                    return tr("Баланс");
+                }
+
+                if(rowType == BriefRow::Space1 || rowType == BriefRow::Space2) {
+                    return QVariant();
+                }
+
+                const auto &common = record.common;
+                return formatMoney(common.received - common.spent);
             } break;
             case BriefColumn::Regular: {
                 if(header) {
@@ -1271,6 +1282,7 @@ QVariant BriefModel::headerData(int section, Qt::Orientation orientation, int ro
         {
             case BriefColumn::Date: return tr("Месяц");
             case BriefColumn::Common: return tr("Всего");
+            case BriefColumn::Balance: return tr("Баланс");
             case BriefColumn::Regular: return tr("Регулярные");
             case BriefColumn::Nonregular: return tr("Нерегулярные");
         }
