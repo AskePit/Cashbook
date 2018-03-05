@@ -83,6 +83,9 @@ private:
 
     void onActionStatementTriggered(Transaction::Type::t type);
 
+    void showUnanchoredSum();
+    void hideUnanchoredSum();
+
 protected:
     void closeEvent(QCloseEvent *event);
 

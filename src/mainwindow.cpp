@@ -58,6 +58,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 {
     ui->setupUi(this);
 
+    hideUnanchoredSum();
+
     ui->menuLayout->setContentsMargins(0, 0, 0, 0);
     ui->stackedWidget->setContentsMargins(0, 0, 0, 0);
 
@@ -129,7 +131,19 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->logTable->setModel(&m_data.log);
     ui->plansTable->setModel(&m_data.plans);
 
+    connect(&m_data.log, &TreeModel::dataChanged, [this](){
+        if(m_data.log.unanchored) {
+            showUnanchoredSum();
+        } else {
+            hideUnanchoredSum();
+        }
+    });
+
     loadFile();
+
+    if(m_data.log.unanchored) {
+        showUnanchoredSum();
+    }
 
     ui->briefTable->setModel(&m_data.briefModel);
     for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
@@ -366,6 +380,8 @@ void cashbook::MainWindow::on_downUserButton_clicked()
 void cashbook::MainWindow::on_addTransactionButton_clicked()
 {
     m_changed |= m_data.log.insertRow(0);
+
+    showUnanchoredSum();
 }
 
 void cashbook::MainWindow::on_removeTransactionButton_clicked()
@@ -375,12 +391,15 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
         m_data.log.removeRow(index.row());
     }
 
+    m_data.log.unanchored ? showUnanchoredSum() : hideUnanchoredSum();
 }
 
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
     bool did = m_data.anchoreTransactions();
     m_changed |= did;
+
+    hideUnanchoredSum();
 }
 
 
@@ -698,6 +717,24 @@ void cashbook::MainWindow::onActionStatementTriggered(Transaction::Type::t type)
     table->resizeColumnsToContents();
     table->hideColumn(LogColumn::Type);
     table->hideColumn(in ? LogColumn::From : LogColumn::To);
+}
+
+void cashbook::MainWindow::showUnanchoredSum()
+{
+    Money sum;
+    for(int i = 0; i<m_data.log.unanchored; ++i) {
+        sum += m_data.log.log[i].amount;
+    }
+    ui->unanchoredSumLabel->setText(formatMoney(sum));
+
+    ui->unanchoredLabel->show();
+    ui->unanchoredSumLabel->show();
+}
+
+void cashbook::MainWindow::hideUnanchoredSum()
+{
+    ui->unanchoredLabel->hide();
+    ui->unanchoredSumLabel->hide();
 }
 
 void cashbook::MainWindow::on_actionInStatement_triggered()

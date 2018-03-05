@@ -158,6 +158,9 @@
   <property name="windowTitle">
    <string>Cashbook</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_7">
     <property name="spacing">
@@ -359,8 +362,8 @@ QToolButton:hover:!checked {
         </property>
         <property name="iconSize">
          <size>
-          <width>29</width>
-          <height>29</height>
+          <width>28</width>
+          <height>28</height>
          </size>
         </property>
         <property name="checkable">
@@ -394,11 +397,17 @@ QToolButton:hover:!checked {
     </item>
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <layout class="QVBoxLayout" name="verticalLayout_9">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QSplitter" name="logSplitter">
           <property name="orientation">
@@ -532,6 +541,33 @@ QToolButton:hover:!checked {
                  </property>
                 </spacer>
                </item>
+               <item>
+                <widget class="QLabel" name="unanchoredLabel">
+                 <property name="text">
+                  <string>Непроведено: </string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="unanchoredSumLabel">
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_21">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
               </layout>
              </item>
              <item>
@@ -557,6 +593,15 @@ QToolButton:hover:!checked {
                     </color>
                    </brush>
                   </colorrole>
+                  <colorrole role="HighlightedText">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="Base">
@@ -574,6 +619,15 @@ QToolButton:hover:!checked {
                      <red>237</red>
                      <green>243</green>
                      <blue>247</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                  <colorrole role="HighlightedText">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -597,11 +651,25 @@ QToolButton:hover:!checked {
                     </color>
                    </brush>
                   </colorrole>
+                  <colorrole role="HighlightedText">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>0</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
                  </disabled>
                 </palette>
                </property>
                <property name="contextMenuPolicy">
                 <enum>Qt::CustomContextMenu</enum>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -731,6 +799,11 @@ QToolButton:hover:!checked {
                   </colorrole>
                  </disabled>
                 </palette>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -961,7 +1034,11 @@ QToolButton:hover:!checked {
              <item>
               <widget class="QTreeView" name="walletsTree">
                <property name="styleSheet">
-                <string notr="true">QTreeView::item { height: 18px;}</string>
+                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}
+
+QTreeView::item { height: 18px;}</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -1117,6 +1194,11 @@ QToolButton:hover:!checked {
              </item>
              <item>
               <widget class="QListView" name="ownersList">
+               <property name="styleSheet">
+                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}</string>
+               </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
                </property>
@@ -1357,7 +1439,11 @@ QToolButton:hover:!checked {
                <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="styleSheet">
-               <string notr="true">QTreeView::item { height: 18px;}</string>
+               <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}
+
+QTreeView::item { height: 18px;}</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
@@ -1788,7 +1874,10 @@ QToolButton:hover:!checked {
                <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="styleSheet">
-               <string notr="true">QTreeView::item { height: 18px;}</string>
+               <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}
+QTreeView::item { height: 18px;}</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
@@ -2449,6 +2538,11 @@ QToolButton:hover:!checked {
              </colorrole>
             </disabled>
            </palette>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: white;
+}</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
