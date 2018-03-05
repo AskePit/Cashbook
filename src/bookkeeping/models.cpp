@@ -990,13 +990,6 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
                 return as<double>(item.amount);
             }
         } break;
-        case PlansColumn::Date: {
-            if(role == Qt::DisplayRole) {
-                return item.date.toString("dd.MM.yy");
-            } else {
-                return item.date;
-            }
-        }
     }
 
     return QVariant();
@@ -1011,7 +1004,6 @@ QVariant PlansModel::headerData(int section, Qt::Orientation orientation, int ro
             case PlansColumn::Type: return tr("Тип");
             case PlansColumn::Category: return tr("Категория");
             case PlansColumn::Money: return tr("Сумма");
-            case PlansColumn::Date: return tr("Дата");
         }
     }
 
@@ -1088,7 +1080,6 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
             }
         } break;
         case PlansColumn::Money: item.amount = value.toDouble(); break;
-        case PlansColumn::Date: item.date = value.toDate(); break;
     }
 
     emit dataChanged(index, index);
@@ -1103,7 +1094,6 @@ bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
     UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     PlannedItem item;
-    item.date = QDate::currentDate();
     plans.insert(position, item);
     endInsertRows();
     return true;
@@ -1553,8 +1543,9 @@ static const QSet<PlansColumn::t> defaultPlanColumns = {
     PlansColumn::Money,
 };
 
-PlannedItemDelegate::PlannedItemDelegate(Data &data, QObject* parent)
+PlannedItemDelegate::PlannedItemDelegate(PlansModel &plans, Data &data, QObject* parent)
     : QStyledItemDelegate(parent)
+    , m_plans(plans)
     , m_data(data)
 {}
 
@@ -1568,17 +1559,11 @@ QWidget* PlannedItemDelegate::createEditor(QWidget* parent, const QStyleOptionVi
         return QStyledItemDelegate::createEditor(parent, option, index);
     }
 
-    const PlannedItem &item = m_data.plans.plans[index.row()];
+    const PlannedItem &item = m_plans.plans[index.row()];
 
     int col = index.column();
 
     switch(col) {
-        case PlansColumn::Date: {
-            QDateEdit *edit = new QDateEdit(parent);
-            edit->setCalendarPopup(true);
-            return edit;
-        } break;
-
         case PlansColumn::Type: {
             QComboBox *box = new QComboBox(parent);
             for(auto t : Transaction::Type::enumerate()) {

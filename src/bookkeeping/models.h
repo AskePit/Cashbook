@@ -304,7 +304,6 @@ public:
         Type,
         Category,
         Money,
-        Date,
 
         Count
     };
@@ -427,7 +426,7 @@ class PlannedItemDelegate : public QStyledItemDelegate
     Q_OBJECT
 
 public:
-    PlannedItemDelegate(Data &data, QObject* parent = nullptr);
+    PlannedItemDelegate(PlansModel &model, Data &data, QObject* parent = nullptr);
     ~PlannedItemDelegate();
 
     virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
@@ -436,6 +435,7 @@ public:
     virtual bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
+    PlansModel &m_plans;
     Data &m_data;
 };
 

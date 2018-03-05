@@ -6,6 +6,18 @@
 namespace cashbook
 {
 
+struct Plans {
+    PlansModel shortPlans;
+    PlansModel middlePlans;
+    PlansModel longPlans;
+
+    void clear() {
+        shortPlans.clear();
+        middlePlans.clear();
+        longPlans.clear();
+    }
+};
+
 class Data : public QObject
 {
     Q_OBJECT
@@ -18,7 +30,7 @@ public:
     CategoriesModel inCategories;
     CategoriesModel outCategories;
     LogModel log;
-    PlansModel plans;
+    Plans plans;
     BriefModel briefModel;
 
     Statistics statistics;

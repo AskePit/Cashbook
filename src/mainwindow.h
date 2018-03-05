@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QEvent>
 #include "bookkeeping/bookkeeping.h"
 
 namespace Ui {
@@ -10,6 +11,21 @@ class MainWindow;
 
 namespace cashbook
 {
+
+class ClickFilter : public QObject {
+    Q_OBJECT
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) {
+        if(event->type() == QEvent::MouseButtonPress) {
+            emit mouseClicked();
+        }
+
+        return QObject::eventFilter(watched, event);
+    }
+
+signals:
+    void mouseClicked();
+};
 
 class MainWindow : public QMainWindow
 {
@@ -53,10 +69,20 @@ private slots:
     void on_outOutCategoryButton_clicked();
     void on_inOutCategoryButton_clicked();
 
-    void on_addPlanButton_clicked();
-    void on_removePlanButton_clicked();
-    void on_upPlanButton_clicked();
-    void on_downPlanButton_clicked();
+    void on_addShortPlanButton_clicked();
+    void on_removeShortPlanButton_clicked();
+    void on_upShortPlanButton_clicked();
+    void on_downShortPlanButton_clicked();
+
+    void on_addMiddlePlanButton_clicked();
+    void on_removeMiddlePlanButton_clicked();
+    void on_upMiddlePlanButton_clicked();
+    void on_downMiddlePlanButton_clicked();
+
+    void on_addLongPlanButton_clicked();
+    void on_removeLongPlanButton_clicked();
+    void on_upLongPlanButton_clicked();
+    void on_downLongPlanButton_clicked();
 
     void on_actionSave_triggered();
 
@@ -86,6 +112,13 @@ private:
     void showUnanchoredSum();
     void hideUnanchoredSum();
 
+    void showShortPlans(bool show);
+    void showMiddlePlans(bool show);
+    void showLongPlans(bool show);
+
+    void showActiveTasks(bool show);
+    void showCompletedTasks(bool show);
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -93,9 +126,12 @@ private:
     Ui::MainWindow *ui;
     Data &m_data;
     LogItemDelegate m_logDelegate;
-    PlannedItemDelegate m_plansDelegate;
+    PlannedItemDelegate m_shortPlansDelegate;
+    PlannedItemDelegate m_middlePlansDelegate;
+    PlannedItemDelegate m_longPlansDelegate;
     BoolDelegate m_boolDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
+    ClickFilter m_clickFilter;
 
     bool m_changed {false};
     QModelIndex m_noteContextIndex;

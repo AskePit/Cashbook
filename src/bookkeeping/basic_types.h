@@ -210,7 +210,6 @@ struct PlannedItem
     Transaction::Type::t type {Transaction::Type::Out};
     ArchNode<Category> category;
     Money amount;
-    QDate date;
 };
 
 const QString pathConcat {"/"};

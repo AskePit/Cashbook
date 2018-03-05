@@ -49,12 +49,26 @@ static void resizeCellWithPadding(View *view, int column, int pad) {
     extendColumn(view, column, pad);
 }
 
+void hideAll(QWidgetList l) {
+    for(QWidget *w : l) {
+        w->hide();
+    }
+}
+
+void showAll(QWidgetList l) {
+    for(QWidget *w : l) {
+        w->show();
+    }
+}
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_data(data)
     , m_logDelegate(m_data)
-    , m_plansDelegate(m_data)
+    , m_shortPlansDelegate(m_data.plans.shortPlans, m_data)
+    , m_middlePlansDelegate(m_data.plans.middlePlans, m_data)
+    , m_longPlansDelegate(m_data.plans.longPlans, m_data)
 {
     ui->setupUi(this);
 
@@ -64,7 +78,9 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->stackedWidget->setContentsMargins(0, 0, 0, 0);
 
     ui->logTable->setItemDelegate(&m_logDelegate);
-    ui->plansTable->setItemDelegate(&m_plansDelegate);
+    ui->shortPlansTable->setItemDelegate(&m_shortPlansDelegate);
+    ui->middlePlansTable->setItemDelegate(&m_middlePlansDelegate);
+    ui->longPlansTable->setItemDelegate(&m_longPlansDelegate);
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
 
@@ -129,7 +145,9 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->walletsTree->setModel(&m_data.wallets);
     ui->ownersList->setModel(&m_data.owners);
     ui->logTable->setModel(&m_data.log);
-    ui->plansTable->setModel(&m_data.plans);
+    ui->shortPlansTable->setModel(&m_data.plans.shortPlans);
+    ui->middlePlansTable->setModel(&m_data.plans.middlePlans);
+    ui->longPlansTable->setModel(&m_data.plans.longPlans);
 
     connect(&m_data.log, &TreeModel::dataChanged, [this](){
         if(m_data.log.unanchored) {
@@ -168,7 +186,9 @@ void MainWindow::loadFile()
 
     int pad = 17;
     resizeContentsWithPadding(ui->logTable, LogColumn::Count, pad);
-    resizeContentsWithPadding(ui->plansTable, PlansColumn::Count, pad);
+    resizeContentsWithPadding(ui->shortPlansTable, PlansColumn::Count, pad);
+    resizeContentsWithPadding(ui->middlePlansTable, PlansColumn::Count, pad);
+    resizeContentsWithPadding(ui->longPlansTable, PlansColumn::Count, pad);
 
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
 
@@ -321,57 +341,62 @@ static bool inNode(QTreeView &view, TreeModel &model)
 }
 
 //
-// Users
+// Common list templates
 //
-void cashbook::MainWindow::on_addUserButton_clicked()
+
+template <class ListModel>
+static bool addListItem(ListModel &model)
 {
-    m_changed |= m_data.owners.insertRow(m_data.owners.rowCount());
+    return model.insertRow(model.rowCount());
 }
 
-void cashbook::MainWindow::on_removeUserButton_clicked()
+template <class ListModel>
+static bool removeListItem(QAbstractItemView &view, ListModel &model)
 {
-    auto index = ui->ownersList->currentIndex();
+    auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
-    m_changed |= m_data.owners.removeRow(row);
+    return model.removeRow(row);
 }
 
-void cashbook::MainWindow::on_upUserButton_clicked()
+template <class ListModel>
+static bool upListItem(QAbstractItemView &view, ListModel &model)
 {
-    auto index = ui->ownersList->currentIndex();
+    auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
 
     if(row == 0) {
-        return;
+        return false;
     }
 
-    m_changed |= m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row-1);
+    return model.moveRow(QModelIndex(), row, QModelIndex(), row-1);
 }
 
-void cashbook::MainWindow::on_downUserButton_clicked()
+template <class ListModel>
+static bool downListItem(QAbstractItemView &view, ListModel &model)
 {
-    auto index = ui->ownersList->currentIndex();
+    auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        return;
+        return false;
     }
 
     int row = index.row();
 
-    if(row == m_data.owners.rowCount()-1) {
-        return;
+    if(row == model.rowCount()-1) {
+        return false;
     }
 
-    m_changed |= m_data.owners.moveRow(QModelIndex(), row, QModelIndex(), row+2);
+    return model.moveRow(QModelIndex(), row, QModelIndex(), row+2);
 }
 
 //
@@ -406,169 +431,135 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 //
 // Wallets
 //
-void cashbook::MainWindow::on_addWalletSiblingButton_clicked()
-{
+void cashbook::MainWindow::on_addWalletSiblingButton_clicked() {
     m_changed |= addSiblingNode(*ui->walletsTree, m_data.wallets);
 }
-
-void cashbook::MainWindow::on_addWalletChildButton_clicked()
-{
+void cashbook::MainWindow::on_addWalletChildButton_clicked() {
     m_changed |= addChildNode(*ui->walletsTree, m_data.wallets);
 }
-
-void cashbook::MainWindow::on_removeWalletButton_clicked()
-{
+void cashbook::MainWindow::on_removeWalletButton_clicked() {
     m_changed |= removeNode(*ui->walletsTree, m_data.wallets);
 }
-
-void cashbook::MainWindow::on_upWalletButton_clicked()
-{
+void cashbook::MainWindow::on_upWalletButton_clicked() {
     m_changed |= upNode(*ui->walletsTree, m_data.wallets);
 }
-
 void cashbook::MainWindow::on_downWalletButton_clicked()
 {
     m_changed |= downNode(*ui->walletsTree, m_data.wallets);
 }
-
-void cashbook::MainWindow::on_outWalletButton_clicked()
-{
+void cashbook::MainWindow::on_outWalletButton_clicked() {
     m_changed |= outNode(*ui->walletsTree, m_data.wallets);
 }
-
-void cashbook::MainWindow::on_inWalletButton_clicked()
-{
+void cashbook::MainWindow::on_inWalletButton_clicked() {
     m_changed |= inNode(*ui->walletsTree, m_data.wallets);
 }
 
 //
 // In categories
 //
-void cashbook::MainWindow::on_addInCategorySiblingButton_clicked()
-{
+void cashbook::MainWindow::on_addInCategorySiblingButton_clicked() {
     m_changed |= addSiblingNode(*ui->inCategoriesTree, m_data.inCategories);
 }
-
-void cashbook::MainWindow::on_addInCategoryChildButton_clicked()
-{
+void cashbook::MainWindow::on_addInCategoryChildButton_clicked() {
     m_changed |= addChildNode(*ui->inCategoriesTree, m_data.inCategories);
 }
-
-void cashbook::MainWindow::on_removeInCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_removeInCategoryButton_clicked() {
     m_changed |= removeNode(*ui->inCategoriesTree, m_data.inCategories);
 }
-
-void cashbook::MainWindow::on_upInCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_upInCategoryButton_clicked() {
     m_changed |= upNode(*ui->inCategoriesTree, m_data.inCategories);
 }
-
-void cashbook::MainWindow::on_downInCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_downInCategoryButton_clicked() {
     m_changed |= downNode(*ui->inCategoriesTree, m_data.inCategories);
 }
-
-void cashbook::MainWindow::on_outInCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_outInCategoryButton_clicked() {
     m_changed |= outNode(*ui->inCategoriesTree, m_data.inCategories);
 }
-
-void cashbook::MainWindow::on_inInCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_inInCategoryButton_clicked() {
     m_changed |= inNode(*ui->inCategoriesTree, m_data.inCategories);
 }
 
 //
 // Out categories
 //
-void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked()
-{
+void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked() {
     m_changed |= addSiblingNode(*ui->outCategoriesTree, m_data.outCategories);
 }
-
-void cashbook::MainWindow::on_addOutCategoryChildButton_clicked()
-{
+void cashbook::MainWindow::on_addOutCategoryChildButton_clicked() {
     m_changed |= addChildNode(*ui->outCategoriesTree, m_data.outCategories);
 }
-
-void cashbook::MainWindow::on_removeOutCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_removeOutCategoryButton_clicked() {
     m_changed |= removeNode(*ui->outCategoriesTree, m_data.outCategories);
 }
-
-void cashbook::MainWindow::on_upOutCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_upOutCategoryButton_clicked() {
     m_changed |= upNode(*ui->outCategoriesTree, m_data.outCategories);
 }
-
-void cashbook::MainWindow::on_downOutCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_downOutCategoryButton_clicked() {
     m_changed |= downNode(*ui->outCategoriesTree, m_data.outCategories);
 }
-
-void cashbook::MainWindow::on_outOutCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_outOutCategoryButton_clicked() {
     m_changed |= outNode(*ui->outCategoriesTree, m_data.outCategories);
 }
-
-void cashbook::MainWindow::on_inOutCategoryButton_clicked()
-{
+void cashbook::MainWindow::on_inOutCategoryButton_clicked() {
     m_changed |= inNode(*ui->outCategoriesTree, m_data.outCategories);
+}
+
+//
+// Users
+//
+void cashbook::MainWindow::on_addUserButton_clicked() {
+    m_changed |= addListItem(m_data.owners);
+}
+void cashbook::MainWindow::on_removeUserButton_clicked() {
+    m_changed |= removeListItem(*ui->ownersList, m_data.owners);
+}
+void cashbook::MainWindow::on_upUserButton_clicked() {
+    m_changed |= upListItem(*ui->ownersList, m_data.owners);
+}
+void cashbook::MainWindow::on_downUserButton_clicked() {
+    m_changed |= downListItem(*ui->ownersList, m_data.owners);
 }
 
 //
 // Plans
 //
-void cashbook::MainWindow::on_addPlanButton_clicked()
-{
-    m_changed |= m_data.plans.insertRow(m_data.plans.rowCount());
+void cashbook::MainWindow::on_addShortPlanButton_clicked() {
+    m_changed |= addListItem(m_data.plans.shortPlans);
+}
+void cashbook::MainWindow::on_removeShortPlanButton_clicked() {
+    m_changed |= removeListItem(*ui->shortPlansTable, m_data.plans.shortPlans);
+}
+void cashbook::MainWindow::on_upShortPlanButton_clicked() {
+    m_changed |= upListItem(*ui->shortPlansTable, m_data.plans.shortPlans);
+}
+void cashbook::MainWindow::on_downShortPlanButton_clicked() {
+    m_changed |= downListItem(*ui->shortPlansTable, m_data.plans.shortPlans);
 }
 
-void cashbook::MainWindow::on_removePlanButton_clicked()
-{
-    auto index = ui->plansTable->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int row = index.row();
-    m_changed |= m_data.plans.removeRow(row);
+void cashbook::MainWindow::on_addMiddlePlanButton_clicked() {
+    m_changed |= addListItem(m_data.plans.middlePlans);
+}
+void cashbook::MainWindow::on_removeMiddlePlanButton_clicked() {
+    m_changed |= removeListItem(*ui->middlePlansTable, m_data.plans.middlePlans);
+}
+void cashbook::MainWindow::on_upMiddlePlanButton_clicked() {
+    m_changed |= upListItem(*ui->middlePlansTable, m_data.plans.middlePlans);
+}
+void cashbook::MainWindow::on_downMiddlePlanButton_clicked() {
+    m_changed |= downListItem(*ui->middlePlansTable, m_data.plans.middlePlans);
 }
 
-void cashbook::MainWindow::on_upPlanButton_clicked()
-{
-    auto index = ui->plansTable->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int row = index.row();
-
-    if(row == 0) {
-        return;
-    }
-
-    m_changed |= m_data.plans.moveRow(QModelIndex(), row, QModelIndex(), row-1);
+void cashbook::MainWindow::on_addLongPlanButton_clicked() {
+    m_changed |= addListItem(m_data.plans.longPlans);
 }
-
-void cashbook::MainWindow::on_downPlanButton_clicked()
-{
-    auto index = ui->plansTable->currentIndex();
-
-    if(!index.isValid()) {
-        return;
-    }
-
-    int row = index.row();
-
-    if(row == m_data.plans.rowCount()-1) {
-        return;
-    }
-
-    m_changed |= m_data.plans.moveRow(QModelIndex(), row, QModelIndex(), row+2);
+void cashbook::MainWindow::on_removeLongPlanButton_clicked() {
+    m_changed |= removeListItem(*ui->longPlansTable, m_data.plans.longPlans);
+}
+void cashbook::MainWindow::on_upLongPlanButton_clicked() {
+    m_changed |= upListItem(*ui->longPlansTable, m_data.plans.longPlans);
+}
+void cashbook::MainWindow::on_downLongPlanButton_clicked() {
+    m_changed |= downListItem(*ui->longPlansTable, m_data.plans.longPlans);
 }
 
 
@@ -736,6 +727,69 @@ void cashbook::MainWindow::hideUnanchoredSum()
     ui->unanchoredLabel->hide();
     ui->unanchoredSumLabel->hide();
 }
+
+void cashbook::MainWindow::showShortPlans(bool show)
+{
+    static const QWidgetList l {
+        ui->shortPlansTable,
+        ui->addShortPlanButton,
+        ui->removeShortPlanButton,
+        ui->upShortPlanButton,
+        ui->downShortPlanButton,
+    };
+
+    show ? showAll(l) : hideAll(l);
+}
+
+void cashbook::MainWindow::showMiddlePlans(bool show)
+{
+    static const QWidgetList l {
+        ui->middlePlansTable,
+        ui->addMiddlePlanButton,
+        ui->removeMiddlePlanButton,
+        ui->upMiddlePlanButton,
+        ui->downMiddlePlanButton,
+    };
+
+    show ? showAll(l) : hideAll(l);
+}
+
+void cashbook::MainWindow::showLongPlans(bool show)
+{
+    static const QWidgetList l {
+        ui->longPlansTable,
+        ui->addLongPlanButton,
+        ui->removeLongPlanButton,
+        ui->upLongPlanButton,
+        ui->downLongPlanButton,
+    };
+
+    show ? showAll(l) : hideAll(l);
+}
+
+
+void cashbook::MainWindow::showActiveTasks(bool show)
+{
+    static const QWidgetList l {
+        ui->activeTasksTable,
+        ui->addActiveTaskButton,
+        ui->removeActiveTaskButton,
+        ui->upActiveTaskButton,
+        ui->downActiveTaskButton,
+    };
+
+    show ? showAll(l) : hideAll(l);
+}
+
+void cashbook::MainWindow::showCompletedTasks(bool show)
+{
+    static const QWidgetList l {
+        ui->completedTasksTable,
+    };
+
+    show ? showAll(l) : hideAll(l);
+}
+
 
 void cashbook::MainWindow::on_actionInStatement_triggered()
 {
