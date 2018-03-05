@@ -71,7 +71,13 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     connect(ui->logTable, &QTableView::customContextMenuRequested, this, &MainWindow::showLogContextMenu);
 
     ui->logSplitter->setStretchFactor(0, 100);
-    ui->logSplitter->setStretchFactor(1, 35);
+    ui->logSplitter->setStretchFactor(1, 30);
+
+    ui->briefSplitter->setStretchFactor(0, 100);
+    ui->briefSplitter->setStretchFactor(1, 30);
+
+    ui->ownersSplitter->setStretchFactor(0, 100);
+    ui->ownersSplitter->setStretchFactor(1, 30);
 
     ui->logTable->setColumnWidth(LogColumn::Date, 55);
     ui->logTable->setColumnWidth(LogColumn::Type, 70);
@@ -584,9 +590,7 @@ public:
     enum t {
         Main = 0,
         Categories,
-        Statistics,
-        Users,
-        Plans
+        Plans,
     };
 };
 
@@ -598,16 +602,6 @@ void cashbook::MainWindow::on_mainButton_clicked()
 void cashbook::MainWindow::on_categoriesButton_clicked()
 {
     ui->stackedWidget->setCurrentIndex(Tab::Categories);
-}
-
-void cashbook::MainWindow::on_statisticsButton_clicked()
-{
-    ui->stackedWidget->setCurrentIndex(Tab::Statistics);
-}
-
-void cashbook::MainWindow::on_usersButton_clicked()
-{
-    ui->stackedWidget->setCurrentIndex(Tab::Users);
 }
 
 void cashbook::MainWindow::on_plansButton_clicked()
