@@ -17,14 +17,14 @@ class ClickFilter : public QObject {
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) {
         if(event->type() == QEvent::MouseButtonPress) {
-            emit mouseClicked();
+            emit mouseClicked(qobject_cast<QWidget *>(watched));
         }
 
         return QObject::eventFilter(watched, event);
     }
 
 signals:
-    void mouseClicked();
+    void mouseClicked(QWidget *watched);
 };
 
 class MainWindow : public QMainWindow

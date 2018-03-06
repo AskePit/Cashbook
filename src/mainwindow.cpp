@@ -170,6 +170,37 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     }
 
     resizeContentsWithPadding(ui->briefTable, BriefColumn::Count, 30);
+
+    ui->shortPlansBar->installEventFilter(&m_clickFilter);
+    ui->middlePlansBar->installEventFilter(&m_clickFilter);
+    ui->longPlansBar->installEventFilter(&m_clickFilter);
+    ui->activeTasksBar->installEventFilter(&m_clickFilter);
+    ui->completedTasksBar->installEventFilter(&m_clickFilter);
+
+    connect(&m_clickFilter, &ClickFilter::mouseClicked, [this](QWidget *w){
+        if(w == ui->shortPlansBar) {
+            showShortPlans(true);
+            showMiddlePlans(false);
+            showLongPlans(false);
+        } else if(w == ui->middlePlansBar) {
+            showShortPlans(false);
+            showMiddlePlans(true);
+            showLongPlans(false);
+        } else if(w == ui->longPlansBar) {
+            showShortPlans(false);
+            showMiddlePlans(false);
+            showLongPlans(true);
+        } else if(w == ui->activeTasksBar) {
+            showActiveTasks(true);
+            showCompletedTasks(false);
+        } else if(w == ui->completedTasksBar) {
+            showActiveTasks(false);
+            showCompletedTasks(true);
+        }
+    });
+
+    emit m_clickFilter.mouseClicked(ui->shortPlansBar);
+    emit m_clickFilter.mouseClicked(ui->activeTasksBar);
 }
 
 MainWindow::~MainWindow()
