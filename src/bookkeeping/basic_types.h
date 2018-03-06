@@ -204,11 +204,20 @@ struct Transaction
     ArchNode<Wallet> to;
 };
 
-struct PlannedItem
+struct Plan
 {
     QString name;
     Transaction::Type::t type {Transaction::Type::Out};
     ArchNode<Category> category;
+    Money amount;
+};
+
+struct Task
+{
+    Transaction::Type::t type {Transaction::Type::Out};
+    const Node<Category> *category {nullptr};
+    QDate from;
+    QDate to;
     Money amount;
 };
 

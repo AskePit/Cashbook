@@ -401,7 +401,7 @@ QToolButton:hover:!checked {
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -2733,6 +2733,12 @@ QTreeView::item { height: 18px;}</string>
             </item>
             <item>
              <widget class="QTableView" name="shortPlansTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="palette">
                <palette>
                 <active>
@@ -3129,6 +3135,12 @@ QTreeView::item { height: 18px;}</string>
             </item>
             <item>
              <widget class="QTableView" name="middlePlansTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="palette">
                <palette>
                 <active>
@@ -3525,6 +3537,12 @@ QTreeView::item { height: 18px;}</string>
             </item>
             <item>
              <widget class="QTableView" name="longPlansTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="palette">
                <palette>
                 <active>
@@ -3616,6 +3634,19 @@ QTreeView::item { height: 18px;}</string>
                <number>23</number>
               </attribute>
              </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
@@ -3943,6 +3974,12 @@ QTreeView::item { height: 18px;}</string>
             </item>
             <item>
              <widget class="QTableView" name="activeTasksTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="palette">
                <palette>
                 <active>
@@ -4082,6 +4119,12 @@ QTreeView::item { height: 18px;}</string>
             </item>
             <item>
              <widget class="QTableView" name="completedTasksTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="palette">
                <palette>
                 <active>
@@ -4173,6 +4216,19 @@ QTreeView::item { height: 18px;}</string>
                <number>23</number>
               </attribute>
              </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>

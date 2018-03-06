@@ -968,7 +968,7 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const PlannedItem &item = plans[index.row()];
+    const Plan &item = plans[index.row()];
 
     switch(index.column())
     {
@@ -1036,7 +1036,7 @@ Qt::ItemFlags PlansModel::flags(const QModelIndex &index) const
     if(!planArchNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const PlannedItem &item = plans[index.row()];
+        const Plan &item = plans[index.row()];
         switch(column) {
             case PlansColumn::Category: {
                 if(item.type == Transaction::Type::Transfer) {
@@ -1057,7 +1057,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
         return false;
     }
 
-    PlannedItem &item = plans[index.row()];
+    Plan &item = plans[index.row()];
 
     switch(index.column())
     {
@@ -1093,7 +1093,7 @@ bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
 
     UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
-    PlannedItem item;
+    Plan item;
     plans.insert(position, item);
     endInsertRows();
     return true;
@@ -1119,6 +1119,190 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     bool down = sourceRow < destinationChild;
     int shift = as<int>(down);
     plans.move(sourceRow, destinationChild - shift);
+
+    endMoveRows();
+
+    return true;
+}
+
+//
+// Tasks
+//
+TasksModel::TasksModel(QObject *parent)
+    : QAbstractTableModel(parent)
+{}
+
+TasksModel::~TasksModel()
+{}
+
+QVariant TasksModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid()) {
+        return QVariant();
+    }
+
+    if(role == Qt::ForegroundRole) {
+        return QColor(Qt::black);
+    }
+
+    if (role != Qt::DisplayRole && role != Qt::EditRole) {
+        return QVariant();
+    }
+
+    const Task &item = Tasks[index.row()];
+
+    switch(index.column())
+    {
+        case TasksColumn::Name: return item.name;
+        case TasksColumn::Type: {
+            if(role == Qt::DisplayRole) {
+                return Transaction::Type::toString(item.type);
+            } else {
+                return as<int>(item.type);
+            }
+        } break;
+        case TasksColumn::Category: {
+            return archNodeData(item.category, role);
+        } break;
+        case TasksColumn::Money: {
+            if(role == Qt::DisplayRole) {
+                return formatMoney(item.amount);
+            } else { // Qt::EditRole
+                return as<double>(item.amount);
+            }
+        } break;
+    }
+
+    return QVariant();
+}
+
+QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+        switch(section)
+        {
+            case TasksColumn::Type: return tr("Тип");
+            case TasksColumn::Category: return tr("Категория");
+            case TasksColumn::From: return tr("Начало");
+            case TasksColumn::To: return tr("Завершение");
+            case TasksColumn::Money: return tr("Заложенная сумма");
+            case TasksColumn::Spent: return tr("Потрачено");
+            case TasksColumn::Rest: return tr("Осталось");
+        }
+    }
+
+    return QVariant();
+}
+
+int TasksModel::rowCount(const QModelIndex &parent) const
+{
+    return common::list::rowCount(Tasks, parent);
+}
+
+int TasksModel::columnCount(const QModelIndex &parent) const
+{
+    UNUSED(parent);
+    return TasksColumn::Count;
+}
+
+static const QSet<TasksColumn::t> TaskArchNodeColumns = {
+    TasksColumn::Category,
+};
+
+Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid()) {
+        return 0;
+    }
+
+    auto column = as<TasksColumn::t>(index.column());
+
+    if(!TaskArchNodeColumns.contains(column)) {
+        return common::flags(this, index);
+    } else {
+        const Task &item = Tasks[index.row()];
+        switch(column) {
+            case TasksColumn::Category: {
+                if(item.type == Transaction::Type::Transfer) {
+                    return Qt::NoItemFlags;
+                }
+
+                return archNodeFlags(this, index, item.category);
+            }
+        }
+    }
+
+    return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
+}
+
+bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (role != Qt::EditRole) {
+        return false;
+    }
+
+    Task &item = Tasks[index.row()];
+
+    switch(index.column())
+    {
+        case TasksColumn::Name: item.name = value.toString(); break;
+        case TasksColumn::Type: {
+            auto oldType = item.type;
+            item.type = as<Transaction::Type::t>(value.toInt());
+            if(item.type != oldType) {
+                item.category.setNull();
+                emit dataChanged(
+                  createIndex(index.row(), TasksColumn::Category),
+                  createIndex(index.row(), TasksColumn::Category),
+                  {Qt::DisplayRole, Qt::EditRole}
+                );
+            }
+        } break;
+        case TasksColumn::Category: {
+            if(!value.isNull()) {
+                item.category = value;
+            }
+        } break;
+        case TasksColumn::Money: item.amount = value.toDouble(); break;
+    }
+
+    emit dataChanged(index, index);
+
+    return true;
+}
+
+bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
+{
+    // always assume that rows == 1
+
+    UNUSED(parent);
+    beginInsertRows(parent, position, position + rows - 1);
+    Task item;
+    Tasks.insert(position, item);
+    endInsertRows();
+    return true;
+}
+
+bool TasksModel::removeRows(int position, int rows, const QModelIndex &parent)
+{
+    // always assume that rows == 1
+
+    UNUSED(parent);
+    beginRemoveRows(parent, position, position + rows - 1);
+    Tasks.removeAt(position);
+    endRemoveRows();
+    return true;
+}
+
+bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
+{
+    if(!beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild)) {
+        return false;
+    }
+
+    bool down = sourceRow < destinationChild;
+    int shift = as<int>(down);
+    Tasks.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
 
@@ -1559,7 +1743,7 @@ QWidget* PlannedItemDelegate::createEditor(QWidget* parent, const QStyleOptionVi
         return QStyledItemDelegate::createEditor(parent, option, index);
     }
 
-    const PlannedItem &item = m_plans.plans[index.row()];
+    const Plan &item = m_plans.plans[index.row()];
 
     int col = index.column();
 

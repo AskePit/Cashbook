@@ -314,10 +314,57 @@ class PlansModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    QVector<PlannedItem> plans;
+    QVector<Plan> plans;
 
     PlansModel(QObject *parent = 0);
     ~PlansModel();
+
+    QVariant data(const QModelIndex &index, int role) const override;
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+
+    bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
+
+    void clear() {
+        emit beginResetModel();
+        plans.clear();
+        emit endResetModel();
+    }
+};
+
+class TasksColumn
+{
+public:
+    enum t {
+        Type,
+        Category,
+        From,
+        To,
+        Money,
+        Spent,
+        Rest,
+
+        Count
+    };
+};
+
+class TasksModel : public QAbstractTableModel
+{
+    Q_OBJECT
+
+public:
+    QVector<Task> plans;
+
+    TasksModel(QObject *parent = 0);
+    ~TasksModel();
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,

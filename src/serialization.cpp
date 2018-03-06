@@ -185,7 +185,7 @@ static void save(const LogModel &data, PitmArray &pitm)
     }
 }
 
-static void save(const PlannedItem &item, PitmObject &pitm)
+static void save(const Plan &item, PitmObject &pitm)
 {
     if(!item.name.isEmpty()) {
         pitm[QLatin1String("name")] = item.name;
@@ -203,7 +203,7 @@ static void save(const PlannedItem &item, PitmObject &pitm)
 
 static void save(const PlansModel &data, PitmArray &pitm)
 {
-    for(const PlannedItem &t : data.plans) {
+    for(const Plan &t : data.plans) {
         PitmObject obj;
         save(t, obj);
         pitm.append(obj);
@@ -547,7 +547,7 @@ static void load(LogModel &logModel, PitmArray pitm, Data &data){
     }
 }
 
-static void load(PlannedItem &item, PitmObject pitm,
+static void load(Plan &item, PitmObject pitm,
                  const CategoriesModel &inCategories,
                  const CategoriesModel &outCategories
 ) {
@@ -575,7 +575,7 @@ static void load(PlansModel &data, PitmArray arr,
 {
     for(PitmValue v : std::as_const(arr)) {
         PitmObject obj = v.toObject();
-        PlannedItem item;
+        Plan item;
         load(item, obj, inCategories, outCategories);
         data.plans.push_back(item);
     }

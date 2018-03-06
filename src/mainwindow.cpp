@@ -61,6 +61,11 @@ void showAll(QWidgetList l) {
     }
 }
 
+void recalculateHeight(QTableView *view) {
+    int height = qMax(view->verticalHeader()->length() + view->horizontalHeader()->height(), 120);
+    view->setFixedHeight(height);
+}
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -201,6 +206,23 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
 
     emit m_clickFilter.mouseClicked(ui->shortPlansBar);
     emit m_clickFilter.mouseClicked(ui->activeTasksBar);
+
+    recalculateHeight(ui->shortPlansTable);
+    recalculateHeight(ui->middlePlansTable);
+    recalculateHeight(ui->longPlansTable);
+    recalculateHeight(ui->activeTasksTable);
+    recalculateHeight(ui->completedTasksTable);
+
+    connect(&m_data.plans.shortPlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_data.plans.shortPlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_data.plans.middlePlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_data.plans.middlePlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_data.plans.longPlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_data.plans.longPlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
+    /*connect(&m_data.tasks.active, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks.active, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks.completed, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
+    connect(&m_data.tasks.completed, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });*/
 }
 
 MainWindow::~MainWindow()

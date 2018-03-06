@@ -18,6 +18,16 @@ struct Plans {
     }
 };
 
+struct Tasks {
+    TasksModel active;
+    TasksModel completed;
+
+    void clear() {
+        active.clear();
+        completed.clear();
+    }
+};
+
 class Data : public QObject
 {
     Q_OBJECT
