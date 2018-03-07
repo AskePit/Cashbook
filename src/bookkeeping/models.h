@@ -435,72 +435,23 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 };
 
-class BoolDelegate : public QItemDelegate
-{
-    Q_OBJECT
-
-public:
-    BoolDelegate(QObject* parent = nullptr);
-    ~BoolDelegate();
-
-    virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
-};
-
 class Data;
 
-class LogItemDelegate : public QStyledItemDelegate
+class ModelsDelegate : public QItemDelegate
 {
     Q_OBJECT
 
 public:
-    LogItemDelegate(Data &data, QObject* parent = nullptr);
-    ~LogItemDelegate();
+    ModelsDelegate(Data &data, QObject* parent = nullptr);
+    ~ModelsDelegate();
 
+    virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
     virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
     virtual bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
-    Data &m_data;
-};
-
-class PlanDelegate : public QStyledItemDelegate
-{
-    Q_OBJECT
-
-public:
-    PlanDelegate(PlansModel &model, Data &data, QObject* parent = nullptr);
-    ~PlanDelegate();
-
-    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
-    virtual bool eventFilter(QObject *object, QEvent *event) override;
-
-private:
-    PlansModel &m_plans;
-    Data &m_data;
-};
-
-class TaskDelegate : public QStyledItemDelegate
-{
-    Q_OBJECT
-
-public:
-    TaskDelegate(TasksModel &model, Data &data, QObject* parent = nullptr);
-    ~TaskDelegate();
-
-    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
-    virtual bool eventFilter(QObject *object, QEvent *event) override;
-
-private:
-    TasksModel &m_tasks;
     Data &m_data;
 };
 

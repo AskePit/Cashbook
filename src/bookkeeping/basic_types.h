@@ -20,7 +20,6 @@ struct Month
     int year {0};
     int month {0};
 
-    //bool operator<(const Month &other) const;
     bool operator==(const Month &other) const;
     bool operator!=(const Month &other) const {
         return !(*this == other);
@@ -203,6 +202,8 @@ struct Transaction
     ArchNode<Wallet> from;
     ArchNode<Wallet> to;
 };
+
+Q_DECLARE_METATYPE(Transaction::Type::t)
 
 struct Plan
 {

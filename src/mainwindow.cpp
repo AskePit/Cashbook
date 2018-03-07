@@ -49,19 +49,31 @@ static void resizeCellWithPadding(View *view, int column, int pad) {
     extendColumn(view, column, pad);
 }
 
-void hideAll(QWidgetList l) {
+static void hideAll(QWidgetList l) {
     for(QWidget *w : l) {
         w->hide();
     }
 }
 
-void showAll(QWidgetList l) {
+static void showAll(QWidgetList l) {
     for(QWidget *w : l) {
         w->show();
     }
 }
 
-void recalculateHeight(QTableView *view) {
+static void setItemDelegate(QItemDelegate &delegate, QList<QAbstractItemView *> l) {
+    for(QAbstractItemView *v : l) {
+        v->setItemDelegate(&delegate);
+    }
+}
+
+static void setItemDelegateForColumn(QItemDelegate &delegate, int column, QList<QAbstractItemView *> l) {
+    for(QAbstractItemView *v : l) {
+        v->setItemDelegateForColumn(column, &delegate);
+    }
+}
+
+static void recalculateHeight(QTableView *view) {
     int height = qMax(view->verticalHeader()->length() + view->horizontalHeader()->height(), 120);
     view->setFixedHeight(height);
 }
@@ -70,11 +82,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_data(data)
-    , m_logDelegate(m_data)
-    , m_shortPlansDelegate(m_data.plans.shortPlans, m_data)
-    , m_middlePlansDelegate(m_data.plans.middlePlans, m_data)
-    , m_longPlansDelegate(m_data.plans.longPlans, m_data)
-    , m_activeTasksDelegate(m_data.tasks.active, m_data)
+    , m_modelsDelegate(m_data)
 {
     ui->setupUi(this);
 
@@ -83,13 +91,19 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->menuLayout->setContentsMargins(0, 0, 0, 0);
     ui->stackedWidget->setContentsMargins(0, 0, 0, 0);
 
-    ui->logTable->setItemDelegate(&m_logDelegate);
-    ui->shortPlansTable->setItemDelegate(&m_shortPlansDelegate);
-    ui->middlePlansTable->setItemDelegate(&m_middlePlansDelegate);
-    ui->longPlansTable->setItemDelegate(&m_longPlansDelegate);
-    ui->activeTasksTable->setItemDelegate(&m_activeTasksDelegate);
-    ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
-    ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
+    setItemDelegate(m_modelsDelegate, {
+        ui->logTable,
+        ui->shortPlansTable,
+        ui->middlePlansTable,
+        ui->longPlansTable,
+        ui->activeTasksTable,
+        ui->completedTasksTable,
+    });
+
+    setItemDelegateForColumn(m_modelsDelegate, CategoriesColumn::Regular, {
+        ui->inCategoriesTree,
+        ui->outCategoriesTree,
+    });
 
     connect(ui->inCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showInCategoryMenu);
     connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);

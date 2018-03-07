@@ -130,12 +130,7 @@ protected:
 private:
     Ui::MainWindow *ui;
     Data &m_data;
-    LogItemDelegate m_logDelegate;
-    PlanDelegate m_shortPlansDelegate;
-    PlanDelegate m_middlePlansDelegate;
-    PlanDelegate m_longPlansDelegate;
-    TaskDelegate m_activeTasksDelegate;
-    BoolDelegate m_boolDelegate;
+    ModelsDelegate m_modelsDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
     ClickFilter m_clickFilter;
 

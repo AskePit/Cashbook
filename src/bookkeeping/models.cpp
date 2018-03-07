@@ -706,7 +706,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(t.type);
             } else {
-                return as<int>(t.type);
+                return QVariant::fromValue<Transaction::Type::t>(t.type);
             }
         } break;
         case LogColumn::Category: {
@@ -977,7 +977,7 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(item.type);
             } else {
-                return as<int>(item.type);
+                return QVariant::fromValue<Transaction::Type::t>(item.type);
             }
         } break;
         case PlansColumn::Category: {
@@ -1163,7 +1163,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(item.type);
             } else {
-                return as<int>(item.type);
+                return QVariant::fromValue<Transaction::Type::t>(item.type);
             }
         } break;
         case TasksColumn::Category: {
@@ -1507,17 +1507,21 @@ QVariant BriefModel::headerData(int section, Qt::Orientation orientation, int ro
     return QVariant();
 }
 
+static int categoryNodeType = qRegisterMetaType<const Node<Category> *>();
+static int walletNodeType = qRegisterMetaType<const Node<Wallet> *>();
+static int transactionTypeType = qRegisterMetaType<Transaction::Type::t>();
 
-BoolDelegate::BoolDelegate(QObject *parent)
+ModelsDelegate::ModelsDelegate(Data &data, QObject* parent)
     : QItemDelegate(parent)
+    , m_data(data)
 {}
 
-BoolDelegate::~BoolDelegate()
+ModelsDelegate::~ModelsDelegate()
 {}
 
-void BoolDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void ModelsDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    if(!index.data().isValid()) {
+    if(index.data().type() != QVariant::Bool) {
         QItemDelegate::paint(painter, option, index);
         return;
     }
@@ -1534,131 +1538,97 @@ void BoolDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     QApplication::style()->drawControl(QStyle::CE_CheckBox, &style, painter);
 }
 
-QWidget *BoolDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    UNUSED(option, index);
+    QVariant data = index.data(Qt::EditRole);
+    QVariant::Type type = data.type();
 
-    if(!index.data().isValid()) {
-        return nullptr;
+    if(type != QVariant::Date && type != QVariant::Bool && type != QVariant::UserType) {
+        return QItemDelegate::createEditor(parent, option, index);
     }
 
-    return new QCheckBox(parent);
-}
-
-void BoolDelegate::setEditorData(QWidget *editor, const QModelIndex& index) const
-{
-    if (QCheckBox *box = qobject_cast<QCheckBox*>(editor)) {
-        box->setChecked(index.data(Qt::EditRole).toBool());
-    } else {
-        QItemDelegate::setEditorData(editor, index);
-    }
-}
-
-void BoolDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
-{
-    if (QCheckBox* box = qobject_cast<QCheckBox*>(editor)) {
-        model->setData(index, box->isChecked(), Qt::EditRole);
-    } else {
-        QItemDelegate::setModelData(editor, model, index);
-    }
-}
-
-
-static const QSet<LogColumn::t> defaultColumns = {
-    LogColumn::Money,
-    LogColumn::Note,
-};
-
-LogItemDelegate::LogItemDelegate(Data &data, QObject* parent)
-    : QStyledItemDelegate(parent)
-    , m_data(data)
-{}
-
-LogItemDelegate::~LogItemDelegate()
-{}
-
-QWidget* LogItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-    auto column = as<LogColumn::t>(index.column());
-    if (defaultColumns.contains(column)) {
-        return QStyledItemDelegate::createEditor(parent, option, index);
+    if(type == QVariant::Bool) {
+        return new QCheckBox(parent);
     }
 
-    const Transaction &record = m_data.log.log[index.row()];
+    if(type == QVariant::Date) {
+        QDateEdit *edit = new QDateEdit(parent);
+        edit->setCalendarPopup(true);
+        return edit;
+    }
 
-    int col = index.column();
+    // custom types
+    int customType = data.userType();
+    if(customType == transactionTypeType) {
+        QComboBox *box = new QComboBox(parent);
+        QVector<Transaction::Type::t> v {Transaction::Type::In, Transaction::Type::Out};
 
-    switch(col) {
-        case LogColumn::Date: {
-            QDate min;
-            QDate max {today};
-            if(as<int>(m_data.log.log.size()) > index.row()+1) {
-                min = m_data.log.log[index.row()+1].date;
-            }
+        bool tasks = !!qobject_cast<const TasksModel*>(index.model());
+        if(!tasks) {
+            v << Transaction::Type::Transfer;
+        }
 
-            if(min == max) {
-                return nullptr;
-            }
+        for(auto t : v) {
+            box->addItem(Transaction::Type::toString(t), as<int>(t));
+        }
+        return box;
+    }
 
-            QDateEdit *edit = new QDateEdit(parent);
-            edit->setMinimumDate(min);
-            edit->setMaximumDate(max);
-            edit->setCalendarPopup(true);
-            return edit;
-        } break;
+    if(customType == categoryNodeType) {
+        int column;
+        if(qobject_cast<const LogModel*>(index.model())) {
+            column = LogColumn::Type;
+        } else if(qobject_cast<const PlansModel*>(index.model())) {
+            column = PlansColumn::Type;
+        } else if(qobject_cast<const TasksModel*>(index.model())) {
+            column = TasksColumn::Type;
+        }
 
-        case LogColumn::Type: {
-            QComboBox *box = new QComboBox(parent);
-            for(auto t : Transaction::Type::enumerate()) {
-                box->addItem(Transaction::Type::toString(t), as<int>(t));
-            }
-            return box;
-        } break;
+        QModelIndex typeIndex = index.model()->index(index.row(), column);
+        QVariant data = typeIndex.data(Qt::EditRole);
+        Transaction::Type::t type = as<Transaction::Type::t>(data.toInt());
+        if(type == Transaction::Type::Transfer) {
+            return nullptr;
+        }
 
-        case LogColumn::Category: {
-            if(record.type == Transaction::Type::Transfer) {
-                return nullptr;
-            }
+        CategoriesModel &categories =
+                type == Transaction::Type::In ?
+                    m_data.inCategories :
+                    m_data.outCategories;
 
-            CategoriesModel &categories =
-                    record.type == Transaction::Type::In ?
-                        m_data.inCategories :
-                        m_data.outCategories;
+        NodeButton<Category> *button = new NodeButton<Category>(categories, parent);
+        return button;
+    }
 
-            NodeButton<Category> *button = new NodeButton<Category>(parent);
-            connect(button, &QPushButton::clicked, [=, &categories]() {
-                button->setState(NodeButtonState::Expanded);
-                QTreeView *view = new PopupTree<Category>(&categories, button, parent);
-                UNUSED(view);
-            });
-            return button;
+    if(customType == walletNodeType) {
+        // assume that only LogModel uses wallets tree editor
+        QModelIndex typeIndex = index.model()->index(index.row(), LogColumn::Type);
+        QVariant data = typeIndex.data(Qt::EditRole);
+        Transaction::Type::t type = as<Transaction::Type::t>(data.toInt());
 
-        } break;
+        int col = index.column();
 
-        case LogColumn::From:
-        case LogColumn::To: {
-            if(col == LogColumn::From && record.type == Transaction::Type::In
-            || col == LogColumn::To   && record.type == Transaction::Type::Out) {
-                return nullptr;
-            }
+        if(col == LogColumn::From && type == Transaction::Type::In
+        || col == LogColumn::To   && type == Transaction::Type::Out) {
+            return nullptr;
+        }
 
-            NodeButton<Wallet> *button = new NodeButton<Wallet>(parent);
-            connect(button, &QPushButton::clicked, [=, this]() {
-                button->setState(NodeButtonState::Expanded);
-                QTreeView *view = new PopupTree<Wallet>(&m_data.wallets, button, parent);
-                UNUSED(view);
-            });
-            return button;
-
-        } break;
+        NodeButton<Wallet> *button = new NodeButton<Wallet>(m_data.wallets, parent);
+        return button;
     }
 
     // should not reach this code, but just to be sure
-    return QStyledItemDelegate::createEditor(parent, option, index);
+    return QItemDelegate::createEditor(parent, option, index);
 }
 
-void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+void ModelsDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
+    // bool case
+    if (QCheckBox *box = qobject_cast<QCheckBox*>(editor)) {
+        box->setChecked(index.data(Qt::EditRole).toBool());
+        return;
+    }
+
     // Date case
     if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
         QDate date = index.data(Qt::EditRole).toDate();
@@ -1686,7 +1656,7 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
     if(cat) {
        const ArchNode<Category> archNode = value;
        if(!archNode.isValidPointer()) {
-           QStyledItemDelegate::setEditorData(editor, index);
+           QItemDelegate::setEditorData(editor, index);
            return;
        }
 
@@ -1698,7 +1668,7 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
     } else if(wal) {
         ArchNode<Wallet> archNode = value;
         if(!archNode.isValidPointer()) {
-            QStyledItemDelegate::setEditorData(editor, index);
+            QItemDelegate::setEditorData(editor, index);
             return;
         }
 
@@ -1707,11 +1677,17 @@ void LogItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) c
         return;
     }
 
-    QStyledItemDelegate::setEditorData(editor, index);
+    QItemDelegate::setEditorData(editor, index);
 }
 
-void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+void ModelsDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
+    // bool case
+    if (QCheckBox* box = qobject_cast<QCheckBox*>(editor)) {
+        model->setData(index, box->isChecked(), Qt::EditRole);
+        return;
+    }
+
     // Date case
     if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
         model->setData(index, edit->date(), Qt::EditRole);
@@ -1725,32 +1701,24 @@ void LogItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, c
     }
 
     // trees case
-    int col = index.column();
-    switch(col) {
-        // Categories tree
-        case LogColumn::Category: {
-            if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
-                model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
-                return;
-            }
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
+    NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(editor);
 
-        } break;
+    // Categories tree
+    if(cat) {
+       model->setData(index, ArchNode<Category>(cat->node()), Qt::EditRole);
+       return;
 
-        // Wallets tree
-        case LogColumn::From:
-        case LogColumn::To: {
-            if (NodeButton<Wallet> *button = dynamic_cast<NodeButton<Wallet> *>(editor)) {
-                model->setData(index, ArchNode<Wallet>(button->node()), Qt::EditRole);
-                return;
-            }
-
-        } break;
+    // Wallets tree
+    } else if(wal) {
+        model->setData(index, ArchNode<Wallet>(wal->node()), Qt::EditRole);
+        return;
     }
 
-    QStyledItemDelegate::setModelData(editor, model, index);
+    QItemDelegate::setModelData(editor, model, index);
 }
 
-bool LogItemDelegate::eventFilter(QObject *object, QEvent *event)
+bool ModelsDelegate::eventFilter(QObject *object, QEvent *event)
 {
     NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
     NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(object);
@@ -1761,295 +1729,7 @@ bool LogItemDelegate::eventFilter(QObject *object, QEvent *event)
         return true;
     }
 
-    return QStyledItemDelegate::eventFilter(object, event);
-}
-
-static const QSet<PlansColumn::t> defaultPlanColumns = {
-    PlansColumn::Name,
-    PlansColumn::Money,
-};
-
-PlanDelegate::PlanDelegate(PlansModel &plans, Data &data, QObject* parent)
-    : QStyledItemDelegate(parent)
-    , m_plans(plans)
-    , m_data(data)
-{}
-
-PlanDelegate::~PlanDelegate()
-{}
-
-QWidget* PlanDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-    auto column = as<PlansColumn::t>(index.column());
-    if (defaultPlanColumns.contains(column)) {
-        return QStyledItemDelegate::createEditor(parent, option, index);
-    }
-
-    const Plan &item = m_plans.plans[index.row()];
-
-    int col = index.column();
-
-    switch(col) {
-        case PlansColumn::Type: {
-            QComboBox *box = new QComboBox(parent);
-            for(auto t : Transaction::Type::enumerate()) {
-                box->addItem(Transaction::Type::toString(t), as<int>(t));
-            }
-            return box;
-        } break;
-
-        case PlansColumn::Category: {
-            if(item.type == Transaction::Type::Transfer) {
-                return nullptr;
-            }
-
-            CategoriesModel &categories =
-                    item.type == Transaction::Type::In ?
-                        m_data.inCategories :
-                        m_data.outCategories;
-
-            NodeButton<Category> *button = new NodeButton<Category>(parent);
-            connect(button, &QPushButton::clicked, [=, &categories]() {
-                button->setState(NodeButtonState::Expanded);
-                QTreeView *view = new PopupTree<Category>(&categories, button, parent);
-                UNUSED(view);
-            });
-            return button;
-
-        } break;
-    }
-
-    // should not reach this code, but just to be sure
-    return QStyledItemDelegate::createEditor(parent, option, index);
-}
-
-void PlanDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
-{
-    // Date case
-    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
-        QDate date = index.data(Qt::EditRole).toDate();
-        edit->setDate(date);
-        return;
-    }
-
-    // Transaction type case
-    if (QComboBox *box = qobject_cast<QComboBox*>(editor)) {
-        QVariant value = index.data(Qt::EditRole);
-        int i = box->findData(value);
-        if(i >= 0) {
-            box->setCurrentIndex(i);
-        }
-        return;
-    }
-
-    // trees case
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
-
-    QVariant value = index.data(Qt::EditRole);
-
-    // Categories tree
-    if(cat) {
-       const ArchNode<Category> archNode = value;
-       if(!archNode.isValidPointer()) {
-           QStyledItemDelegate::setEditorData(editor, index);
-           return;
-       }
-
-       const Node<Category> *node = archNode.toPointer();
-       cat->setNode(node);
-       return;
-    }
-
-    QStyledItemDelegate::setEditorData(editor, index);
-}
-
-void PlanDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
-{
-    // Date case
-    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
-        model->setData(index, edit->date(), Qt::EditRole);
-        return;
-    }
-
-    // Transaction type case
-    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
-        model->setData(index, box->currentData(), Qt::EditRole);
-        return;
-    }
-
-    // trees case
-    int col = index.column();
-    switch(col) {
-        // Categories tree
-        case PlansColumn::Category: {
-            if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
-                model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
-                return;
-            }
-
-        } break;
-    }
-
-    QStyledItemDelegate::setModelData(editor, model, index);
-}
-
-bool PlanDelegate::eventFilter(QObject *object, QEvent *event)
-{
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
-    NodeButtonState state {cat ? cat->state() : NodeButtonState::Folded};
-
-    if(state == NodeButtonState::Expanded && event->type() == QEvent::FocusOut) { // for expaned case we do not want to close editor
-        return true;
-    }
-
-    return QStyledItemDelegate::eventFilter(object, event);
-}
-
-static const QSet<TasksColumn::t> defaultTaskColumns = {
-    TasksColumn::Money,
-    TasksColumn::Spent,
-    TasksColumn::Rest,
-};
-
-TaskDelegate::TaskDelegate(TasksModel &tasks, Data &data, QObject* parent)
-    : QStyledItemDelegate(parent)
-    , m_tasks(tasks)
-    , m_data(data)
-{}
-
-TaskDelegate::~TaskDelegate()
-{}
-
-QWidget* TaskDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-    auto column = as<TasksColumn::t>(index.column());
-    if (defaultTaskColumns.contains(column)) {
-        return QStyledItemDelegate::createEditor(parent, option, index);
-    }
-
-    const Task &item = m_tasks.tasks[index.row()];
-
-    int col = index.column();
-
-    switch(col) {
-        case TasksColumn::From:
-        case TasksColumn::To:{
-            QDateEdit *edit = new QDateEdit(parent);
-            edit->setCalendarPopup(true);
-            return edit;
-        } break;
-        case TasksColumn::Type: {
-            QComboBox *box = new QComboBox(parent);
-            for(auto t : Transaction::Type::enumerate()) {
-                box->addItem(Transaction::Type::toString(t), as<int>(t));
-            }
-            return box;
-        } break;
-
-        case TasksColumn::Category: {
-            if(item.type == Transaction::Type::Transfer) {
-                return nullptr;
-            }
-
-            CategoriesModel &categories =
-                    item.type == Transaction::Type::In ?
-                        m_data.inCategories :
-                        m_data.outCategories;
-
-            NodeButton<Category> *button = new NodeButton<Category>(parent);
-            connect(button, &QPushButton::clicked, [=, &categories]() {
-                button->setState(NodeButtonState::Expanded);
-                QTreeView *view = new PopupTree<Category>(&categories, button, parent);
-                UNUSED(view);
-            });
-            return button;
-        } break;
-    }
-
-    // should not reach this code, but just to be sure
-    return QStyledItemDelegate::createEditor(parent, option, index);
-}
-
-void TaskDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
-{
-    // Date case
-    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
-        QDate date = index.data(Qt::EditRole).toDate();
-        edit->setDate(date);
-        return;
-    }
-
-    // Transaction type case
-    if (QComboBox *box = qobject_cast<QComboBox*>(editor)) {
-        QVariant value = index.data(Qt::EditRole);
-        int i = box->findData(value);
-        if(i >= 0) {
-            box->setCurrentIndex(i);
-        }
-        return;
-    }
-
-    // trees case
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
-
-    QVariant value = index.data(Qt::EditRole);
-
-    // Categories tree
-    if(cat) {
-       const ArchNode<Category> archNode = value;
-       if(!archNode.isValidPointer()) {
-           QStyledItemDelegate::setEditorData(editor, index);
-           return;
-       }
-
-       const Node<Category> *node = archNode.toPointer();
-       cat->setNode(node);
-       return;
-    }
-
-    QStyledItemDelegate::setEditorData(editor, index);
-}
-
-void TaskDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
-{
-    // Date case
-    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
-        model->setData(index, edit->date(), Qt::EditRole);
-        return;
-    }
-
-    // Transaction type case
-    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
-        model->setData(index, box->currentData(), Qt::EditRole);
-        return;
-    }
-
-    // trees case
-    int col = index.column();
-    switch(col) {
-        // Categories tree
-        case TasksColumn::Category: {
-            if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
-                model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
-                return;
-            }
-
-        } break;
-    }
-
-    QStyledItemDelegate::setModelData(editor, model, index);
-}
-
-bool TaskDelegate::eventFilter(QObject *object, QEvent *event)
-{
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
-    NodeButtonState state {cat ? cat->state() : NodeButtonState::Folded};
-
-    if(state == NodeButtonState::Expanded && event->type() == QEvent::FocusOut) { // for expaned case we do not want to close editor
-        return true;
-    }
-
-    return QStyledItemDelegate::eventFilter(object, event);
+    return QItemDelegate::eventFilter(object, event);
 }
 
 void CategoriesViewEventFilter::setViews(QTreeView *in, QTreeView *out)

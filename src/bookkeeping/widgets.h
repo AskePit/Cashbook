@@ -24,10 +24,22 @@ template <class T>
 class NodeButton : public QPushButton
 {
 public:
-    NodeButton(QWidget *parent = nullptr)
+    NodeButton(QAbstractItemModel &model, QWidget *parent = nullptr)
         : QPushButton(parent)
     {
         setStyleSheet("padding:0 0 0 2; text-align:left");
+
+        connect(this, &QPushButton::clicked, [this, &model]() {
+            this->setState(NodeButtonState::Expanded);
+            QTreeView *view = new PopupTree<T>(model, this, nullptr);
+            UNUSED(view);
+        });
+    }
+
+    ~NodeButton() {
+        /*if(m_tree) {
+            m_tree->deleteLater();
+        }*/
     }
 
     void setState(NodeButtonState s) {
@@ -112,12 +124,14 @@ template <class T>
 class PopupTree : public QTreeView
 {
 public:
-    PopupTree(QAbstractItemModel *model, NodeButton<T> *button, QWidget *parent = nullptr)
+    PopupTree(QAbstractItemModel &model, NodeButton<T> *button, QWidget *parent = nullptr)
         : QTreeView(parent)
         , m_button(button)
     {
-        setModel(model);
+        setModel(&model);
         setEditTriggers(QAbstractItemView::NoEditTriggers);
+        setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint);
+
         setStyleSheet("QTreeView::item { height: 18px;}");
         setAlternatingRowColors(true);
         expandToDepth(0);
@@ -126,7 +140,7 @@ public:
             hideColumn(i);
         }
         button->setTree(this);
-        move(button->pos());
+        move(button->mapToGlobal(QPoint(0, 0)));
         show();
         setFocus();
     }
@@ -154,11 +168,17 @@ protected:
 
 private:
     NodeButton<T> *m_button;
+    bool m_gonnaDestroy {false};
 
     void chooseValue(QEvent *event){
         Q_UNUSED(event);
 
+        if(m_gonnaDestroy) {
+            return;
+        }
+
         m_button->fetchNode();
+        m_gonnaDestroy = true;
         selfDestroy();
     }
 
