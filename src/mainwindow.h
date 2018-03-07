@@ -12,6 +12,10 @@ class MainWindow;
 namespace cashbook
 {
 
+class ViewModelMap : public std::map<QAbstractItemView*, QAbstractItemModel*> {
+
+};
+
 class ClickFilter : public QObject {
     Q_OBJECT
 public:
@@ -89,6 +93,8 @@ private slots:
     void on_upActiveTaskButton_clicked();
     void on_downActiveTaskButton_clicked();
 
+    void on_removeCompletedTaskButton_clicked();
+
     void on_actionSave_triggered();
 
     void on_mainButton_clicked();
@@ -109,11 +115,15 @@ private slots:
     void on_actionEditNote_triggered();
 
 private:
+    void preLoadSetup();
+    void postLoadSetup();
+
     void loadFile();
     void saveFile();
 
-    void onActionStatementTriggered(Transaction::Type::t type);
+    void showCategoryStatement(Transaction::Type::t type);
 
+    void updateUnanchoredSum();
     void showUnanchoredSum();
     void hideUnanchoredSum();
 
@@ -130,6 +140,7 @@ protected:
 private:
     Ui::MainWindow *ui;
     Data &m_data;
+    ViewModelMap vm;
     ModelsDelegate m_modelsDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
     ClickFilter m_clickFilter;

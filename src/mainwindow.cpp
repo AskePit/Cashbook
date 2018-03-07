@@ -78,18 +78,58 @@ static void recalculateHeight(QTableView *view) {
     view->setFixedHeight(height);
 }
 
+static void setSplitterStretching(QSplitter *splitter, int x1, int x2) {
+    splitter->setStretchFactor(0, x1);
+    splitter->setStretchFactor(1, x2);
+}
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_data(data)
     , m_modelsDelegate(m_data)
 {
-    ui->setupUi(this);
+    preLoadSetup();
+    loadFile();
+    postLoadSetup();
 
-    hideUnanchoredSum();
+    showMaximized();
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::preLoadSetup()
+{
+    ui->setupUi(this);
 
     ui->menuLayout->setContentsMargins(0, 0, 0, 0);
     ui->stackedWidget->setContentsMargins(0, 0, 0, 0);
+
+    hideUnanchoredSum();
+
+    const int stretch1 = 100;
+    const int stretch2 = 30;
+    setSplitterStretching(ui->logSplitter, stretch1, stretch2);
+    setSplitterStretching(ui->briefSplitter, stretch1, stretch2);
+    setSplitterStretching(ui->ownersSplitter, stretch1, stretch2);
+
+    ui->logTable->setColumnWidth(LogColumn::Date, 55);
+    ui->logTable->setColumnWidth(LogColumn::Type, 70);
+    ui->logTable->setColumnWidth(LogColumn::Category, 200);
+    ui->logTable->setColumnWidth(LogColumn::Money, 65);
+    ui->logTable->setColumnWidth(LogColumn::From, 145);
+    ui->logTable->setColumnWidth(LogColumn::To, 145);
+
+    ui->dateTo->setMaximumDate(today); // should be today day
+    ui->thisMonthButton->setText(months[today.month()-1]);
+    ui->thisYearButton->setText(QString::number(today.year()));
+
+    m_categoriesEventFilter.setViews(ui->inCategoriesTree, ui->outCategoriesTree);
+    ui->inCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
+    ui->outCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
 
     setItemDelegate(m_modelsDelegate, {
         ui->logTable,
@@ -105,100 +145,28 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
         ui->outCategoriesTree,
     });
 
-    connect(ui->inCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showInCategoryMenu);
-    connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);
-    connect(ui->logTable, &QTableView::customContextMenuRequested, this, &MainWindow::showLogContextMenu);
-
-    ui->logSplitter->setStretchFactor(0, 100);
-    ui->logSplitter->setStretchFactor(1, 30);
-
-    ui->briefSplitter->setStretchFactor(0, 100);
-    ui->briefSplitter->setStretchFactor(1, 30);
-
-    ui->ownersSplitter->setStretchFactor(0, 100);
-    ui->ownersSplitter->setStretchFactor(1, 30);
-
-    ui->logTable->setColumnWidth(LogColumn::Date, 55);
-    ui->logTable->setColumnWidth(LogColumn::Type, 70);
-    ui->logTable->setColumnWidth(LogColumn::Category, 200);
-    ui->logTable->setColumnWidth(LogColumn::Money, 65);
-    ui->logTable->setColumnWidth(LogColumn::From, 145);
-    ui->logTable->setColumnWidth(LogColumn::To, 145);
-
-    m_categoriesEventFilter.setViews(ui->inCategoriesTree, ui->outCategoriesTree);
-    ui->inCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
-    ui->outCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
-
-    connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
-
-    showMaximized();
-
-    ui->dateTo->setMaximumDate(m_data.statistics.categoriesTo); // should be today day
-
-    connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
-        m_data.loadCategoriesStatistics(from, m_data.statistics.categoriesTo);
-        m_data.inCategories.update();
-        m_data.outCategories.update();
-    });
-
-    connect(ui->dateTo, &QDateEdit::dateChanged, [this](const QDate &to) {
-        m_data.loadCategoriesStatistics(m_data.statistics.categoriesFrom, to);
-        m_data.inCategories.update();
-        m_data.outCategories.update();
-    });
-
-    ui->thisMonthButton->setText(months[today.month()-1]);
-    ui->thisYearButton->setText(QString::number(today.year()));
-
-    connect(&m_data, &Data::categoriesStatisticsUpdated, [this]() {
-        const auto *inRoot = m_data.inCategories.rootItem;
-        const auto *outRoot = m_data.outCategories.rootItem;
-
-        const Money &in = m_data.statistics.inCategories[inRoot];
-        const Money &out = m_data.statistics.outCategories[outRoot];
-
-        ui->inTotalLabel->setText(formatMoney(in));
-        ui->outTotalLabel->setText(formatMoney(out));
-    });
-
     ui->outCategoriesTree->setModel(&m_data.outCategories);
     ui->inCategoriesTree->setModel(&m_data.inCategories);
     ui->walletsTree->setModel(&m_data.wallets);
     ui->ownersList->setModel(&m_data.owners);
     ui->logTable->setModel(&m_data.log);
+
     ui->shortPlansTable->setModel(&m_data.plans.shortPlans);
     ui->middlePlansTable->setModel(&m_data.plans.middlePlans);
     ui->longPlansTable->setModel(&m_data.plans.longPlans);
     ui->activeTasksTable->setModel(&m_data.tasks.active);
     ui->completedTasksTable->setModel(&m_data.tasks.completed);
 
-    connect(&m_data.log, &TreeModel::dataChanged, [this](){
-        if(m_data.log.unanchored) {
-            showUnanchoredSum();
-        } else {
-            hideUnanchoredSum();
-        }
-    });
+    connect(ui->inCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showInCategoryMenu);
+    connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);
+    connect(ui->logTable, &QTableView::customContextMenuRequested, this, &MainWindow::showLogContextMenu);
 
-    loadFile();
-
-    if(m_data.log.unanchored) {
-        showUnanchoredSum();
-    }
-
-    ui->briefTable->setModel(&m_data.briefModel);
-    for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
-        ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
-        ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
-    }
-
-    resizeContentsWithPadding(ui->briefTable, BriefColumn::Count, 30);
+    connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
+    connect(&m_data.log, &TreeModel::dataChanged, this, &MainWindow::updateUnanchoredSum);
 
     ui->shortPlansBar->installEventFilter(&m_clickFilter);
     ui->middlePlansBar->installEventFilter(&m_clickFilter);
     ui->longPlansBar->installEventFilter(&m_clickFilter);
-    ui->activeTasksBar->installEventFilter(&m_clickFilter);
-    ui->completedTasksBar->installEventFilter(&m_clickFilter);
 
     connect(&m_clickFilter, &ClickFilter::mouseClicked, [this](QWidget *w){
         if(w == ui->shortPlansBar) {
@@ -213,46 +181,55 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
             showShortPlans(false);
             showMiddlePlans(false);
             showLongPlans(true);
-        } else if(w == ui->activeTasksBar) {
-            showActiveTasks(true);
-            showCompletedTasks(false);
-        } else if(w == ui->completedTasksBar) {
-            showActiveTasks(false);
-            showCompletedTasks(true);
         }
     });
 
     emit m_clickFilter.mouseClicked(ui->shortPlansBar);
-    emit m_clickFilter.mouseClicked(ui->activeTasksBar);
 
-    recalculateHeight(ui->shortPlansTable);
-    recalculateHeight(ui->middlePlansTable);
-    recalculateHeight(ui->longPlansTable);
-    recalculateHeight(ui->activeTasksTable);
-    recalculateHeight(ui->completedTasksTable);
-
-    connect(&m_data.plans.shortPlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
-    connect(&m_data.plans.shortPlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
-    connect(&m_data.plans.middlePlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
-    connect(&m_data.plans.middlePlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
-    connect(&m_data.plans.longPlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
-    connect(&m_data.plans.longPlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
-    connect(&m_data.tasks.active, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
-    connect(&m_data.tasks.active, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
-    connect(&m_data.tasks.completed, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
-    connect(&m_data.tasks.completed, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
+    connect(&m_data.plans.shortPlans, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_data.plans.shortPlans, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_data.plans.middlePlans, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_data.plans.middlePlans, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_data.plans.longPlans, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_data.plans.longPlans, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_data.tasks.active, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks.active, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks.completed, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
+    connect(&m_data.tasks.completed, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
 }
 
 void MainWindow::loadFile()
 {
     cashbook::load(m_data);
+}
 
+void MainWindow::postLoadSetup()
+{
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
+
+    connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
+        m_data.loadCategoriesStatistics(from, m_data.statistics.categoriesTo);
+        m_data.inCategories.update();
+        m_data.outCategories.update();
+    });
+
+    connect(ui->dateTo, &QDateEdit::dateChanged, [this](const QDate &to) {
+        m_data.loadCategoriesStatistics(m_data.statistics.categoriesFrom, to);
+        m_data.inCategories.update();
+        m_data.outCategories.update();
+    });
+
+    connect(&m_data, &Data::categoriesStatisticsUpdated, [this]() {
+        const auto *inRoot = m_data.inCategories.rootItem;
+        const auto *outRoot = m_data.outCategories.rootItem;
+
+        const Money &in = m_data.statistics.inCategories[inRoot];
+        const Money &out = m_data.statistics.outCategories[outRoot];
+
+        ui->inTotalLabel->setText(formatMoney(in));
+        ui->outTotalLabel->setText(formatMoney(out));
+    });
+
     ui->dateTo->setDate(m_data.statistics.categoriesTo);
 
     int pad = 17;
@@ -268,6 +245,22 @@ void MainWindow::loadFile()
     pad = 25;
     resizeCellWithPadding(ui->inCategoriesTree, CategoriesColumn::Name, pad);
     resizeCellWithPadding(ui->outCategoriesTree, CategoriesColumn::Name, pad);
+
+    updateUnanchoredSum();
+
+    ui->briefTable->setModel(&m_data.briefModel);
+    for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
+        ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
+        ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
+    }
+
+    resizeContentsWithPadding(ui->briefTable, BriefColumn::Count, 30);
+
+    recalculateHeight(ui->shortPlansTable);
+    recalculateHeight(ui->middlePlansTable);
+    recalculateHeight(ui->longPlansTable);
+    recalculateHeight(ui->activeTasksTable);
+    recalculateHeight(ui->completedTasksTable);
 }
 
 void MainWindow::saveFile()
@@ -489,7 +482,7 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
         m_data.log.removeRow(index.row());
     }
 
-    m_data.log.unanchored ? showUnanchoredSum() : hideUnanchoredSum();
+    updateUnanchoredSum();
 }
 
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
@@ -648,6 +641,10 @@ void cashbook::MainWindow::on_downActiveTaskButton_clicked() {
     m_changed |= downListItem(*ui->activeTasksTable, m_data.tasks.active);
 }
 
+void cashbook::MainWindow::on_removeCompletedTaskButton_clicked() {
+    m_changed |= removeListItem(*ui->completedTasksTable, m_data.tasks.completed);
+}
+
 void cashbook::MainWindow::on_actionSave_triggered()
 {
     /*if(!m_changed) {
@@ -766,7 +763,7 @@ void cashbook::MainWindow::showOutCategoryMenu(const QPoint& point)
     showCategoryContextMenu(m_data.outCategories, ui->outCategoriesTree, ui->actionOutStatement, point);
 }
 
-void cashbook::MainWindow::onActionStatementTriggered(Transaction::Type::t type)
+void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
 {
     bool in = type == Transaction::Type::In;
 
@@ -793,6 +790,15 @@ void cashbook::MainWindow::onActionStatementTriggered(Transaction::Type::t type)
     table->resizeColumnsToContents();
     table->hideColumn(LogColumn::Type);
     table->hideColumn(in ? LogColumn::From : LogColumn::To);
+}
+
+void cashbook::MainWindow::updateUnanchoredSum()
+{
+    if(m_data.log.unanchored) {
+        showUnanchoredSum();
+    } else {
+        hideUnanchoredSum();
+    }
 }
 
 void cashbook::MainWindow::showUnanchoredSum()
@@ -878,12 +884,12 @@ void cashbook::MainWindow::showCompletedTasks(bool show)
 
 void cashbook::MainWindow::on_actionInStatement_triggered()
 {
-    onActionStatementTriggered(Transaction::Type::In);
+    showCategoryStatement(Transaction::Type::In);
 }
 
 void cashbook::MainWindow::on_actionOutStatement_triggered()
 {
-    onActionStatementTriggered(Transaction::Type::Out);
+    showCategoryStatement(Transaction::Type::Out);
 }
 
 void cashbook::MainWindow::showLogContextMenu(const QPoint& point)

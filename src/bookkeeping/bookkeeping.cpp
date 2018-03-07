@@ -13,6 +13,10 @@ Data::Data()
     connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
     connect(&outCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onOutCategoriesRemove);
     connect(&wallets, &WalletsModel::nodesGonnaBeRemoved, this, &Data::onWalletsRemove);
+
+    connect(this, &Data::categoriesStatisticsUpdated, [this](){
+        updateTasks();
+    });
 }
 
 void Data::onOwnersRemove(QStringList paths)
@@ -113,10 +117,65 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
     emit categoriesStatisticsUpdated();
 }
 
+static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
+    while(node) {
+        if(node == parent) {
+            return true;
+        }
+        node = node->parent;
+    }
+
+    return false;
+}
+
+void Data::updateTasks()
+{
+    updateTasks(tasks.active);
+    updateTasks(tasks.completed);
+}
+
+void Data::updateTasks(TasksModel &tasksModel)
+{
+    for(Task &task : tasksModel.tasks) {
+        task.spent = 0;
+        task.rest = 0;
+
+        size_t i = 0;
+        while(i < log.log.size()) {
+            const Transaction &t = log.log[i++];
+
+            if(task.type != t.type) {
+                continue;
+            }
+
+            if(t.date > task.to) {
+                continue;
+            }
+
+            if(t.date < task.from) {
+                break;
+            }
+
+            const ArchNode<Category> &trArchNode = t.category;
+            const ArchNode<Category> &taskArchNode = task.category;
+            if(trArchNode.isValidPointer() && taskArchNode.isValidPointer()) {
+                const Node<Category> *trNode = trArchNode.toPointer();
+                const Node<Category> *taskNode = taskArchNode.toPointer();
+                if(isNodeBelongsTo(trNode, taskNode)) {
+                    task.spent += t.amount;
+                }
+            }
+        }
+
+        task.rest = task.amount - task.spent;
+    }
+}
+
 bool Data::anchoreTransactions()
 {
     bool did = log.anchoreTransactions();
     if(did) {
+        emit categoriesStatisticsUpdated();
         wallets.update();
     }
 

@@ -697,6 +697,7 @@ static void loadLog(Data &data)
 
     QDate monthBegin(today.year(), today.month(), 1);
     data.loadCategoriesStatistics(monthBegin, today);
+    data.updateTasks();
 }
 
 static void loadHead(Data &data)

@@ -51,6 +51,8 @@ public:
     Node<Category> *outCategoryFromPath(const QString &path);
 
     void loadCategoriesStatistics(const QDate &from, const QDate &to);
+    void updateTasks();
+    void updateTasks(TasksModel &tasksModel);
     bool anchoreTransactions();
     void clear();
 
