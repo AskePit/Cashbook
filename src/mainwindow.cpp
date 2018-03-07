@@ -74,6 +74,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_shortPlansDelegate(m_data.plans.shortPlans, m_data)
     , m_middlePlansDelegate(m_data.plans.middlePlans, m_data)
     , m_longPlansDelegate(m_data.plans.longPlans, m_data)
+    , m_activeTasksDelegate(m_data.tasks.active, m_data)
 {
     ui->setupUi(this);
 
@@ -86,6 +87,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->shortPlansTable->setItemDelegate(&m_shortPlansDelegate);
     ui->middlePlansTable->setItemDelegate(&m_middlePlansDelegate);
     ui->longPlansTable->setItemDelegate(&m_longPlansDelegate);
+    ui->activeTasksTable->setItemDelegate(&m_activeTasksDelegate);
     ui->inCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
     ui->outCategoriesTree->setItemDelegateForColumn(CategoriesColumn::Regular, &m_boolDelegate);
 
@@ -153,6 +155,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     ui->shortPlansTable->setModel(&m_data.plans.shortPlans);
     ui->middlePlansTable->setModel(&m_data.plans.middlePlans);
     ui->longPlansTable->setModel(&m_data.plans.longPlans);
+    ui->activeTasksTable->setModel(&m_data.tasks.active);
+    ui->completedTasksTable->setModel(&m_data.tasks.completed);
 
     connect(&m_data.log, &TreeModel::dataChanged, [this](){
         if(m_data.log.unanchored) {
@@ -219,10 +223,10 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     connect(&m_data.plans.middlePlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
     connect(&m_data.plans.longPlans, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
     connect(&m_data.plans.longPlans, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
-    /*connect(&m_data.tasks.active, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks.active, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
     connect(&m_data.tasks.active, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
     connect(&m_data.tasks.completed, &PlansModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
-    connect(&m_data.tasks.completed, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });*/
+    connect(&m_data.tasks.completed, &PlansModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
 }
 
 MainWindow::~MainWindow()
@@ -242,6 +246,8 @@ void MainWindow::loadFile()
     resizeContentsWithPadding(ui->shortPlansTable, PlansColumn::Count, pad);
     resizeContentsWithPadding(ui->middlePlansTable, PlansColumn::Count, pad);
     resizeContentsWithPadding(ui->longPlansTable, PlansColumn::Count, pad);
+    resizeContentsWithPadding(ui->activeTasksTable, TasksColumn::Count, pad);
+    resizeContentsWithPadding(ui->completedTasksTable, TasksColumn::Count, pad);
 
     ui->walletsTree->resizeColumnToContents(WalletColumn::Name);
 
@@ -615,6 +621,18 @@ void cashbook::MainWindow::on_downLongPlanButton_clicked() {
     m_changed |= downListItem(*ui->longPlansTable, m_data.plans.longPlans);
 }
 
+void cashbook::MainWindow::on_addActiveTaskButton_clicked() {
+    m_changed |= addListItem(m_data.tasks.active);
+}
+void cashbook::MainWindow::on_removeActiveTaskButton_clicked() {
+    m_changed |= removeListItem(*ui->activeTasksTable, m_data.tasks.active);
+}
+void cashbook::MainWindow::on_upActiveTaskButton_clicked() {
+    m_changed |= upListItem(*ui->activeTasksTable, m_data.tasks.active);
+}
+void cashbook::MainWindow::on_downActiveTaskButton_clicked() {
+    m_changed |= downListItem(*ui->activeTasksTable, m_data.tasks.active);
+}
 
 void cashbook::MainWindow::on_actionSave_triggered()
 {

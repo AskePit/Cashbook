@@ -142,6 +142,7 @@ void Data::clear() {
     outCategories.clear();
     log.clear();
     plans.clear();
+    tasks.clear();
 }
 
 } // namespace cashbook

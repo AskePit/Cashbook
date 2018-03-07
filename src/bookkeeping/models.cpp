@@ -871,7 +871,7 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Transaction t;
-    t.date = QDate::currentDate();
+    t.date = today;
     log.insert(position, rows, t);
     unanchored += rows;
     changedMonths.insert(Month(t.date));
@@ -1141,19 +1141,24 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    int column = index.column();
+
     if(role == Qt::ForegroundRole) {
-        return QColor(Qt::black);
+        if(column == TasksColumn::Spent || column == TasksColumn::Rest) {
+            return QColor(100, 100, 100);
+        } else {
+            return QColor(Qt::black);
+        }
     }
 
     if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
     }
 
-    const Task &item = Tasks[index.row()];
+    const Task &item = tasks[index.row()];
 
-    switch(index.column())
+    switch(column)
     {
-        case TasksColumn::Name: return item.name;
         case TasksColumn::Type: {
             if(role == Qt::DisplayRole) {
                 return Transaction::Type::toString(item.type);
@@ -1164,11 +1169,39 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
         case TasksColumn::Category: {
             return archNodeData(item.category, role);
         } break;
+        case TasksColumn::From: {
+            if(role == Qt::DisplayRole) {
+                return item.from.toString("dd.MM.yy");
+            } else {
+                return item.from;
+            }
+        } break;
+        case TasksColumn::To: {
+            if(role == Qt::DisplayRole) {
+                return item.to.toString("dd.MM.yy");
+            } else {
+                return item.to;
+            }
+        } break;
         case TasksColumn::Money: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.amount);
             } else { // Qt::EditRole
                 return as<double>(item.amount);
+            }
+        } break;
+        case TasksColumn::Spent: {
+            if(role == Qt::DisplayRole) {
+                return formatMoney(item.spent);
+            } else { // Qt::EditRole
+                return as<double>(item.spent);
+            }
+        } break;
+        case TasksColumn::Rest: {
+            if(role == Qt::DisplayRole) {
+                return formatMoney(item.rest);
+            } else { // Qt::EditRole
+                return as<double>(item.rest);
             }
         } break;
     }
@@ -1196,7 +1229,7 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
 
 int TasksModel::rowCount(const QModelIndex &parent) const
 {
-    return common::list::rowCount(Tasks, parent);
+    return common::list::rowCount(tasks, parent);
 }
 
 int TasksModel::columnCount(const QModelIndex &parent) const
@@ -1205,7 +1238,7 @@ int TasksModel::columnCount(const QModelIndex &parent) const
     return TasksColumn::Count;
 }
 
-static const QSet<TasksColumn::t> TaskArchNodeColumns = {
+static const QSet<TasksColumn::t> taskNodeColumns = {
     TasksColumn::Category,
 };
 
@@ -1217,10 +1250,14 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 
     auto column = as<TasksColumn::t>(index.column());
 
-    if(!TaskArchNodeColumns.contains(column)) {
+    if(column == TasksColumn::Spent || column == TasksColumn::Rest) {
+        return Qt::NoItemFlags;
+    }
+
+    if(!taskNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Task &item = Tasks[index.row()];
+        const Task &item = tasks[index.row()];
         switch(column) {
             case TasksColumn::Category: {
                 if(item.type == Transaction::Type::Transfer) {
@@ -1241,11 +1278,10 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
         return false;
     }
 
-    Task &item = Tasks[index.row()];
+    Task &item = tasks[index.row()];
 
     switch(index.column())
     {
-        case TasksColumn::Name: item.name = value.toString(); break;
         case TasksColumn::Type: {
             auto oldType = item.type;
             item.type = as<Transaction::Type::t>(value.toInt());
@@ -1263,7 +1299,11 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
                 item.category = value;
             }
         } break;
+        case TasksColumn::From: item.from = value.toDate(); break;
+        case TasksColumn::To: item.to = value.toDate(); break;
         case TasksColumn::Money: item.amount = value.toDouble(); break;
+        case TasksColumn::Spent: item.spent = value.toDouble(); break;
+        case TasksColumn::Rest: item.rest = value.toDouble(); break;
     }
 
     emit dataChanged(index, index);
@@ -1278,7 +1318,9 @@ bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
     UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Task item;
-    Tasks.insert(position, item);
+    item.from = today;
+    item.to = today;
+    tasks.insert(position, item);
     endInsertRows();
     return true;
 }
@@ -1289,7 +1331,7 @@ bool TasksModel::removeRows(int position, int rows, const QModelIndex &parent)
 
     UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
-    Tasks.removeAt(position);
+    tasks.removeAt(position);
     endRemoveRows();
     return true;
 }
@@ -1302,7 +1344,7 @@ bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 
     bool down = sourceRow < destinationChild;
     int shift = as<int>(down);
-    Tasks.move(sourceRow, destinationChild - shift);
+    tasks.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
 
@@ -1727,16 +1769,16 @@ static const QSet<PlansColumn::t> defaultPlanColumns = {
     PlansColumn::Money,
 };
 
-PlannedItemDelegate::PlannedItemDelegate(PlansModel &plans, Data &data, QObject* parent)
+PlanDelegate::PlanDelegate(PlansModel &plans, Data &data, QObject* parent)
     : QStyledItemDelegate(parent)
     , m_plans(plans)
     , m_data(data)
 {}
 
-PlannedItemDelegate::~PlannedItemDelegate()
+PlanDelegate::~PlanDelegate()
 {}
 
-QWidget* PlannedItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+QWidget* PlanDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     auto column = as<PlansColumn::t>(index.column());
     if (defaultPlanColumns.contains(column)) {
@@ -1781,7 +1823,7 @@ QWidget* PlannedItemDelegate::createEditor(QWidget* parent, const QStyleOptionVi
     return QStyledItemDelegate::createEditor(parent, option, index);
 }
 
-void PlannedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+void PlanDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
     // Date case
     if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
@@ -1821,7 +1863,7 @@ void PlannedItemDelegate::setEditorData(QWidget* editor, const QModelIndex& inde
     QStyledItemDelegate::setEditorData(editor, index);
 }
 
-void PlannedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+void PlanDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
     // Date case
     if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
@@ -1851,7 +1893,154 @@ void PlannedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* mode
     QStyledItemDelegate::setModelData(editor, model, index);
 }
 
-bool PlannedItemDelegate::eventFilter(QObject *object, QEvent *event)
+bool PlanDelegate::eventFilter(QObject *object, QEvent *event)
+{
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
+    NodeButtonState state {cat ? cat->state() : NodeButtonState::Folded};
+
+    if(state == NodeButtonState::Expanded && event->type() == QEvent::FocusOut) { // for expaned case we do not want to close editor
+        return true;
+    }
+
+    return QStyledItemDelegate::eventFilter(object, event);
+}
+
+static const QSet<TasksColumn::t> defaultTaskColumns = {
+    TasksColumn::Money,
+    TasksColumn::Spent,
+    TasksColumn::Rest,
+};
+
+TaskDelegate::TaskDelegate(TasksModel &tasks, Data &data, QObject* parent)
+    : QStyledItemDelegate(parent)
+    , m_tasks(tasks)
+    , m_data(data)
+{}
+
+TaskDelegate::~TaskDelegate()
+{}
+
+QWidget* TaskDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    auto column = as<TasksColumn::t>(index.column());
+    if (defaultTaskColumns.contains(column)) {
+        return QStyledItemDelegate::createEditor(parent, option, index);
+    }
+
+    const Task &item = m_tasks.tasks[index.row()];
+
+    int col = index.column();
+
+    switch(col) {
+        case TasksColumn::From:
+        case TasksColumn::To:{
+            QDateEdit *edit = new QDateEdit(parent);
+            edit->setCalendarPopup(true);
+            return edit;
+        } break;
+        case TasksColumn::Type: {
+            QComboBox *box = new QComboBox(parent);
+            for(auto t : Transaction::Type::enumerate()) {
+                box->addItem(Transaction::Type::toString(t), as<int>(t));
+            }
+            return box;
+        } break;
+
+        case TasksColumn::Category: {
+            if(item.type == Transaction::Type::Transfer) {
+                return nullptr;
+            }
+
+            CategoriesModel &categories =
+                    item.type == Transaction::Type::In ?
+                        m_data.inCategories :
+                        m_data.outCategories;
+
+            NodeButton<Category> *button = new NodeButton<Category>(parent);
+            connect(button, &QPushButton::clicked, [=, &categories]() {
+                button->setState(NodeButtonState::Expanded);
+                QTreeView *view = new PopupTree<Category>(&categories, button, parent);
+                UNUSED(view);
+            });
+            return button;
+        } break;
+    }
+
+    // should not reach this code, but just to be sure
+    return QStyledItemDelegate::createEditor(parent, option, index);
+}
+
+void TaskDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+    // Date case
+    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
+        QDate date = index.data(Qt::EditRole).toDate();
+        edit->setDate(date);
+        return;
+    }
+
+    // Transaction type case
+    if (QComboBox *box = qobject_cast<QComboBox*>(editor)) {
+        QVariant value = index.data(Qt::EditRole);
+        int i = box->findData(value);
+        if(i >= 0) {
+            box->setCurrentIndex(i);
+        }
+        return;
+    }
+
+    // trees case
+    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
+
+    QVariant value = index.data(Qt::EditRole);
+
+    // Categories tree
+    if(cat) {
+       const ArchNode<Category> archNode = value;
+       if(!archNode.isValidPointer()) {
+           QStyledItemDelegate::setEditorData(editor, index);
+           return;
+       }
+
+       const Node<Category> *node = archNode.toPointer();
+       cat->setNode(node);
+       return;
+    }
+
+    QStyledItemDelegate::setEditorData(editor, index);
+}
+
+void TaskDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+{
+    // Date case
+    if (QDateEdit *edit = qobject_cast<QDateEdit*>(editor)) {
+        model->setData(index, edit->date(), Qt::EditRole);
+        return;
+    }
+
+    // Transaction type case
+    if (QComboBox* box = qobject_cast<QComboBox*>(editor)) {
+        model->setData(index, box->currentData(), Qt::EditRole);
+        return;
+    }
+
+    // trees case
+    int col = index.column();
+    switch(col) {
+        // Categories tree
+        case TasksColumn::Category: {
+            if (NodeButton<Category> *button = dynamic_cast<NodeButton<Category> *>(editor)) {
+                model->setData(index, ArchNode<Category>(button->node()), Qt::EditRole);
+                return;
+            }
+
+        } break;
+    }
+
+    QStyledItemDelegate::setModelData(editor, model, index);
+}
+
+bool TaskDelegate::eventFilter(QObject *object, QEvent *event)
 {
     NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
     NodeButtonState state {cat ? cat->state() : NodeButtonState::Folded};

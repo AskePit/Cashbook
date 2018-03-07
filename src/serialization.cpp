@@ -225,6 +225,35 @@ static void save(const Plans &data, PitmObject &pitm)
     pitm[QLatin1String("long")] = longPlans;
 }
 
+static void save(const Task &item, PitmObject &pitm)
+{
+    pitm[QLatin1String("type")] = Transaction::Type::toConfigString(item.type);
+
+    PitmObject category;
+    save(item.category, category);
+    if(item.type != Transaction::Type::Transfer) {
+        pitm[QLatin1String("category")] = category;
+    }
+    pitm[QLatin1String("from")] = item.from.toString(QStringLiteral("dd.MM.yyyy"));
+    pitm[QLatin1String("to")] = item.to.toString(QStringLiteral("dd.MM.yyyy"));
+    pitm[QLatin1String("amount")] = item.amount.as_cents();
+}
+
+static void save(const Tasks &data, PitmArray &pitm)
+{
+    for(const Task &task : data.active.tasks) {
+        PitmObject obj;
+        save(task, obj);
+        pitm.append(obj);
+    }
+
+    for(const Task &task : data.completed.tasks) {
+        PitmObject obj;
+        save(task, obj);
+        pitm.append(obj);
+    }
+}
+
 static void saveLog(const Data &data, PitmObject &pitm)
 {
     PitmArray log;
@@ -310,18 +339,21 @@ static void saveHead(const Data &data, PitmObject &pitm)
     PitmArray inCategories;
     PitmArray outCategories;
     PitmObject plans;
+    PitmArray tasks;
 
     save(data.owners, owners);
     save(data.wallets, wallets);
     save(data.inCategories, inCategories);
     save(data.outCategories, outCategories);
     save(data.plans, plans);
+    save(data.tasks, tasks);
 
     pitm[QLatin1String("owners")] = owners;
     pitm[QLatin1String("wallets")] = wallets;
     pitm[QLatin1String("inCategories")] = inCategories;
     pitm[QLatin1String("outCategories")] = outCategories;
     pitm[QLatin1String("plans")] = plans;
+    pitm[QLatin1String("tasks")] = tasks;
     pitm[QLatin1String("unanchored")] = data.log.unanchored;
 }
 
@@ -591,6 +623,46 @@ static void load(Plans &data, PitmObject pitm,
     load(data.longPlans, pitm[QLatin1String("long")].toArray(), inCategories, outCategories);
 }
 
+static void load(Task &item, PitmObject pitm,
+                 const CategoriesModel &inCategories,
+                 const CategoriesModel &outCategories
+) {
+    item.type = Transaction::Type::fromConfigString( pitm[QLatin1String("type")].toString() );
+
+    if(item.type != Transaction::Type::Transfer) {
+        PitmObject categoryObj = pitm[QLatin1String("category")].toObject();
+        ArchNode<Category> category;
+        if(item.type == Transaction::Type::In) {
+            load(category, categoryObj, inCategories);
+        } else if(item.type == Transaction::Type::Out) {
+            load(category, categoryObj, outCategories);
+        }
+        item.category = category;
+    }
+
+    item.from = QDate::fromString(pitm[QLatin1String("from")].toString(), "dd.MM.yyyy");
+    item.to = QDate::fromString(pitm[QLatin1String("to")].toString(), "dd.MM.yyyy");
+
+    item.amount = Money(as<intmax_t>(pitm[QLatin1String("amount")].toInt()));
+}
+
+static void load(Tasks &data, PitmArray arr,
+                 const CategoriesModel &inCategories,
+                 const CategoriesModel &outCategories
+)
+{
+    for(PitmValue v : std::as_const(arr)) {
+        PitmObject obj = v.toObject();
+        Task item;
+        load(item, obj, inCategories, outCategories);
+        if(item.to >= today) {
+            data.active.tasks.push_back(item);
+        } else {
+            data.completed.tasks.push_back(item);
+        }
+    }
+}
+
 static void loadHead(Data &data, PitmObject pitm)
 {
     load(data.owners, pitm[QLatin1String("owners")].toArray());
@@ -598,6 +670,7 @@ static void loadHead(Data &data, PitmObject pitm)
     load(data.inCategories, pitm[QLatin1String("inCategories")].toArray());
     load(data.outCategories, pitm[QLatin1String("outCategories")].toArray());
     load(data.plans, pitm[QLatin1String("plans")].toObject(), data.inCategories, data.outCategories);
+    load(data.tasks, pitm[QLatin1String("tasks")].toArray(), data.inCategories, data.outCategories);
     data.log.unanchored = pitm[QLatin1String("unanchored")].toInt();
 }
 

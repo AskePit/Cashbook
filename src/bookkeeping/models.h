@@ -361,7 +361,7 @@ class TasksModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    QVector<Task> plans;
+    QVector<Task> tasks;
 
     TasksModel(QObject *parent = 0);
     ~TasksModel();
@@ -382,7 +382,7 @@ public:
 
     void clear() {
         emit beginResetModel();
-        plans.clear();
+        tasks.clear();
         emit endResetModel();
     }
 };
@@ -468,13 +468,13 @@ private:
     Data &m_data;
 };
 
-class PlannedItemDelegate : public QStyledItemDelegate
+class PlanDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
 public:
-    PlannedItemDelegate(PlansModel &model, Data &data, QObject* parent = nullptr);
-    ~PlannedItemDelegate();
+    PlanDelegate(PlansModel &model, Data &data, QObject* parent = nullptr);
+    ~PlanDelegate();
 
     virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
@@ -483,6 +483,24 @@ public:
 
 private:
     PlansModel &m_plans;
+    Data &m_data;
+};
+
+class TaskDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+public:
+    TaskDelegate(TasksModel &model, Data &data, QObject* parent = nullptr);
+    ~TaskDelegate();
+
+    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    virtual bool eventFilter(QObject *object, QEvent *event) override;
+
+private:
+    TasksModel &m_tasks;
     Data &m_data;
 };
 

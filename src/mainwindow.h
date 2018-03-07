@@ -84,6 +84,11 @@ private slots:
     void on_upLongPlanButton_clicked();
     void on_downLongPlanButton_clicked();
 
+    void on_addActiveTaskButton_clicked();
+    void on_removeActiveTaskButton_clicked();
+    void on_upActiveTaskButton_clicked();
+    void on_downActiveTaskButton_clicked();
+
     void on_actionSave_triggered();
 
     void on_mainButton_clicked();
@@ -126,9 +131,10 @@ private:
     Ui::MainWindow *ui;
     Data &m_data;
     LogItemDelegate m_logDelegate;
-    PlannedItemDelegate m_shortPlansDelegate;
-    PlannedItemDelegate m_middlePlansDelegate;
-    PlannedItemDelegate m_longPlansDelegate;
+    PlanDelegate m_shortPlansDelegate;
+    PlanDelegate m_middlePlansDelegate;
+    PlanDelegate m_longPlansDelegate;
+    TaskDelegate m_activeTasksDelegate;
     BoolDelegate m_boolDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
     ClickFilter m_clickFilter;

@@ -215,10 +215,12 @@ struct Plan
 struct Task
 {
     Transaction::Type::t type {Transaction::Type::Out};
-    const Node<Category> *category {nullptr};
+    ArchNode<Category> category;
     QDate from;
     QDate to;
     Money amount;
+    Money spent;
+    Money rest;
 };
 
 const QString pathConcat {"/"};
