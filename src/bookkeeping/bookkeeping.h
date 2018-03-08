@@ -19,6 +19,10 @@ struct Plans {
 };
 
 struct Tasks {
+    Tasks(const LogModel &log)
+        : active(log), completed(log)
+    {}
+
     TasksModel active;
     TasksModel completed;
 

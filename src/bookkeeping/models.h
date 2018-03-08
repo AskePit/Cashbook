@@ -279,6 +279,7 @@ public:
     }
 
     void updateNote(int row, const QString &note);
+    void updateTask(Task &task) const;
 };
 
 class FilteredLogModel : public QSortFilterProxyModel
@@ -363,7 +364,7 @@ class TasksModel : public QAbstractTableModel
 public:
     QVector<Task> tasks;
 
-    TasksModel(QObject *parent = 0);
+    TasksModel(const LogModel &log, QObject *parent = 0);
     ~TasksModel();
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -385,6 +386,9 @@ public:
         tasks.clear();
         emit endResetModel();
     }
+
+private:
+    const LogModel &m_log;
 };
 
 class BriefColumn

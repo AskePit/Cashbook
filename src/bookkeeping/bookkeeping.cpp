@@ -7,6 +7,7 @@ Data::Data()
     : inCategories(statistics.inCategories)
     , outCategories(statistics.outCategories)
     , log(statistics)
+    , tasks(log)
     , briefModel(statistics.brief)
 {
     connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
@@ -117,17 +118,6 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
     emit categoriesStatisticsUpdated();
 }
 
-static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
-    while(node) {
-        if(node == parent) {
-            return true;
-        }
-        node = node->parent;
-    }
-
-    return false;
-}
-
 void Data::updateTasks()
 {
     updateTasks(tasks.active);
@@ -137,37 +127,7 @@ void Data::updateTasks()
 void Data::updateTasks(TasksModel &tasksModel)
 {
     for(Task &task : tasksModel.tasks) {
-        task.spent = 0;
-        task.rest = 0;
-
-        size_t i = 0;
-        while(i < log.log.size()) {
-            const Transaction &t = log.log[i++];
-
-            if(task.type != t.type) {
-                continue;
-            }
-
-            if(t.date > task.to) {
-                continue;
-            }
-
-            if(t.date < task.from) {
-                break;
-            }
-
-            const ArchNode<Category> &trArchNode = t.category;
-            const ArchNode<Category> &taskArchNode = task.category;
-            if(trArchNode.isValidPointer() && taskArchNode.isValidPointer()) {
-                const Node<Category> *trNode = trArchNode.toPointer();
-                const Node<Category> *taskNode = taskArchNode.toPointer();
-                if(isNodeBelongsTo(trNode, taskNode)) {
-                    task.spent += t.amount;
-                }
-            }
-        }
-
-        task.rest = task.amount - task.spent;
+        log.updateTask(task);
     }
 }
 

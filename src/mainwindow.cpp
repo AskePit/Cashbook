@@ -74,7 +74,7 @@ static void setItemDelegateForColumn(QItemDelegate &delegate, int column, QList<
 }
 
 static void recalculateHeight(QTableView *view) {
-    int height = qMax(view->verticalHeader()->length() + view->horizontalHeader()->height(), 120);
+    int height = qMax(view->verticalHeader()->length() + view->horizontalHeader()->height(), 115);
     view->setFixedHeight(height);
 }
 

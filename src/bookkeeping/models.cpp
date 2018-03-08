@@ -832,7 +832,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         case LogColumn::Date: t.date = value.toDate(); break;
         case LogColumn::Type: {
             auto oldType = t.type;
-            t.type = as<Transaction::Type::t>(value.toInt());
+            t.type = value.value<Transaction::Type::t>();
             if(t.type != oldType) {
                 t.category.setNull();
                 t.from.setNull();
@@ -942,6 +942,52 @@ bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &source
     }
 
     return false;
+}
+
+static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
+    while(node) {
+        if(node == parent) {
+            return true;
+        }
+        node = node->parent;
+    }
+
+    return false;
+}
+
+void LogModel::updateTask(Task &task) const
+{
+    task.spent = 0;
+    task.rest = 0;
+
+    size_t i = 0;
+    while(i < log.size()) {
+        const Transaction &t = log[i++];
+
+        if(task.type != t.type) {
+            continue;
+        }
+
+        if(t.date > task.to) {
+            continue;
+        }
+
+        if(t.date < task.from) {
+            break;
+        }
+
+        const ArchNode<Category> &trArchNode = t.category;
+        const ArchNode<Category> &taskArchNode = task.category;
+        if(trArchNode.isValidPointer() && taskArchNode.isValidPointer()) {
+            const Node<Category> *trNode = trArchNode.toPointer();
+            const Node<Category> *taskNode = taskArchNode.toPointer();
+            if(isNodeBelongsTo(trNode, taskNode)) {
+                task.spent += t.amount;
+            }
+        }
+    }
+
+    task.rest = task.amount - task.spent;
 }
 
 //
@@ -1064,7 +1110,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
         case PlansColumn::Name: item.name = value.toString(); break;
         case PlansColumn::Type: {
             auto oldType = item.type;
-            item.type = as<Transaction::Type::t>(value.toInt());
+            item.type = value.value<Transaction::Type::t>();
             if(item.type != oldType) {
                 item.category.setNull();
                 emit dataChanged(
@@ -1128,8 +1174,9 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 //
 // Tasks
 //
-TasksModel::TasksModel(QObject *parent)
+TasksModel::TasksModel(const LogModel &log, QObject *parent)
     : QAbstractTableModel(parent)
+    , m_log(log)
 {}
 
 TasksModel::~TasksModel()
@@ -1278,15 +1325,16 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
         return false;
     }
 
-    Task &item = tasks[index.row()];
+    Task &task = tasks[index.row()];
+    Task origin(task);
 
     switch(index.column())
     {
         case TasksColumn::Type: {
-            auto oldType = item.type;
-            item.type = as<Transaction::Type::t>(value.toInt());
-            if(item.type != oldType) {
-                item.category.setNull();
+            auto oldType = task.type;
+            task.type = value.value<Transaction::Type::t>();
+            if(task.type != oldType) {
+                task.category.setNull();
                 emit dataChanged(
                   createIndex(index.row(), TasksColumn::Category),
                   createIndex(index.row(), TasksColumn::Category),
@@ -1296,17 +1344,29 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
         } break;
         case TasksColumn::Category: {
             if(!value.isNull()) {
-                item.category = value;
+                task.category = value;
             }
         } break;
-        case TasksColumn::From: item.from = value.toDate(); break;
-        case TasksColumn::To: item.to = value.toDate(); break;
-        case TasksColumn::Money: item.amount = value.toDouble(); break;
-        case TasksColumn::Spent: item.spent = value.toDouble(); break;
-        case TasksColumn::Rest: item.rest = value.toDouble(); break;
+        case TasksColumn::From: task.from = value.toDate(); break;
+        case TasksColumn::To: task.to = value.toDate(); break;
+        case TasksColumn::Money: task.amount = value.toDouble(); break;
+        case TasksColumn::Spent: task.spent = value.toDouble(); break;
+        case TasksColumn::Rest: task.rest = value.toDouble(); break;
     }
 
     emit dataChanged(index, index);
+
+    if(origin.category != task.category
+    || origin.from != task.from
+    || origin.to != task.to
+    || origin.amount != task.amount) {
+        m_log.updateTask(task);
+        emit dataChanged(
+          createIndex(index.row(), TasksColumn::Spent),
+          createIndex(index.row(), TasksColumn::Rest),
+          {Qt::DisplayRole, Qt::EditRole}
+        );
+    }
 
     return true;
 }
