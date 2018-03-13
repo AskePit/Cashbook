@@ -960,6 +960,19 @@ void LogModel::updateTask(Task &task) const
     task.spent = 0;
     task.rest = 0;
 
+    if(log.empty()) {
+        task.rest = task.amount;
+        return;
+    }
+
+    const QDate &logBegin = log.at(log.size()-1).date;
+    const QDate &logEnd = log.at(0).date;
+
+    if(task.to < logBegin || task.from > logEnd) {
+        task.rest = task.amount;
+        return;
+    }
+
     size_t i = 0;
     while(i < log.size()) {
         const Transaction &t = log[i++];

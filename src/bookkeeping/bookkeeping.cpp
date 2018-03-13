@@ -87,6 +87,13 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
         return;
     }
 
+    const QDate &logBegin = log.log.at(log.log.size()-1).date;
+    const QDate &logEnd = log.log.at(0).date;
+
+    if(to < logBegin || from > logEnd) {
+        return;
+    }
+
     size_t i = 0;
     while(i < log.log.size()) {
         const Transaction &t = log.log[i++];
