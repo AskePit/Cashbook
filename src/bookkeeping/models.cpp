@@ -1637,6 +1637,23 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
     if(type == QVariant::Date) {
         QDateEdit *edit = new QDateEdit(parent);
         edit->setCalendarPopup(true);
+
+        bool log = !!qobject_cast<const LogModel*>(index.model());
+        if(log) {
+            QDate min;
+            QDate max {today};
+            if(as<int>(m_data.log.log.size()) > index.row()+1) {
+                min = m_data.log.log[index.row()+1].date;
+            }
+
+            if(min == max) {
+                return nullptr;
+            }
+
+            edit->setMinimumDate(min);
+            edit->setMaximumDate(max);
+        }
+
         return edit;
     }
 
