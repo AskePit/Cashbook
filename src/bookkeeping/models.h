@@ -231,7 +231,9 @@ class LogColumn
 {
 public:
     enum t {
-        Date = 0,
+        Start = 0,
+
+        Date = Start,
         Type,
         Category,
         Money,
@@ -257,6 +259,7 @@ public:
     ~LogModel();
 
     bool anchoreTransactions();
+    bool copyTop();
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,

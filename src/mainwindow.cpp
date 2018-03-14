@@ -533,6 +533,13 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
     updateUnanchoredSum();
 }
 
+void cashbook::MainWindow::on_copyTransactionButton_clicked()
+{
+    m_changed |= m_data.logModel.copyTop();
+
+    updateUnanchoredSum();
+}
+
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
     bool did = m_data.anchoreTransactions();

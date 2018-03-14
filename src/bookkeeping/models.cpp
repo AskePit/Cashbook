@@ -658,6 +658,21 @@ bool LogModel::anchoreTransactions()
     return true;
 }
 
+bool LogModel::copyTop()
+{
+    if(unanchored == 0 || log.empty()) {
+        return false;
+    }
+
+    if(!insertRow(0)) {
+        return false;
+    }
+
+    log[0] = log[1];
+    emit dataChanged(index(0, LogColumn::Start), index(0, LogColumn::Count), {Qt::DisplayRole});
+    return true;
+}
+
 template <class T>
 static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
