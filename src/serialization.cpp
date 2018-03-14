@@ -216,9 +216,9 @@ static void save(const Plans &data, PitmObject &pitm)
     PitmArray middlePlans;
     PitmArray longPlans;
 
-    save(data.shortPlans, shortPlans);
-    save(data.middlePlans, middlePlans);
-    save(data.longPlans, longPlans);
+    save(data[PlanTerm::Short], shortPlans);
+    save(data[PlanTerm::Middle], middlePlans);
+    save(data[PlanTerm::Long], longPlans);
 
     pitm[QLatin1String("short")] = shortPlans;
     pitm[QLatin1String("middle")] = middlePlans;
@@ -241,13 +241,13 @@ static void save(const Task &item, PitmObject &pitm)
 
 static void save(const Tasks &data, PitmArray &pitm)
 {
-    for(const Task &task : data.active.tasks) {
+    for(const Task &task : data[TaskStatus::Active].tasks) {
         PitmObject obj;
         save(task, obj);
         pitm.append(obj);
     }
 
-    for(const Task &task : data.completed.tasks) {
+    for(const Task &task : data[TaskStatus::Completed].tasks) {
         PitmObject obj;
         save(task, obj);
         pitm.append(obj);
@@ -618,9 +618,9 @@ static void load(Plans &data, PitmObject pitm,
                  const CategoriesModel &outCategories
 )
 {
-    load(data.shortPlans, pitm[QLatin1String("short")].toArray(), inCategories, outCategories);
-    load(data.middlePlans, pitm[QLatin1String("middle")].toArray(), inCategories, outCategories);
-    load(data.longPlans, pitm[QLatin1String("long")].toArray(), inCategories, outCategories);
+    load(data[PlanTerm::Short], pitm[QLatin1String("short")].toArray(), inCategories, outCategories);
+    load(data[PlanTerm::Middle], pitm[QLatin1String("middle")].toArray(), inCategories, outCategories);
+    load(data[PlanTerm::Long], pitm[QLatin1String("long")].toArray(), inCategories, outCategories);
 }
 
 static void load(Task &item, PitmObject pitm,
@@ -656,9 +656,9 @@ static void load(Tasks &data, PitmArray arr,
         Task item;
         load(item, obj, inCategories, outCategories);
         if(item.to >= today) {
-            data.active.tasks.push_back(item);
+            data[TaskStatus::Active].tasks.push_back(item);
         } else {
-            data.completed.tasks.push_back(item);
+            data[TaskStatus::Completed].tasks.push_back(item);
         }
     }
 }

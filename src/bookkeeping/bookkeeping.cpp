@@ -127,8 +127,8 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
 
 void Data::updateTasks()
 {
-    updateTasks(tasks.active);
-    updateTasks(tasks.completed);
+    updateTasks(tasks[TaskStatus::Active]);
+    updateTasks(tasks[TaskStatus::Completed]);
 }
 
 void Data::updateTasks(TasksModel &tasksModel)

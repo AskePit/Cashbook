@@ -109,6 +109,10 @@ private slots:
     void showInCategoryMenu(const QPoint& point);
     void showOutCategoryMenu(const QPoint& point);
     void showLogContextMenu(const QPoint& point);
+    void showShortPlansContextMenu(const QPoint& point);
+    void showMiddlePlansContextMenu(const QPoint& point);
+    void showLongPlansContextMenu(const QPoint& point);
+    void showPlansContextMenu(const QPoint& point);
 
     void on_actionInStatement_triggered();
     void on_actionOutStatement_triggered();

@@ -6,30 +6,82 @@
 namespace cashbook
 {
 
+struct PlanTerm {
+    enum t {
+        Short = 0,
+        Middle,
+        Long,
+
+        Count
+    };
+
+    static QVector<PlanTerm::t> enumerate() {
+        return {Short, Middle, Long};
+    }
+};
+
 struct Plans {
-    PlansModel shortPlans;
-    PlansModel middlePlans;
-    PlansModel longPlans;
+    const PlansModel &operator[](PlanTerm::t term) const {
+        switch(term) {
+            default:
+            case PlanTerm::Short: return m_shortPlans;
+            case PlanTerm::Middle: return m_middlePlans;
+            case PlanTerm::Long: return m_longPlans;
+        }
+    }
+
+    PlansModel &operator[](PlanTerm::t term) {
+        const Plans *const_this = const_cast<const Plans *>(this);
+        return const_cast<PlansModel &>( const_this->operator [](term) );
+    }
 
     void clear() {
-        shortPlans.clear();
-        middlePlans.clear();
-        longPlans.clear();
+        m_shortPlans.clear();
+        m_middlePlans.clear();
+        m_longPlans.clear();
     }
+
+private:
+    PlansModel m_shortPlans;
+    PlansModel m_middlePlans;
+    PlansModel m_longPlans;
+};
+
+struct TaskStatus {
+    enum t {
+        Active = 0,
+        Completed,
+
+        Count
+    };
 };
 
 struct Tasks {
     Tasks(const LogModel &log)
-        : active(log), completed(log)
+        : m_active(log), m_completed(log)
     {}
 
-    TasksModel active;
-    TasksModel completed;
+    const TasksModel &operator[](TaskStatus::t status) const {
+        switch(status) {
+            default:
+            case TaskStatus::Active: return m_active;
+            case TaskStatus::Completed: return m_completed;
+        }
+    }
+
+    TasksModel &operator[](TaskStatus::t status) {
+        const Tasks *const_this = const_cast<const Tasks *>(this);
+        return const_cast<TasksModel &>( const_this->operator [](status) );
+    }
 
     void clear() {
-        active.clear();
-        completed.clear();
+        m_active.clear();
+        m_completed.clear();
     }
+
+private:
+    TasksModel m_active;
+    TasksModel m_completed;
 };
 
 class Data : public QObject

@@ -339,6 +339,8 @@ public:
         plans.clear();
         emit endResetModel();
     }
+
+    void insertPlan(const Plan &plan);
 };
 
 class TasksColumn

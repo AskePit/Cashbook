@@ -151,15 +151,18 @@ void MainWindow::preLoadSetup()
     ui->ownersList->setModel(&m_data.owners);
     ui->logTable->setModel(&m_data.log);
 
-    ui->shortPlansTable->setModel(&m_data.plans.shortPlans);
-    ui->middlePlansTable->setModel(&m_data.plans.middlePlans);
-    ui->longPlansTable->setModel(&m_data.plans.longPlans);
-    ui->activeTasksTable->setModel(&m_data.tasks.active);
-    ui->completedTasksTable->setModel(&m_data.tasks.completed);
+    ui->shortPlansTable->setModel(&m_data.plans[PlanTerm::Short]);
+    ui->middlePlansTable->setModel(&m_data.plans[PlanTerm::Middle]);
+    ui->longPlansTable->setModel(&m_data.plans[PlanTerm::Long]);
+    ui->activeTasksTable->setModel(&m_data.tasks[TaskStatus::Active]);
+    ui->completedTasksTable->setModel(&m_data.tasks[TaskStatus::Completed]);
 
     connect(ui->inCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showInCategoryMenu);
     connect(ui->outCategoriesTree, &QTreeView::customContextMenuRequested, this, &MainWindow::showOutCategoryMenu);
     connect(ui->logTable, &QTableView::customContextMenuRequested, this, &MainWindow::showLogContextMenu);
+    connect(ui->shortPlansTable, &QTableView::customContextMenuRequested, this, &MainWindow::showShortPlansContextMenu);
+    connect(ui->middlePlansTable, &QTableView::customContextMenuRequested, this, &MainWindow::showMiddlePlansContextMenu);
+    connect(ui->longPlansTable, &QTableView::customContextMenuRequested, this, &MainWindow::showLongPlansContextMenu);
 
     connect(&m_data.wallets, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
     connect(&m_data.log, &TreeModel::dataChanged, this, &MainWindow::updateUnanchoredSum);
@@ -186,16 +189,16 @@ void MainWindow::preLoadSetup()
 
     emit m_clickFilter.mouseClicked(ui->shortPlansBar);
 
-    connect(&m_data.plans.shortPlans, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
-    connect(&m_data.plans.shortPlans, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
-    connect(&m_data.plans.middlePlans, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
-    connect(&m_data.plans.middlePlans, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
-    connect(&m_data.plans.longPlans, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
-    connect(&m_data.plans.longPlans, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
-    connect(&m_data.tasks.active, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
-    connect(&m_data.tasks.active, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
-    connect(&m_data.tasks.completed, &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
-    connect(&m_data.tasks.completed, &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
+    connect(&m_data.plans[PlanTerm::Short], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_data.plans[PlanTerm::Short], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_data.plans[PlanTerm::Middle], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_data.plans[PlanTerm::Middle], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_data.plans[PlanTerm::Long], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_data.plans[PlanTerm::Long], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_data.tasks[TaskStatus::Active], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks[TaskStatus::Active], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_data.tasks[TaskStatus::Completed], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
+    connect(&m_data.tasks[TaskStatus::Completed], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
 }
 
 void MainWindow::loadFile()
@@ -590,59 +593,59 @@ void cashbook::MainWindow::on_downUserButton_clicked() {
 // Plans
 //
 void cashbook::MainWindow::on_addShortPlanButton_clicked() {
-    m_changed |= addListItem(m_data.plans.shortPlans);
+    m_changed |= addListItem(m_data.plans[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_removeShortPlanButton_clicked() {
-    m_changed |= removeListItem(*ui->shortPlansTable, m_data.plans.shortPlans);
+    m_changed |= removeListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_upShortPlanButton_clicked() {
-    m_changed |= upListItem(*ui->shortPlansTable, m_data.plans.shortPlans);
+    m_changed |= upListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_downShortPlanButton_clicked() {
-    m_changed |= downListItem(*ui->shortPlansTable, m_data.plans.shortPlans);
+    m_changed |= downListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
 }
 
 void cashbook::MainWindow::on_addMiddlePlanButton_clicked() {
-    m_changed |= addListItem(m_data.plans.middlePlans);
+    m_changed |= addListItem(m_data.plans[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_removeMiddlePlanButton_clicked() {
-    m_changed |= removeListItem(*ui->middlePlansTable, m_data.plans.middlePlans);
+    m_changed |= removeListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_upMiddlePlanButton_clicked() {
-    m_changed |= upListItem(*ui->middlePlansTable, m_data.plans.middlePlans);
+    m_changed |= upListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_downMiddlePlanButton_clicked() {
-    m_changed |= downListItem(*ui->middlePlansTable, m_data.plans.middlePlans);
+    m_changed |= downListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
 }
 
 void cashbook::MainWindow::on_addLongPlanButton_clicked() {
-    m_changed |= addListItem(m_data.plans.longPlans);
+    m_changed |= addListItem(m_data.plans[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_removeLongPlanButton_clicked() {
-    m_changed |= removeListItem(*ui->longPlansTable, m_data.plans.longPlans);
+    m_changed |= removeListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_upLongPlanButton_clicked() {
-    m_changed |= upListItem(*ui->longPlansTable, m_data.plans.longPlans);
+    m_changed |= upListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_downLongPlanButton_clicked() {
-    m_changed |= downListItem(*ui->longPlansTable, m_data.plans.longPlans);
+    m_changed |= downListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
 }
 
 void cashbook::MainWindow::on_addActiveTaskButton_clicked() {
-    m_changed |= addListItem(m_data.tasks.active);
+    m_changed |= addListItem(m_data.tasks[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_removeActiveTaskButton_clicked() {
-    m_changed |= removeListItem(*ui->activeTasksTable, m_data.tasks.active);
+    m_changed |= removeListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_upActiveTaskButton_clicked() {
-    m_changed |= upListItem(*ui->activeTasksTable, m_data.tasks.active);
+    m_changed |= upListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_downActiveTaskButton_clicked() {
-    m_changed |= downListItem(*ui->activeTasksTable, m_data.tasks.active);
+    m_changed |= downListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
 }
 
 void cashbook::MainWindow::on_removeCompletedTaskButton_clicked() {
-    m_changed |= removeListItem(*ui->completedTasksTable, m_data.tasks.completed);
+    m_changed |= removeListItem(*ui->completedTasksTable, m_data.tasks[TaskStatus::Completed]);
 }
 
 void cashbook::MainWindow::on_actionSave_triggered()
@@ -907,6 +910,87 @@ void cashbook::MainWindow::showLogContextMenu(const QPoint& point)
     menu.exec(globalPos);
 }
 
+void cashbook::MainWindow::showShortPlansContextMenu(const QPoint& point)
+{
+    QPoint globalPos = ui->shortPlansTable->mapToGlobal(point);
+    showPlansContextMenu(globalPos);
+}
+
+void cashbook::MainWindow::showMiddlePlansContextMenu(const QPoint& point)
+{
+    QPoint globalPos = ui->middlePlansTable->mapToGlobal(point);
+    showPlansContextMenu(globalPos);
+}
+
+void cashbook::MainWindow::showLongPlansContextMenu(const QPoint& point)
+{
+    QPoint globalPos = ui->longPlansTable->mapToGlobal(point);
+    showPlansContextMenu(globalPos);
+}
+
+void cashbook::MainWindow::showPlansContextMenu(const QPoint& point)
+{
+    QTableView *table = qobject_cast<QTableView *>( childAt(point)->parent() );
+    if(!table) {
+        return;
+    }
+
+    PlanTerm::t termFrom = (table == ui->shortPlansTable)  ? PlanTerm::Short :
+                           (table == ui->middlePlansTable) ? PlanTerm::Middle :
+                           (table == ui->longPlansTable)   ? PlanTerm::Long : PlanTerm::Count;
+
+    if(termFrom == PlanTerm::Count) {
+        return;
+    }
+
+    PlansModel &model = m_data.plans[termFrom];
+    auto index = table->indexAt(table->mapFromGlobal(point));
+
+    if(!index.isValid()) {
+        return;
+    }
+
+    QMenu menu(table);
+
+    /*
+     * Idea is to use a pull of connections, which would contain one connection
+     * per action. Each time connection should be different beacause of
+     * different `from` and `to` tables. It means that it is simpler and safer
+     * to disconnect connection each time it executes it's slot and reconnect
+     * it next time with new lambda.
+     */
+    static std::shared_ptr<QMetaObject::Connection> connections[PlanTerm::Count];
+
+    auto connectionAction = [&, this](PlanTerm::t term) {
+        QAction *action = (term == PlanTerm::Short)  ? ui->actionMoveToShortPlans :
+                          (term == PlanTerm::Middle) ? ui->actionMoveToMiddlePlans : ui->actionMoveToLongPlans;
+
+        menu.addAction(action);
+
+        connections[term] = std::make_shared<QMetaObject::Connection>();
+        *connections[term] = connect(action, &QAction::triggered, [this, &model, &index, term](){
+            for(auto term : PlanTerm::enumerate()) {
+                if(connections[term]) QObject::disconnect(*connections[term]);
+            }
+
+            const Plan &plan = model.plans[index.row()];
+            m_data.plans[term].insertPlan(plan);
+            model.removeRow(index.row());
+        });
+    };
+
+    if (termFrom != PlanTerm::Short) {
+        connectionAction(PlanTerm::Short);
+    }
+    if (termFrom != PlanTerm::Middle) {
+        connectionAction(PlanTerm::Middle);
+    }
+    if (termFrom != PlanTerm::Long) {
+        connectionAction(PlanTerm::Long);
+    }
+    menu.exec(point);
+}
+
 static QString getTextDialog(const QString &title, const QString &message, const QString &text, QWidget *parent)
 {
     bool ok = false;
@@ -926,4 +1010,6 @@ void cashbook::MainWindow::on_actionEditNote_triggered()
     if(!note.isNull()) {
         m_data.log.updateNote(m_noteContextIndex.row(), note);
     }
+
+    m_noteContextIndex = QModelIndex();
 }

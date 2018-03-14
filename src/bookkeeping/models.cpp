@@ -1184,6 +1184,16 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     return true;
 }
 
+void PlansModel::insertPlan(const Plan &plan)
+{
+    int size = plans.size();
+
+    insertRow(size);
+    plans[size] = plan;
+
+    emit dataChanged(index(size, PlansColumn::Count), index(size, PlansColumn::Count));
+}
+
 //
 // Tasks
 //

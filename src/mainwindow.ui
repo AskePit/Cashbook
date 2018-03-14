@@ -3497,6 +3497,9 @@ QTreeView::item { height: 18px;}</string>
                 </disabled>
                </palette>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="styleSheet">
                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
     background: white;
@@ -3910,6 +3913,9 @@ QTreeView::item { height: 18px;}</string>
                  </colorrole>
                 </disabled>
                </palette>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="styleSheet">
                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
@@ -4325,6 +4331,9 @@ QTreeView::item { height: 18px;}</string>
                 </disabled>
                </palette>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="styleSheet">
                <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
     background: white;
@@ -4438,6 +4447,30 @@ QTreeView::item { height: 18px;}</string>
    </property>
    <property name="toolTip">
     <string>Редактировать примечание</string>
+   </property>
+  </action>
+  <action name="actionMoveToShortPlans">
+   <property name="text">
+    <string>Переместить в краткосрочные</string>
+   </property>
+   <property name="toolTip">
+    <string>Переместить в краткосрочные</string>
+   </property>
+  </action>
+  <action name="actionMoveToMiddlePlans">
+   <property name="text">
+    <string>Переместить в среднесрочные</string>
+   </property>
+   <property name="toolTip">
+    <string>Переместить в среднесрочные</string>
+   </property>
+  </action>
+  <action name="actionMoveToLongPlans">
+   <property name="text">
+    <string>Переместить в долгосрочные</string>
+   </property>
+   <property name="toolTip">
+    <string>Переместить в долгосрочные</string>
    </property>
   </action>
  </widget>
