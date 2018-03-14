@@ -258,7 +258,7 @@ static void saveLog(const Data &data, PitmObject &pitm)
 {
     PitmArray log;
 
-    save(data.log, log);
+    save(data.logModel, log);
     pitm[QLatin1String("log")] = log;
 }
 
@@ -301,8 +301,8 @@ static void saveFile(const QString &fileName, ObjectOrArray data)
 
 static void saveLog(Data &data)
 {
-    const auto &log = data.log.log;
-    auto &changedMonths = data.log.changedMonths;
+    const auto &log = data.logModel.log;
+    auto &changedMonths = data.logModel.changedMonths;
 
     if(log.empty()) {
         return;
@@ -341,10 +341,10 @@ static void saveHead(const Data &data, PitmObject &pitm)
     PitmObject plans;
     PitmArray tasks;
 
-    save(data.owners, owners);
-    save(data.wallets, wallets);
-    save(data.inCategories, inCategories);
-    save(data.outCategories, outCategories);
+    save(data.ownersModel, owners);
+    save(data.walletsModel, wallets);
+    save(data.inCategoriesModel, inCategories);
+    save(data.outCategoriesModel, outCategories);
     save(data.plans, plans);
     save(data.tasks, tasks);
 
@@ -354,7 +354,7 @@ static void saveHead(const Data &data, PitmObject &pitm)
     pitm[QLatin1String("outCategories")] = outCategories;
     pitm[QLatin1String("plans")] = plans;
     pitm[QLatin1String("tasks")] = tasks;
-    pitm[QLatin1String("unanchored")] = data.log.unanchored;
+    pitm[QLatin1String("unanchored")] = data.logModel.unanchored;
 }
 
 static void saveHead(const Data &data)
@@ -555,7 +555,7 @@ static void load(LogModel &logModel, PitmArray pitm, Data &data){
     for (int i = n-1; i>=0; --i) {
         PitmObject tObj = pitm[i].toObject();
         Transaction t;
-        load(t, tObj, data.wallets, data.inCategories, data.outCategories);
+        load(t, tObj, data.walletsModel, data.inCategoriesModel, data.outCategoriesModel);
         logModel.log.push_front(t);
 
         // update brief statistics
@@ -665,18 +665,18 @@ static void load(Tasks &data, PitmArray arr,
 
 static void loadHead(Data &data, PitmObject pitm)
 {
-    load(data.owners, pitm[QLatin1String("owners")].toArray());
-    load(data.wallets, pitm[QLatin1String("wallets")].toArray(), data.owners);
-    load(data.inCategories, pitm[QLatin1String("inCategories")].toArray());
-    load(data.outCategories, pitm[QLatin1String("outCategories")].toArray());
-    load(data.plans, pitm[QLatin1String("plans")].toObject(), data.inCategories, data.outCategories);
-    load(data.tasks, pitm[QLatin1String("tasks")].toArray(), data.inCategories, data.outCategories);
-    data.log.unanchored = pitm[QLatin1String("unanchored")].toInt();
+    load(data.ownersModel, pitm[QLatin1String("owners")].toArray());
+    load(data.walletsModel, pitm[QLatin1String("wallets")].toArray(), data.ownersModel);
+    load(data.inCategoriesModel, pitm[QLatin1String("inCategories")].toArray());
+    load(data.outCategoriesModel, pitm[QLatin1String("outCategories")].toArray());
+    load(data.plans, pitm[QLatin1String("plans")].toObject(), data.inCategoriesModel, data.outCategoriesModel);
+    load(data.tasks, pitm[QLatin1String("tasks")].toArray(), data.inCategoriesModel, data.outCategoriesModel);
+    data.logModel.unanchored = pitm[QLatin1String("unanchored")].toInt();
 }
 
 static void loadMonth(Data &data, PitmArray pitm)
 {
-    load(data.log, pitm, data);
+    load(data.logModel, pitm, data);
 }
 
 static void loadLog(Data &data)

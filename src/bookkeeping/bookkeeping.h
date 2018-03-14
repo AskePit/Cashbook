@@ -91,11 +91,11 @@ class Data : public QObject
 public:
     Data();
 
-    OwnersModel owners;
-    WalletsModel wallets;
-    CategoriesModel inCategories;
-    CategoriesModel outCategories;
-    LogModel log;
+    OwnersModel ownersModel;
+    WalletsModel walletsModel;
+    CategoriesModel inCategoriesModel;
+    CategoriesModel outCategoriesModel;
+    LogModel logModel;
     Plans plans;
     Tasks tasks;
     BriefModel briefModel;
@@ -108,7 +108,7 @@ public:
 
     void loadCategoriesStatistics(const QDate &from, const QDate &to);
     void updateTasks();
-    void updateTasks(TasksModel &tasksModel);
+    void updateTasks(TasksModel &tasks);
     bool anchoreTransactions();
     void clear();
 

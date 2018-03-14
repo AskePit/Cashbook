@@ -4,16 +4,16 @@ namespace cashbook
 {
 
 Data::Data()
-    : inCategories(statistics.inCategories)
-    , outCategories(statistics.outCategories)
-    , log(statistics)
-    , tasks(log)
+    : inCategoriesModel(statistics.inCategories)
+    , outCategoriesModel(statistics.outCategories)
+    , logModel(statistics)
+    , tasks(logModel)
     , briefModel(statistics.brief)
 {
-    connect(&owners, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
-    connect(&inCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
-    connect(&outCategories, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onOutCategoriesRemove);
-    connect(&wallets, &WalletsModel::nodesGonnaBeRemoved, this, &Data::onWalletsRemove);
+    connect(&ownersModel, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
+    connect(&inCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
+    connect(&outCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onOutCategoriesRemove);
+    connect(&walletsModel, &WalletsModel::nodesGonnaBeRemoved, this, &Data::onWalletsRemove);
 
     connect(this, &Data::categoriesStatisticsUpdated, [this](){
         updateTasks();
@@ -22,7 +22,7 @@ Data::Data()
 
 void Data::onOwnersRemove(QStringList paths)
 {
-    auto nodes = wallets.rootItem->toList();
+    auto nodes = walletsModel.rootItem->toList();
     for(auto *node : nodes) {
         ArchPointer<Owner> &owner = node->data.owner;
         if(owner.isValidPointer()) {
@@ -47,7 +47,7 @@ static void invalidateArchNode(ArchNode<DataType> &archNode, const QStringList &
 
 void Data::onInCategoriesRemove(QStringList paths)
 {
-    for(Transaction &t : log.log) {
+    for(Transaction &t : logModel.log) {
         if(t.type != Transaction::Type::In) {
             continue;
         }
@@ -58,7 +58,7 @@ void Data::onInCategoriesRemove(QStringList paths)
 
 void Data::onOutCategoriesRemove(QStringList paths)
 {
-    for(Transaction &t : log.log) {
+    for(Transaction &t : logModel.log) {
         if(t.type != Transaction::Type::Out) {
             continue;
         }
@@ -69,7 +69,7 @@ void Data::onOutCategoriesRemove(QStringList paths)
 
 void Data::onWalletsRemove(QStringList paths)
 {
-    for(Transaction &t : log.log) {
+    for(Transaction &t : logModel.log) {
         invalidateArchNode(t.from, paths);
         invalidateArchNode(t.to, paths);
     }
@@ -83,20 +83,20 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
     statistics.categoriesFrom = from;
     statistics.categoriesTo = to;
 
-    if(log.log.empty()) {
+    if(logModel.log.empty()) {
         return;
     }
 
-    const QDate &logBegin = log.log.at(log.log.size()-1).date;
-    const QDate &logEnd = log.log.at(0).date;
+    const QDate &logBegin = logModel.log.at(logModel.log.size()-1).date;
+    const QDate &logEnd = logModel.log.at(0).date;
 
     if(to < logBegin || from > logEnd) {
         return;
     }
 
     size_t i = 0;
-    while(i < log.log.size()) {
-        const Transaction &t = log.log[i++];
+    while(i < logModel.log.size()) {
+        const Transaction &t = logModel.log[i++];
         if(t.date > statistics.categoriesTo) {
             continue;
         }
@@ -134,39 +134,39 @@ void Data::updateTasks()
 void Data::updateTasks(TasksModel &tasksModel)
 {
     for(Task &task : tasksModel.tasks) {
-        log.updateTask(task);
+        logModel.updateTask(task);
     }
 }
 
 bool Data::anchoreTransactions()
 {
-    bool did = log.anchoreTransactions();
+    bool did = logModel.anchoreTransactions();
     if(did) {
         emit categoriesStatisticsUpdated();
-        wallets.update();
+        walletsModel.update();
     }
 
     return did;
 }
 
 Node<Wallet> *Data::walletFromPath(const QString &path) {
-    return nodeFromPath<Wallet, WalletsModel>(wallets, path);
+    return nodeFromPath<Wallet, WalletsModel>(walletsModel, path);
 }
 
 Node<Category> *Data::inCategoryFromPath(const QString &path) {
-    return nodeFromPath<Category, CategoriesModel>(inCategories, path);
+    return nodeFromPath<Category, CategoriesModel>(inCategoriesModel, path);
 }
 
 Node<Category> *Data::outCategoryFromPath(const QString &path) {
-    return nodeFromPath<Category, CategoriesModel>(outCategories, path);
+    return nodeFromPath<Category, CategoriesModel>(outCategoriesModel, path);
 }
 
 void Data::clear() {
-    owners.clear();
-    wallets.clear();
-    inCategories.clear();
-    outCategories.clear();
-    log.clear();
+    ownersModel.clear();
+    walletsModel.clear();
+    inCategoriesModel.clear();
+    outCategoriesModel.clear();
+    logModel.clear();
     plans.clear();
     tasks.clear();
 }

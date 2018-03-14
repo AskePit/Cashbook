@@ -12,8 +12,17 @@ class MainWindow;
 namespace cashbook
 {
 
-class ViewModelMap : public std::map<QAbstractItemView*, QAbstractItemModel*> {
+struct ViewModel {
+    QAbstractItemView *view;
+    QAbstractItemModel *model;
+    QItemDelegate *delegate;
+    std::function<void(const QPoint &)> contextMenu;
+};
 
+class ViewModelMap : public std::vector<ViewModel> {
+public:
+    void operator =(std::initializer_list<ViewModel> list);
+    void connectModels();
 };
 
 class ClickFilter : public QObject {
@@ -106,14 +115,6 @@ private slots:
     void on_monthButton_clicked();
     void on_yearButton_clicked();
 
-    void showInCategoryMenu(const QPoint& point);
-    void showOutCategoryMenu(const QPoint& point);
-    void showLogContextMenu(const QPoint& point);
-    void showShortPlansContextMenu(const QPoint& point);
-    void showMiddlePlansContextMenu(const QPoint& point);
-    void showLongPlansContextMenu(const QPoint& point);
-    void showPlansContextMenu(const QPoint& point);
-
     void on_actionInStatement_triggered();
     void on_actionOutStatement_triggered();
     void on_actionEditNote_triggered();
@@ -137,6 +138,14 @@ private:
 
     void showActiveTasks(bool show);
     void showCompletedTasks(bool show);
+
+    void showInCategoryMenu(const QPoint& point);
+    void showOutCategoryMenu(const QPoint& point);
+    void showLogMenu(const QPoint& point);
+    void showShortPlansMenu(const QPoint& point);
+    void showMiddlePlansMenu(const QPoint& point);
+    void showLongPlansMenu(const QPoint& point);
+    void showPlansContextMenu(const QPoint& point);
 
 protected:
     void closeEvent(QCloseEvent *event);

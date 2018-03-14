@@ -1642,8 +1642,8 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         if(log) {
             QDate min;
             QDate max {today};
-            if(as<int>(m_data.log.log.size()) > index.row()+1) {
-                min = m_data.log.log[index.row()+1].date;
+            if(as<int>(m_data.logModel.log.size()) > index.row()+1) {
+                min = m_data.logModel.log[index.row()+1].date;
             }
 
             if(min == max) {
@@ -1693,8 +1693,8 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
 
         CategoriesModel &categories =
                 type == Transaction::Type::In ?
-                    m_data.inCategories :
-                    m_data.outCategories;
+                    m_data.inCategoriesModel :
+                    m_data.outCategoriesModel;
 
         NodeButton<Category> *button = new NodeButton<Category>(categories, parent);
         return button;
@@ -1713,7 +1713,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
             return nullptr;
         }
 
-        NodeButton<Wallet> *button = new NodeButton<Wallet>(m_data.wallets, parent);
+        NodeButton<Wallet> *button = new NodeButton<Wallet>(m_data.walletsModel, parent);
         return button;
     }
 
