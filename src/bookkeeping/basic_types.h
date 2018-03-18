@@ -47,11 +47,6 @@ public:
     IdableString(const QString &str);
 };
 
-Q_DECLARE_METATYPE(IdableString *)
-Q_DECLARE_METATYPE(const IdableString *)
-Q_DECLARE_METATYPE(Node<IdableString> *)
-Q_DECLARE_METATYPE(const Node<IdableString> *)
-
 using Owner = IdableString;
 
 /**
@@ -144,9 +139,6 @@ struct Wallet : public Idable
     Money amount;
 };
 
-Q_DECLARE_METATYPE(Node<Wallet> *)
-Q_DECLARE_METATYPE(const Node<Wallet> *)
-
 struct Category : public IdableString
 {
     bool regular {false};
@@ -155,11 +147,6 @@ struct Category : public IdableString
     Category(const char *str) : IdableString(str) {}
     Category(const QString &str) : IdableString(str) {}
 };
-
-Q_DECLARE_METATYPE(Category *)
-Q_DECLARE_METATYPE(const Category *)
-Q_DECLARE_METATYPE(Node<Category> *)
-Q_DECLARE_METATYPE(const Node<Category> *)
 
 /**
  * @brief Archiveable node.
@@ -202,8 +189,6 @@ struct Transaction
     ArchNode<Wallet> from;
     ArchNode<Wallet> to;
 };
-
-Q_DECLARE_METATYPE(Transaction::Type::t)
 
 struct Plan
 {
@@ -272,5 +257,17 @@ QString pathToShortString(const Node<T> *node)
 QString formatMoney(const Money &money);
 
 } // namespace cashbook
+
+Q_DECLARE_METATYPE(cashbook::IdableString *)
+Q_DECLARE_METATYPE(const cashbook::IdableString *)
+Q_DECLARE_METATYPE(Node<cashbook::IdableString> *)
+Q_DECLARE_METATYPE(const Node<cashbook::IdableString> *)
+Q_DECLARE_METATYPE(Node<cashbook::Wallet> *)
+Q_DECLARE_METATYPE(const Node<cashbook::Wallet> *)
+Q_DECLARE_METATYPE(cashbook::Category *)
+Q_DECLARE_METATYPE(const cashbook::Category *)
+Q_DECLARE_METATYPE(Node<cashbook::Category> *)
+Q_DECLARE_METATYPE(const Node<cashbook::Category> *)
+Q_DECLARE_METATYPE(cashbook::Transaction::Type::t)
 
 #endif // BOOKKEEPING_BASIC_TYPES_H

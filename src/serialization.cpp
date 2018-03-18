@@ -386,7 +386,7 @@ static void load(IdableString &data, PitmObject pitm)
 
 static void load(OwnersModel &data, PitmArray arr)
 {
-    for(PitmValue v : std::as_const(arr)) {
+    for(PitmValue v : arr) {
         PitmObject obj = v.toObject();
         Owner owner;
         load(owner, obj);
@@ -399,7 +399,7 @@ static void load(CategoriesModel &data, PitmArray arr)
     Node<Category> *currNode = data.rootItem;
     std::stack<int> children;
 
-    for(PitmValue v : std::as_const(arr)) {
+    for(PitmValue v : arr) {
         PitmObject nodeObj = v.toObject();
         PitmObject categoryObj = nodeObj[QLatin1String("category")].toObject();
         currNode->data.regular = nodeObj[QLatin1String("regular")].toBool();
@@ -460,7 +460,7 @@ static void load(WalletsModel &data, PitmArray arr, const OwnersModel &ownersMod
     Node<Wallet> *currNode = data.rootItem;
     std::stack<int> children;
 
-    for(PitmValue v : std::as_const(arr)) {
+    for(PitmValue v : arr) {
         PitmObject nodeObj = v.toObject();
         PitmObject walletObj = nodeObj[QLatin1String("wallet")].toObject();
         load(currNode->data, walletObj, ownersModel);
@@ -605,7 +605,7 @@ static void load(PlansModel &data, PitmArray arr,
                  const CategoriesModel &outCategories
 )
 {
-    for(PitmValue v : std::as_const(arr)) {
+    for(PitmValue v : arr) {
         PitmObject obj = v.toObject();
         Plan item;
         load(item, obj, inCategories, outCategories);
@@ -651,7 +651,7 @@ static void load(Tasks &data, PitmArray arr,
                  const CategoriesModel &outCategories
 )
 {
-    for(PitmValue v : std::as_const(arr)) {
+    for(PitmValue v : arr) {
         PitmObject obj = v.toObject();
         Task item;
         load(item, obj, inCategories, outCategories);

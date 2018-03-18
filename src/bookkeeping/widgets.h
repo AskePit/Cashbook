@@ -21,6 +21,9 @@ enum class NodeButtonState {
 };
 
 template <class T>
+class PopupTree;
+
+template <class T>
 class NodeButton : public QPushButton
 {
 public:
