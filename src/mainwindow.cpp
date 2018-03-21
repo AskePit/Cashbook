@@ -833,7 +833,7 @@ void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
     FilteredLogModel *filterModel = new FilteredLogModel(ui->dateFrom->date(), ui->dateTo->date(), type, node, categoryTree);
     filterModel->setSourceModel(&m_data.logModel);
     QTableView *table = new QTableView();
-    table->setWindowFlags(Qt::WindowCloseButtonHint);
+    table->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Tool);
     table->setAttribute(Qt::WA_DeleteOnClose);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->verticalHeader()->hide();

@@ -133,7 +133,7 @@ public:
     {
         setModel(&model);
         setEditTriggers(QAbstractItemView::NoEditTriggers);
-        setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint);
+        setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint | Qt::Tool);
 
         setStyleSheet("QTreeView::item { height: 18px;}");
         setAlternatingRowColors(true);
