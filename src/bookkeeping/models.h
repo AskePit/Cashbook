@@ -401,9 +401,9 @@ public:
     enum t {
         Date = 0,
         Common,
-        Balance,
         Regular,
         Nonregular,
+        Balance,
 
         Count
     };
