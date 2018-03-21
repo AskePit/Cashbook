@@ -22,7 +22,7 @@ namespace cashbook
  *          methods to make it possible to use them in template nonmember
  *          functions.
  */
-class TreeModel : public QAbstractItemModel
+class TreeModel : public QAbstractItemModel, public Changable
 {
     Q_OBJECT
 
@@ -68,6 +68,14 @@ signals:
     void recalculated();
 };
 
+class TableModel : public QAbstractTableModel, public Changable
+{
+    Q_OBJECT
+
+public:
+    TableModel(QObject *parent = 0) : QAbstractTableModel(parent) {}
+};
+
 class CategoriesColumn
 {
 public:
@@ -93,16 +101,6 @@ public:
 
     Node<Category> *getItem(const QModelIndex &index) const;
     QModelIndex itemIndex(const Node<Category> *item) const;
-
-    Node<Category> *addChild(const Category &data) {
-        auto node = new Node<Category>(data, rootItem);
-        rootItem->children.push_back(node);
-        return node;
-    }
-
-    Node<Category> *child(const Category &data) {
-        return rootItem->child(data);
-    }
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -194,7 +192,7 @@ public:
     }
 };
 
-class OwnersModel : public QAbstractListModel
+class OwnersModel : public TableModel
 {
     Q_OBJECT
 
@@ -209,6 +207,7 @@ public:
                         int role = Qt::DisplayRole) const override;
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
@@ -245,7 +244,7 @@ public:
     };
 };
 
-class LogModel : public QAbstractTableModel
+class LogModel : public TableModel
 {
     Q_OBJECT
 
@@ -313,7 +312,7 @@ public:
     };
 };
 
-class PlansModel : public QAbstractTableModel
+class PlansModel : public TableModel
 {
     Q_OBJECT
 
@@ -362,7 +361,7 @@ public:
     };
 };
 
-class TasksModel : public QAbstractTableModel
+class TasksModel : public TableModel
 {
     Q_OBJECT
 
@@ -424,7 +423,7 @@ public:
     };
 };
 
-class BriefModel : public QAbstractTableModel
+class BriefModel : public TableModel
 {
     Q_OBJECT
 

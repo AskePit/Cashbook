@@ -315,7 +315,7 @@ bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &pare
     auto createCategory = [](){
         return tr("Новая категория");
     };
-    return common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent);
+    return changeFilter( common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent) );
 }
 
 QModelIndex CategoriesModel::parent(const QModelIndex &index) const
@@ -325,12 +325,12 @@ QModelIndex CategoriesModel::parent(const QModelIndex &index) const
 
 bool CategoriesModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    return common::tree::removeRows(this, position, rows, parent);
+    return changeFilter( common::tree::removeRows(this, position, rows, parent) );
 }
 
 bool CategoriesModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
 {
-    return common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild);
+    return changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild));
 }
 
 int CategoriesModel::rowCount(const QModelIndex &parent) const
@@ -351,6 +351,7 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
         case CategoriesColumn::Regular: item->data.regular = value.toBool(); break;
     }
     emit dataChanged(index, index);
+    setChanged();
 
     return true;
 }
@@ -447,7 +448,7 @@ bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
         w.name = tr("Новый кошелек");
         return w;
     };
-    return common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent);
+    return changeFilter( common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent) );
 }
 
 QModelIndex WalletsModel::parent(const QModelIndex &index) const
@@ -457,12 +458,12 @@ QModelIndex WalletsModel::parent(const QModelIndex &index) const
 
 bool WalletsModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    return common::tree::removeRows(this, position, rows, parent);
+    return changeFilter( common::tree::removeRows(this, position, rows, parent) );
 }
 
 bool WalletsModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
 {
-    return common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild);
+    return changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild) );
 }
 
 int WalletsModel::rowCount(const QModelIndex &parent) const
@@ -485,6 +486,7 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
     }
 
     emit dataChanged(index, index);
+    setChanged();
 
     return true;
 }
@@ -494,7 +496,7 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
 //
 
 OwnersModel::OwnersModel(QObject *parent)
-    : QAbstractListModel(parent)
+    : TableModel(parent)
 {}
 
 OwnersModel::~OwnersModel()
@@ -523,6 +525,12 @@ int OwnersModel::rowCount(const QModelIndex &parent) const
     return common::list::rowCount(owners, parent);
 }
 
+int OwnersModel::columnCount(const QModelIndex &parent) const
+{
+    UNUSED(parent);
+    return WalletColumn::Count;
+}
+
 Qt::ItemFlags OwnersModel::flags(const QModelIndex &index) const
 {
     return common::flags(this, index);
@@ -540,6 +548,7 @@ bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int r
 
     owners[index.row()] = value.toString();
     emit dataChanged(index, index);
+    setChanged();
 
     return true;
 }
@@ -550,6 +559,7 @@ bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
     beginInsertRows(parent, position, position + rows - 1);
     owners.insert(position, rows, tr("Новый пользователь"));
     endInsertRows();
+    setChanged();
     return true;
 }
 
@@ -566,6 +576,7 @@ bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     owners.remove(position, rows);
     endRemoveRows();
+    setChanged();
     return true;
 }
 
@@ -580,6 +591,7 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
     owners.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
+    setChanged();
 
     return true;
 }
@@ -589,7 +601,7 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 //
 
 LogModel::LogModel(Statistics &statistics, QObject *parent)
-    : QAbstractTableModel(parent)
+    : TableModel(parent)
     , statistics(statistics)
 {}
 
@@ -653,6 +665,7 @@ bool LogModel::anchoreTransactions()
     const int right = LogColumn::Count-1;
 
     emit dataChanged(index(top, left), index(bottom, right));
+    setChanged();
 
     unanchored = 0;
     return true;
@@ -670,6 +683,7 @@ bool LogModel::copyTop()
 
     log[0] = log[1];
     emit dataChanged(index(0, LogColumn::Start), index(0, LogColumn::Count), {Qt::DisplayRole});
+    setChanged();
     return true;
 }
 
@@ -877,6 +891,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
 
     emit dataChanged(index, index);
     changedMonths.insert(Month(t.date));
+    setChanged();
 
     return true;
 }
@@ -891,6 +906,8 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     unanchored += rows;
     changedMonths.insert(Month(t.date));
     endInsertRows();
+
+    setChanged();
     return true;
 }
 
@@ -906,6 +923,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     unanchored -= 1;
 
     endRemoveRows();
+    setChanged();
     return true;
 }
 
@@ -917,46 +935,7 @@ void LogModel::updateNote(int row, const QString &note)
     changedMonths.insert(Month(t.date));
     QModelIndex i = index(row, LogColumn::Note);
     emit dataChanged(i, i, {Qt::DisplayRole});
-}
-
-FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)
-    : QSortFilterProxyModel(parent)
-    , m_from(from)
-    , m_to(to)
-    , m_type(type)
-    , m_category(category)
-{}
-
-bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
-{
-    UNUSED(sourceParent);
-
-    LogModel *model = qobject_cast<LogModel*>(sourceModel());
-
-    const Transaction &t = model->log[sourceRow];
-    if(t.type != m_type) {
-        return false;
-    }
-
-    if(t.date < m_from || t.date > m_to) {
-        return false;
-    }
-
-    if(!t.category.isValidPointer()) {
-        return false;
-    }
-
-    const Node<Category> *node = t.category.toPointer();
-
-    while(node) {
-        if(node == m_category) {
-            return true;
-        }
-
-        node = node->parent;
-    }
-
-    return false;
+    setChanged();
 }
 
 static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
@@ -1018,11 +997,51 @@ void LogModel::updateTask(Task &task) const
     task.rest = task.amount - task.spent;
 }
 
+FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)
+    : QSortFilterProxyModel(parent)
+    , m_from(from)
+    , m_to(to)
+    , m_type(type)
+    , m_category(category)
+{}
+
+bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
+    UNUSED(sourceParent);
+
+    LogModel *model = qobject_cast<LogModel*>(sourceModel());
+
+    const Transaction &t = model->log[sourceRow];
+    if(t.type != m_type) {
+        return false;
+    }
+
+    if(t.date < m_from || t.date > m_to) {
+        return false;
+    }
+
+    if(!t.category.isValidPointer()) {
+        return false;
+    }
+
+    const Node<Category> *node = t.category.toPointer();
+
+    while(node) {
+        if(node == m_category) {
+            return true;
+        }
+
+        node = node->parent;
+    }
+
+    return false;
+}
+
 //
 // Plans
 //
 PlansModel::PlansModel(QObject *parent)
-    : QAbstractTableModel(parent)
+    : TableModel(parent)
 {}
 
 PlansModel::~PlansModel()
@@ -1157,6 +1176,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     emit dataChanged(index, index);
+    setChanged();
 
     return true;
 }
@@ -1170,6 +1190,7 @@ bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
     Plan item;
     plans.insert(position, item);
     endInsertRows();
+    setChanged();
     return true;
 }
 
@@ -1181,6 +1202,7 @@ bool PlansModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     plans.removeAt(position);
     endRemoveRows();
+    setChanged();
     return true;
 }
 
@@ -1195,6 +1217,7 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     plans.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
+    setChanged();
 
     return true;
 }
@@ -1207,13 +1230,14 @@ void PlansModel::insertPlan(const Plan &plan)
     plans[size] = plan;
 
     emit dataChanged(index(size, PlansColumn::Count), index(size, PlansColumn::Count));
+    setChanged();
 }
 
 //
 // Tasks
 //
 TasksModel::TasksModel(const LogModel &log, QObject *parent)
-    : QAbstractTableModel(parent)
+    : TableModel(parent)
     , m_log(log)
 {}
 
@@ -1393,6 +1417,7 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     emit dataChanged(index, index);
+    setChanged();
 
     if(origin.category != task.category
     || origin.from != task.from
@@ -1420,6 +1445,7 @@ bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
     item.to = today;
     tasks.insert(position, item);
     endInsertRows();
+    setChanged();
     return true;
 }
 
@@ -1431,6 +1457,7 @@ bool TasksModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     tasks.removeAt(position);
     endRemoveRows();
+    setChanged();
     return true;
 }
 
@@ -1445,6 +1472,7 @@ bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     tasks.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
+    setChanged();
 
     return true;
 }
@@ -1453,7 +1481,7 @@ bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 // Brief
 //
 BriefModel::BriefModel(BriefStatistics &brief, QObject *parent)
-    : QAbstractTableModel(parent)
+    : TableModel(parent)
     , brief(brief)
 {}
 

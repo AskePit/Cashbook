@@ -518,8 +518,7 @@ static bool downListItem(QAbstractItemView &view, ListModel &model)
 //
 void cashbook::MainWindow::on_addTransactionButton_clicked()
 {
-    m_changed |= m_data.logModel.insertRow(0);
-
+    m_data.logModel.insertRow(0);
     showUnanchoredSum();
 }
 
@@ -535,7 +534,7 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
 
 void cashbook::MainWindow::on_copyTransactionButton_clicked()
 {
-    m_changed |= m_data.logModel.copyTop();
+    m_data.logModel.copyTop();
 
     updateUnanchoredSum();
 }
@@ -543,7 +542,7 @@ void cashbook::MainWindow::on_copyTransactionButton_clicked()
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
     bool did = m_data.anchoreTransactions();
-    m_changed |= did;
+    did;
 
     hideUnanchoredSum();
 }
@@ -553,151 +552,151 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 // Wallets
 //
 void cashbook::MainWindow::on_addWalletSiblingButton_clicked() {
-    m_changed |= addSiblingNode(*ui->walletsTree, m_data.walletsModel);
+    addSiblingNode(*ui->walletsTree, m_data.walletsModel);
 }
 void cashbook::MainWindow::on_addWalletChildButton_clicked() {
-    m_changed |= addChildNode(*ui->walletsTree, m_data.walletsModel);
+    addChildNode(*ui->walletsTree, m_data.walletsModel);
 }
 void cashbook::MainWindow::on_removeWalletButton_clicked() {
-    m_changed |= removeNode(*ui->walletsTree, m_data.walletsModel);
+    removeNode(*ui->walletsTree, m_data.walletsModel);
 }
 void cashbook::MainWindow::on_upWalletButton_clicked() {
-    m_changed |= upNode(*ui->walletsTree, m_data.walletsModel);
+    upNode(*ui->walletsTree, m_data.walletsModel);
 }
 void cashbook::MainWindow::on_downWalletButton_clicked()
 {
-    m_changed |= downNode(*ui->walletsTree, m_data.walletsModel);
+    downNode(*ui->walletsTree, m_data.walletsModel);
 }
 void cashbook::MainWindow::on_outWalletButton_clicked() {
-    m_changed |= outNode(*ui->walletsTree, m_data.walletsModel);
+    outNode(*ui->walletsTree, m_data.walletsModel);
 }
 void cashbook::MainWindow::on_inWalletButton_clicked() {
-    m_changed |= inNode(*ui->walletsTree, m_data.walletsModel);
+    inNode(*ui->walletsTree, m_data.walletsModel);
 }
 
 //
 // In categories
 //
 void cashbook::MainWindow::on_addInCategorySiblingButton_clicked() {
-    m_changed |= addSiblingNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    addSiblingNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 void cashbook::MainWindow::on_addInCategoryChildButton_clicked() {
-    m_changed |= addChildNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    addChildNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 void cashbook::MainWindow::on_removeInCategoryButton_clicked() {
-    m_changed |= removeNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    removeNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 void cashbook::MainWindow::on_upInCategoryButton_clicked() {
-    m_changed |= upNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    upNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 void cashbook::MainWindow::on_downInCategoryButton_clicked() {
-    m_changed |= downNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    downNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 void cashbook::MainWindow::on_outInCategoryButton_clicked() {
-    m_changed |= outNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    outNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 void cashbook::MainWindow::on_inInCategoryButton_clicked() {
-    m_changed |= inNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    inNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
 }
 
 //
 // Out categories
 //
 void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked() {
-    m_changed |= addSiblingNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    addSiblingNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 void cashbook::MainWindow::on_addOutCategoryChildButton_clicked() {
-    m_changed |= addChildNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    addChildNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 void cashbook::MainWindow::on_removeOutCategoryButton_clicked() {
-    m_changed |= removeNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    removeNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 void cashbook::MainWindow::on_upOutCategoryButton_clicked() {
-    m_changed |= upNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    upNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 void cashbook::MainWindow::on_downOutCategoryButton_clicked() {
-    m_changed |= downNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    downNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 void cashbook::MainWindow::on_outOutCategoryButton_clicked() {
-    m_changed |= outNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    outNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 void cashbook::MainWindow::on_inOutCategoryButton_clicked() {
-    m_changed |= inNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    inNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
 }
 
 //
 // Users
 //
 void cashbook::MainWindow::on_addUserButton_clicked() {
-    m_changed |= addListItem(m_data.ownersModel);
+    addListItem(m_data.ownersModel);
 }
 void cashbook::MainWindow::on_removeUserButton_clicked() {
-    m_changed |= removeListItem(*ui->ownersList, m_data.ownersModel);
+    removeListItem(*ui->ownersList, m_data.ownersModel);
 }
 void cashbook::MainWindow::on_upUserButton_clicked() {
-    m_changed |= upListItem(*ui->ownersList, m_data.ownersModel);
+    upListItem(*ui->ownersList, m_data.ownersModel);
 }
 void cashbook::MainWindow::on_downUserButton_clicked() {
-    m_changed |= downListItem(*ui->ownersList, m_data.ownersModel);
+    downListItem(*ui->ownersList, m_data.ownersModel);
 }
 
 //
 // Plans
 //
 void cashbook::MainWindow::on_addShortPlanButton_clicked() {
-    m_changed |= addListItem(m_data.plans[PlanTerm::Short]);
+    addListItem(m_data.plans[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_removeShortPlanButton_clicked() {
-    m_changed |= removeListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
+    removeListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_upShortPlanButton_clicked() {
-    m_changed |= upListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
+    upListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_downShortPlanButton_clicked() {
-    m_changed |= downListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
+    downListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
 }
 
 void cashbook::MainWindow::on_addMiddlePlanButton_clicked() {
-    m_changed |= addListItem(m_data.plans[PlanTerm::Middle]);
+    addListItem(m_data.plans[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_removeMiddlePlanButton_clicked() {
-    m_changed |= removeListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
+    removeListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_upMiddlePlanButton_clicked() {
-    m_changed |= upListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
+    upListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_downMiddlePlanButton_clicked() {
-    m_changed |= downListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
+    downListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
 }
 
 void cashbook::MainWindow::on_addLongPlanButton_clicked() {
-    m_changed |= addListItem(m_data.plans[PlanTerm::Long]);
+    addListItem(m_data.plans[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_removeLongPlanButton_clicked() {
-    m_changed |= removeListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
+    removeListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_upLongPlanButton_clicked() {
-    m_changed |= upListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
+    upListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_downLongPlanButton_clicked() {
-    m_changed |= downListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
+    downListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
 }
 
 void cashbook::MainWindow::on_addActiveTaskButton_clicked() {
-    m_changed |= addListItem(m_data.tasks[TaskStatus::Active]);
+    addListItem(m_data.tasks[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_removeActiveTaskButton_clicked() {
-    m_changed |= removeListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
+    removeListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_upActiveTaskButton_clicked() {
-    m_changed |= upListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
+    upListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_downActiveTaskButton_clicked() {
-    m_changed |= downListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
+    downListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
 }
 
 void cashbook::MainWindow::on_removeCompletedTaskButton_clicked() {
-    m_changed |= removeListItem(*ui->completedTasksTable, m_data.tasks[TaskStatus::Completed]);
+    removeListItem(*ui->completedTasksTable, m_data.tasks[TaskStatus::Completed]);
 }
 
 void cashbook::MainWindow::on_actionSave_triggered()
@@ -707,7 +706,7 @@ void cashbook::MainWindow::on_actionSave_triggered()
     }*/
 
     saveFile();
-    m_changed = false;
+    m_data.resetChanged();
 }
 
 int callQuestionDialog(const QString &message, QWidget *parent)
@@ -724,7 +723,7 @@ void cashbook::MainWindow::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event);
 
-    if(m_changed) {
+    if(m_data.isChanged()) {
         int ret { callQuestionDialog(tr("Сохранить изменения?"), this) };
         if(ret == QMessageBox::Ok) {
             on_actionSave_triggered();

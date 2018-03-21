@@ -10,6 +10,16 @@ Data::Data()
     , tasks(logModel)
     , briefModel(statistics.brief)
 {
+    setChangableItems({
+        &ownersModel,
+        &walletsModel,
+        &inCategoriesModel,
+        &outCategoriesModel,
+        &logModel,
+        &plans,
+        &tasks
+    });
+
     connect(&ownersModel, &OwnersModel::nodesGonnaBeRemoved, this, &Data::onOwnersRemove);
     connect(&inCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onInCategoriesRemove);
     connect(&outCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, this, &Data::onOutCategoriesRemove);
@@ -161,7 +171,8 @@ Node<Category> *Data::outCategoryFromPath(const QString &path) {
     return nodeFromPath<Category, CategoriesModel>(outCategoriesModel, path);
 }
 
-void Data::clear() {
+void Data::clear()
+{
     ownersModel.clear();
     walletsModel.clear();
     inCategoriesModel.clear();
@@ -169,6 +180,8 @@ void Data::clear() {
     logModel.clear();
     plans.clear();
     tasks.clear();
+
+    resetChanged();
 }
 
 } // namespace cashbook

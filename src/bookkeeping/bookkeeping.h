@@ -20,7 +20,11 @@ struct PlanTerm {
     }
 };
 
-struct Plans {
+struct Plans : public ChangeObservable {
+    Plans() {
+        setChangableItems({&m_shortPlans, &m_middlePlans, &m_longPlans});
+    }
+
     const PlansModel &operator[](PlanTerm::t term) const {
         switch(term) {
             default:
@@ -56,10 +60,12 @@ struct TaskStatus {
     };
 };
 
-struct Tasks {
+struct Tasks : public ChangeObservable {
     Tasks(const LogModel &log)
         : m_active(log), m_completed(log)
-    {}
+    {
+        setChangableItems({&m_active, &m_completed});
+    }
 
     const TasksModel &operator[](TaskStatus::t status) const {
         switch(status) {
@@ -84,7 +90,7 @@ private:
     TasksModel m_completed;
 };
 
-class Data : public QObject
+class Data : public QObject, public ChangeObservable
 {
     Q_OBJECT
 

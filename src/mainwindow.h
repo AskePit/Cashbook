@@ -159,7 +159,6 @@ private:
     CategoriesViewEventFilter m_categoriesEventFilter;
     ClickFilter m_clickFilter;
 
-    bool m_changed {false};
     QModelIndex m_noteContextIndex;
 };
 
