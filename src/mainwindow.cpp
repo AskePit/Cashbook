@@ -89,6 +89,26 @@ void ViewModelMap::connectModels() {
     }
 }
 
+static void callInfoDialog(const QString &message)
+{
+    QMessageBox msgBox;
+    msgBox.setText(message);
+
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    msgBox.exec();
+}
+
+int callQuestionDialog(const QString &message, QWidget *parent)
+{
+    QMessageBox msgBox {parent};
+    msgBox.setText(message);
+
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    return msgBox.exec();
+}
+
 MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -541,9 +561,12 @@ void cashbook::MainWindow::on_copyTransactionButton_clicked()
 
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
-    bool did = m_data.anchoreTransactions();
-    did;
+    if(!m_data.logModel.canAnchore()) {
+        callInfoDialog(tr("Заполните все поля,\nподсвеченные красным!"));
+        return;
+    }
 
+    m_data.anchoreTransactions();
     hideUnanchoredSum();
 }
 
@@ -707,16 +730,6 @@ void cashbook::MainWindow::on_actionSave_triggered()
 
     saveFile();
     m_data.resetChanged();
-}
-
-int callQuestionDialog(const QString &message, QWidget *parent)
-{
-    QMessageBox msgBox {parent};
-    msgBox.setText(message);
-
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    return msgBox.exec();
 }
 
 void cashbook::MainWindow::closeEvent(QCloseEvent *event)

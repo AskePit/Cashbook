@@ -215,6 +215,20 @@ static void destructor(Model *model)
 } // namespace tree
 } // namespace common
 
+namespace colors {
+    // Foregrounds
+    static const QColor normal {Qt::black};
+    static const QColor inactive {120, 120, 120};
+    static const QColor readonly {100, 100, 100};
+    static const QColor profit {34, 120, 53};
+    static const QColor loses {220, 47, 67};
+
+    // Backgrounds
+    static const QColor incorrect {250, 77, 97};
+    static const QColor noField {252, 252, 252};
+}
+
+
 //
 // Categories
 //
@@ -244,7 +258,7 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
     }
 
     if(index.column() == CategoriesColumn::Statistics && role == Qt::ForegroundRole) {
-        return QColor(100, 100, 100);
+        return colors::readonly;
     }
 
 
@@ -688,6 +702,49 @@ bool LogModel::copyTop()
 }
 
 template <class T>
+static bool isErrorNode(const ArchNode<T> &node)
+{
+    if(node.isValidPointer()) {
+        if(node.toPointer() == nullptr) {
+            return true;
+        }
+    } else {
+        if(node.toString().isEmpty()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool LogModel::canAnchore() const
+{
+    for(int i = 0; i<unanchored; ++i) {
+        const Transaction &t = log[i];
+
+        if(t.type == Transaction::Type::In || t.type == Transaction::Type::Out) {
+           if(isErrorNode(t.category)) {
+               return false;
+           }
+        }
+
+        if(t.type != Transaction::Type::Out) {
+            if(isErrorNode(t.to)) {
+                return false;
+            }
+        }
+
+        if(t.type != Transaction::Type::In) {
+            if(isErrorNode(t.from)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+template <class T>
 static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
     if(role == Qt::DisplayRole) {
@@ -697,9 +754,21 @@ static QVariant archNodeData(const ArchNode<T> &archNode, int role)
         } else {
             return archNode.toString();
         }
-    } else { // Qt::EditRole
+    } else if(role == Qt::EditRole) {
         return archNode;
+    } else if(role == Qt::BackgroundRole) {
+        bool incorrect = false;
+        if(archNode.isValidPointer()) {
+            const Node<T> *node = archNode.toPointer();
+            incorrect = !node;
+        } else {
+            incorrect = archNode.toString().isEmpty();
+        }
+
+        return incorrect ? colors::incorrect : QVariant();
     }
+
+    return QVariant();
 }
 
 QVariant LogModel::data(const QModelIndex &index, int role) const
@@ -710,51 +779,69 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
 
     if(role == Qt::ForegroundRole) {
         if(index.row() >= unanchored) {
-            return QColor(120, 120, 120);
+            return colors::inactive;
         } else {
-            return QColor(Qt::black);
+            return colors::normal;
         }
     }
 
-    if (role != Qt::DisplayRole && role != Qt::EditRole) {
+    if (role != Qt::DisplayRole && role != Qt::EditRole && role != Qt::BackgroundRole) {
         return QVariant();
     }
 
     const Transaction &t = log[index.row()];
+    int column = index.column();
 
-    switch(index.column())
-    {
-        case LogColumn::Date: {
-            if(role == Qt::DisplayRole) {
-                return t.date.toString("dd.MM.yy");
-            } else {
-                return t.date;
-            }
-        } break;
-        case LogColumn::Type: {
-            if(role == Qt::DisplayRole) {
-                return Transaction::Type::toString(t.type);
-            } else {
-                return QVariant::fromValue<Transaction::Type::t>(t.type);
-            }
-        } break;
-        case LogColumn::Category: {
+    if(column == LogColumn::Date) {
+        if(role == Qt::DisplayRole) {
+            return t.date.toString("dd.MM.yy");
+        } else if(role == Qt::EditRole) {
+            return t.date;
+        }
+
+    } else if(column == LogColumn::Type) {
+        if(role == Qt::DisplayRole) {
+            return Transaction::Type::toString(t.type);
+        } else if(role == Qt::EditRole) {
+            return QVariant::fromValue<Transaction::Type::t>(t.type);
+        }
+
+    } else if(column == LogColumn::Category) {
+        if(t.type != Transaction::Type::Transfer) {
             return archNodeData(t.category, role);
-        } break;
-        case LogColumn::Money: {
-            if(role == Qt::DisplayRole) {
-                return formatMoney(t.amount);
-            } else { // Qt::EditRole
-                return as<double>(t.amount);
+        } else {
+            if(role == Qt::BackgroundRole) {
+                return colors::noField;
             }
         }
-        case LogColumn::From: {
+
+    } else if(column == LogColumn::Money) {
+        if(role == Qt::DisplayRole) {
+            return formatMoney(t.amount);
+        } else if(role == Qt::EditRole) {
+            return as<double>(t.amount);
+        }
+
+    } else if(column == LogColumn::From) {
+        if(t.type != Transaction::Type::In) {
             return archNodeData(t.from, role);
-        } break;
-        case LogColumn::To: {
+        } else {
+            if(role == Qt::BackgroundRole) {
+                return colors::noField;
+            }
+        }
+
+    } else if(column == LogColumn::To) {
+        if(t.type != Transaction::Type::Out) {
             return archNodeData(t.to, role);
-        } break;
-        case LogColumn::Note: return t.note;
+        } else {
+            if(role == Qt::BackgroundRole) {
+                return colors::noField;
+            }
+        }
+
+    } else if(column == LogColumn::Note) {
+        return t.note;
     }
 
     return QVariant();
@@ -1054,7 +1141,7 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
     }
 
     if(role == Qt::ForegroundRole) {
-        return QColor(Qt::black);
+        return colors::normal;
     }
 
     if (role != Qt::DisplayRole && role != Qt::EditRole) {
@@ -1254,9 +1341,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
 
     if(role == Qt::ForegroundRole) {
         if(column == TasksColumn::Spent || column == TasksColumn::Rest) {
-            return QColor(100, 100, 100);
+            return colors::readonly;
         } else {
-            return QColor(Qt::black);
+            return colors::normal;
         }
     }
 
@@ -1584,9 +1671,9 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
 
     if(role == Qt::ForegroundRole) {
         if(col == BriefColumn::Common) {
-            return rowType == BriefRow::Received ? QColor(34, 120, 53) : QColor(220, 47, 67);
+            return rowType == BriefRow::Received ? colors::profit : colors::loses;
         } else {
-            return QColor(Qt::black);
+            return colors::normal;
         }
     }
 

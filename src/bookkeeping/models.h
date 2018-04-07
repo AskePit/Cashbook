@@ -259,6 +259,7 @@ public:
 
     bool anchoreTransactions();
     bool copyTop();
+    bool canAnchore() const;
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
