@@ -145,7 +145,7 @@ public:
         button->setTree(this);
         move(button->mapToGlobal(QPoint(0, 0)));
         show();
-        setFocus();
+        activateWindow();
     }
 
 protected:

@@ -840,10 +840,11 @@ void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
     table->verticalHeader()->setDefaultSectionSize(23);
     table->setModel(filterModel);
     table->setGeometry(QRect(categoryTree->mapToGlobal(categoryTree->pos()), categoryTree->size()));
-    table->show();
     table->resizeColumnsToContents();
     table->hideColumn(LogColumn::Type);
     table->hideColumn(in ? LogColumn::From : LogColumn::To);
+    table->show();
+    table->activateWindow();
 }
 
 void cashbook::MainWindow::updateUnanchoredSum()
