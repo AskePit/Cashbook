@@ -4,7 +4,7 @@
 #include "basic_types.h"
 #include "statistics.h"
 
-#include <std/rvector.h>
+#include <askelib_qt/askelib/std/rvector.h>
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>

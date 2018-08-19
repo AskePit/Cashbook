@@ -1,10 +1,10 @@
 #include "serialization.h"
 #include "bookkeeping/bookkeeping.h"
 
-#include "std/pitm/pitmarray.h"
-#include "std/pitm/pitmobject.h"
-#include "std/pitm/pitmdocument.h"
-#include "std/fs.h"
+#include <askelib_qt/std/pitm/pitmarray.h>
+#include <askelib_qt/std/pitm/pitmobject.h>
+#include <askelib_qt/std/pitm/pitmdocument.h>
+#include <askelib_qt/std/fs.h>
 #include <QFileInfo>
 #include <QDir>
 #include <QDirIterator>

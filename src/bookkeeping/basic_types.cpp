@@ -195,6 +195,19 @@ QString extractPathString<Wallet>(const Node<Wallet> *node) {
     return node ? node->data.name : "";
 }
 
+static QString getCurrencySymbol(Currency::t type)
+{
+    switch(type) {
+        default: return "";
+        case Currency::Rub: return "₽";
+        case Currency::Usd: return "$";
+        case Currency::Eur: return "€";
+        case Currency::Gbp: return "£";
+        case Currency::Jpy: return "¥";
+        case Currency::Btc: return "฿";
+    }
+}
+
 QString formatMoney(const Money &money)
 {
     QString units = QString::number(money.units());
@@ -212,7 +225,7 @@ QString formatMoney(const Money &money)
         units.insert(index, ' ');
     }
 
-    QString symbol = Currency::symbol(money.currency());
+    QString symbol = getCurrencySymbol(money.currency());
 
     if(money.cents()) {
         QString cents = QString::number(money.cents());
