@@ -4,7 +4,7 @@
 #include <QDate>
 #include <vector>
 
-#define UNUSED(...) (void)__VA_ARGS__
+#define UNUSED(x) (void)(x)
 #define as static_cast
 
 static const QDate today {QDate::currentDate()};

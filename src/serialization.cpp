@@ -176,15 +176,6 @@ static void save(const Transaction &t, PitmObject &pitm)
     }
 }
 
-static void save(const LogModel &data, PitmArray &pitm)
-{
-    for(const Transaction &t : data.log) {
-        PitmObject obj;
-        save(t, obj);
-        pitm.append(obj);
-    }
-}
-
 static void save(const Plan &item, PitmObject &pitm)
 {
     if(!item.name.isEmpty()) {
@@ -252,14 +243,6 @@ static void save(const Tasks &data, PitmArray &pitm)
         save(task, obj);
         pitm.append(obj);
     }
-}
-
-static void saveLog(const Data &data, PitmObject &pitm)
-{
-    PitmArray log;
-
-    save(data.logModel, log);
-    pitm[QLatin1String("log")] = log;
 }
 
 static QString backupFile(const QString &originalFile, int number)

@@ -160,7 +160,7 @@ protected:
         bool scrollDown = event->delta() < 0;
         bool scrollUp = !scrollDown;
 
-        bool noWay = atBottom && scrollDown || atTop && scrollUp;
+        bool noWay = (atBottom && scrollDown) || (atTop && scrollUp);
 
         if(noWay) {
             event->accept();

@@ -31,7 +31,9 @@ static inline Qt::ItemFlags flags(const Model *model, const QModelIndex &index)
 
 static QVariant headerData(int section, Qt::Orientation orientation, int role)
 {
-    UNUSED(section, orientation, role);
+    UNUSED(section);
+    UNUSED(orientation);
+    UNUSED(role);
     return QVariant();
 }
 
@@ -929,6 +931,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
                 }
                 return archNodeFlags(this, index, t.to);
             }
+            default: break;
         }
     }
 
@@ -1225,6 +1228,7 @@ Qt::ItemFlags PlansModel::flags(const QModelIndex &index) const
 
                 return archNodeFlags(this, index, item.category);
             }
+            default: break;
         }
     }
 
@@ -1462,6 +1466,7 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 
                 return archNodeFlags(this, index, item.category);
             }
+            default: break;
         }
     }
 
@@ -1838,8 +1843,8 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
 
         int col = index.column();
 
-        if(col == LogColumn::From && type == Transaction::Type::In
-        || col == LogColumn::To   && type == Transaction::Type::Out) {
+        if((col == LogColumn::From && type == Transaction::Type::In)
+        || (col == LogColumn::To   && type == Transaction::Type::Out)) {
             return nullptr;
         }
 
@@ -1981,7 +1986,7 @@ bool CategoriesViewEventFilter::eventFilter(QObject *watched, QEvent *event)
 
     QWidget *w = qobject_cast<QWidget *>(watched);
 
-    if(w && w == m_in->viewport() || w == m_out->viewport()) {
+    if(w && (w == m_in->viewport() || w == m_out->viewport())) {
         QTreeView *view = w == m_in->viewport() ? m_in : m_out;
 
         QPoint pos = e->pos();
