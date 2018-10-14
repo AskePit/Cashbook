@@ -10,6 +10,7 @@
 #include <QDateEdit>
 #include <QApplication>
 #include <QPainter>
+#include <QDebug>
 
 namespace cashbook
 {
@@ -1085,6 +1086,79 @@ void LogModel::updateTask(Task &task) const
     }
 
     task.rest = task.amount - task.spent;
+}
+
+void LogModel::normalizeData()
+{
+    if(log.empty()) {
+        return;
+    }
+
+    auto history = log.getStdVector(); // get log (from now till eldest record) in reverse manner (from eldest record till now)
+
+    QDate date = history.front().date;
+    std::vector<Transaction> res;
+    std::vector<std::reference_wrapper<const Transaction>> day;
+
+    res.reserve(history.size());
+
+    const auto processDay = [this, &day, &date, &res]() {
+        std::vector<Transaction> normalizedDay;
+        normalizedDay.reserve(day.size());
+
+        // 1. Merge same Categories for same Transaction Type that has same Note (or have no any)
+        for(int i = 0; i<day.size(); ++i) {
+            Transaction iRec = day[i];
+
+            for(int j = i+1; j<day.size(); ++j) {
+                const Transaction& jRec = day[j];
+
+                bool merge = iRec.type == jRec.type
+                          && iRec.category == jRec.category
+                          && iRec.from == jRec.from
+                          && iRec.to == jRec.to
+                          && iRec.note == jRec.note;
+
+                if(merge) {
+                    qDebug() << QString("Merge: Date %1, Category \'%2\' Amount %3 merges with Amount %4").arg(iRec.date.toString(), (iRec.category.toPointer() ? iRec.category.toPointer()->data : "TRANSFER"), formatMoney(iRec.amount), formatMoney(jRec.amount));
+
+                    iRec.amount += jRec.amount;
+                    day.erase(std::next(day.begin(), j));
+                    changedMonths.insert(Month(iRec.date));
+                    setChanged();
+                    --j;
+                }
+            }
+
+            normalizedDay.emplace_back(std::move(iRec));
+        }
+
+        // 2. Merge Transer Transactions like: from A->B->C to A->C for same amounts of money
+
+        // 3.
+
+        // Add normalized day to res
+
+        res.insert(res.end(), normalizedDay.begin(), normalizedDay.end());
+    };
+
+    for(const auto &record : history)
+    {
+        if(record.date != date) {
+            // process previous day
+            processDay();
+            date = record.date;
+            day.clear();
+        }
+
+        day.push_back(record);
+    }
+    processDay(); // process last day
+
+    log.setStdVector(res);
+
+    beginResetModel();
+    endResetModel();
 }
 
 FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)

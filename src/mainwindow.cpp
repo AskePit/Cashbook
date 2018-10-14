@@ -329,6 +329,8 @@ void MainWindow::postLoadSetup()
     recalculateHeight(ui->longPlansTable);
     recalculateHeight(ui->activeTasksTable);
     recalculateHeight(ui->completedTasksTable);
+
+    m_data.logModel.normalizeData();
 }
 
 void MainWindow::saveFile()

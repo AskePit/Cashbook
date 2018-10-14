@@ -283,6 +283,7 @@ public:
 
     void updateNote(int row, const QString &note);
     void updateTask(Task &task) const;
+    void normalizeData();
 };
 
 class FilteredLogModel : public QSortFilterProxyModel
