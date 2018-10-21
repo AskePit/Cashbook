@@ -1,4 +1,5 @@
 #include "bookkeeping.h"
+#include <askelib_qt/std/fs.h>
 
 namespace cashbook
 {
@@ -182,6 +183,52 @@ void Data::clear()
     tasks.clear();
 
     resetChanged();
+}
+
+void Data::importReceiptFile(const QString &json, const Node<Wallet> *wallet)
+{
+    QString data = aske::readFile(json);
+
+    const auto findWord = [&data](const QLatin1String &startMarker, const QLatin1String &endMarker, int from) -> std::pair<QStringRef, int> {
+        from = data.indexOf(startMarker, from);
+        if(from < 0) {
+            return std::make_pair(QStringRef(), from);
+        }
+        from += startMarker.size();
+        int to = data.indexOf(endMarker, from);
+        QStringRef str = data.midRef(from, to-from);
+        to += endMarker.size();
+        return std::make_pair(str, to);
+    };
+
+    QStringRef dateString = findWord(QLatin1String(R"("dateTime":)"), QLatin1String(R"(,")"), 0).first;
+    QDate date = QDateTime::fromSecsSinceEpoch(dateString.toInt()).date();
+
+    std::vector<Transaction> transactions;
+
+    int i {0};
+    while(1) {
+        auto p = findWord(QLatin1String(R"("name":")"), QLatin1String(R"(",")"), i);
+        if(p.second < 0) {
+            break;
+        }
+
+        QString name = p.first.toString();
+        i = p.second;
+
+        p = findWord(QLatin1String(R"("sum":)"), QLatin1String(R"(,")"), i);
+        QString sum = p.first.toString();
+        i = p.second;
+
+        Transaction t;
+        t.note = name;
+        t.amount = Money(static_cast<intmax_t>(sum.toInt()));
+        t.date = date;
+        t.from = wallet;
+        transactions.emplace_back(std::move(t));
+    }
+
+    logModel.appendTransactions(transactions);
 }
 
 } // namespace cashbook

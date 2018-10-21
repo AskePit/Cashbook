@@ -1069,7 +1069,7 @@ QTreeView::item { height: 18px;}</string>
                 <bool>false</bool>
                </property>
                <attribute name="headerVisible">
-                <bool>true</bool>
+                <bool>false</bool>
                </attribute>
               </widget>
              </item>
@@ -4428,6 +4428,7 @@ QTreeView::item { height: 18px;}</string>
     <bool>false</bool>
    </attribute>
    <addaction name="actionSave"/>
+   <addaction name="actionImportReceipt"/>
   </widget>
   <action name="actionSave">
    <property name="icon">
@@ -4490,6 +4491,15 @@ QTreeView::item { height: 18px;}</string>
    </property>
    <property name="toolTip">
     <string>Переместить в долгосрочные</string>
+   </property>
+  </action>
+  <action name="actionImportReceipt">
+   <property name="icon">
+    <iconset resource="resources/resources.qrc">
+     <normaloff>:/importReceipt.png</normaloff>:/importReceipt.png</iconset>
+   </property>
+   <property name="text">
+    <string>Импортировать чек</string>
    </property>
   </action>
  </widget>

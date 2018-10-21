@@ -260,6 +260,7 @@ public:
     bool anchoreTransactions();
     bool copyTop();
     bool canAnchore() const;
+    void appendTransactions(const std::vector<Transaction> &transactions);
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,

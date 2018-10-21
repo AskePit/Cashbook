@@ -750,6 +750,24 @@ bool LogModel::canAnchore() const
     return true;
 }
 
+void LogModel::appendTransactions(const std::vector<Transaction> &transactions)
+{
+    if(transactions.empty()) {
+        return;
+    }
+    QDate date = transactions.front().date;
+    changedMonths.insert(Month(date));
+    setChanged();
+
+    for(const auto &t : transactions) {
+        log.push_front(t);
+    }
+
+    unanchored += static_cast<int>(transactions.size());
+
+    emit dataChanged(index(0, LogColumn::Start), index(static_cast<int>(transactions.size()-1), LogColumn::Count), {Qt::DisplayRole});
+}
+
 template <class T>
 static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {

@@ -11,5 +11,6 @@
         <file>plansTab_active.png</file>
         <file>statistics.png</file>
         <file>statistics_active.png</file>
+        <file>importReceipt.png</file>
     </qresource>
 </RCC>

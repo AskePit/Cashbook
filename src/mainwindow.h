@@ -120,6 +120,8 @@ private slots:
     void on_actionOutStatement_triggered();
     void on_actionEditNote_triggered();
 
+    void on_actionImportReceipt_triggered();
+
 private:
     void preLoadSetup();
     void postLoadSetup();

@@ -5,12 +5,14 @@
 #include "innodedialog.h"
 #include "bookkeeping/bookkeeping.h"
 #include "serialization.h"
+#include "selectwalletdialog.h"
 
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QInputDialog>
+#include <QStandardPaths>
 
 namespace cashbook
 {
@@ -1079,4 +1081,24 @@ void cashbook::MainWindow::on_actionEditNote_triggered()
     }
 
     m_noteContextIndex = QModelIndex();
+}
+
+void cashbook::MainWindow::on_actionImportReceipt_triggered()
+{
+    const auto& downloadFolders = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation);
+    QString downloadFolder(".");
+    if(!downloadFolders.empty()) {
+        downloadFolder = downloadFolders.front();
+    }
+    QString json = QFileDialog::getOpenFileName(this, tr("Открыть файл для импорта..."), downloadFolder, tr("JSON-файл (*.json)"));
+
+
+    cashbook::SelectWalletDialog d(m_data.walletsModel, this);
+    const Node<Wallet> *node = nullptr;
+    if(d.exec()) {
+        node = d.getWalletNode();
+    } else {
+    }
+
+    m_data.importReceiptFile(json, node);
 }

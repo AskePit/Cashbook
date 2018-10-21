@@ -117,6 +117,7 @@ public:
     void updateTasks(TasksModel &tasks);
     bool anchoreTransactions();
     void clear();
+    void importReceiptFile(const QString &json, const Node<Wallet> *wallet);
 
 signals:
     void categoriesStatisticsUpdated();

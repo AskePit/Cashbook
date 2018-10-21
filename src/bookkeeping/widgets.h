@@ -27,22 +27,31 @@ template <class T>
 class NodeButton : public QPushButton
 {
 public:
+    NodeButton(QWidget *parent = nullptr)
+        : QPushButton(parent)
+    {
+        setStyleSheet("padding:0 0 0 2; text-align:left");
+    }
+
     NodeButton(QAbstractItemModel &model, QWidget *parent = nullptr)
         : QPushButton(parent)
     {
         setStyleSheet("padding:0 0 0 2; text-align:left");
-
-        connect(this, &QPushButton::clicked, [this, &model]() {
-            this->setState(NodeButtonState::Expanded);
-            QTreeView *view = new PopupTree<T>(model, this, nullptr);
-            UNUSED(view);
-        });
+        setModel(model);
     }
 
     ~NodeButton() {
         /*if(m_tree) {
             m_tree->deleteLater();
         }*/
+    }
+
+    void setModel(QAbstractItemModel &model) {
+        connect(this, &QPushButton::clicked, [this, &model]() {
+            this->setState(NodeButtonState::Expanded);
+            QTreeView *view = new PopupTree<T>(model, this, this);
+            UNUSED(view);
+        });
     }
 
     void setState(NodeButtonState s) {
@@ -84,44 +93,16 @@ private:
 };
 
 template<>
-const Node<Category> *NodeButton<Category>::treeNode() const {
-    if(!m_tree) {
-        return nullptr;
-    }
-
-    CategoriesModel *model = dynamic_cast<CategoriesModel *>(m_tree->model());
-    return model->getItem(m_tree->currentIndex());
-}
+const Node<Category> *NodeButton<Category>::treeNode() const;
 
 template<>
-const Node<Wallet> *NodeButton<Wallet>::treeNode() const {
-    if(!m_tree) {
-        return nullptr;
-    }
-
-    WalletsModel *model = dynamic_cast<WalletsModel *>(m_tree->model());
-    return model->getItem(m_tree->currentIndex());
-}
+const Node<Wallet> *NodeButton<Wallet>::treeNode() const;
 
 template<>
-QModelIndex NodeButton<Category>::nodeIndex() {
-    if(m_node) {
-        CategoriesModel *model = dynamic_cast<CategoriesModel *>(m_tree->model());
-        return model->itemIndex(m_node);
-    } else {
-        return QModelIndex();
-    }
-}
+QModelIndex NodeButton<Category>::nodeIndex();
 
 template<>
-QModelIndex NodeButton<Wallet>::nodeIndex() {
-    if(m_node) {
-        WalletsModel *model = dynamic_cast<WalletsModel *>(m_tree->model());
-        return model->itemIndex(m_node);
-    } else {
-        return QModelIndex();
-    }
-}
+QModelIndex NodeButton<Wallet>::nodeIndex();
 
 template <class T>
 class PopupTree : public QTreeView
@@ -193,57 +174,16 @@ private:
 };
 
 template <>
-void PopupTree<Category>::mouseDoubleClickEvent(QMouseEvent *event) {
-    chooseValue(event);
-}
+void PopupTree<Category>::mouseDoubleClickEvent(QMouseEvent *event);
 
 template <>
-void PopupTree<Category>::focusOutEvent(QFocusEvent *event) {
-    chooseValue(event);
-}
+void PopupTree<Category>::focusOutEvent(QFocusEvent *event);
 
 template <>
-void PopupTree<Wallet>::mouseDoubleClickEvent(QMouseEvent *event) {
-    WalletsModel *model = dynamic_cast<WalletsModel *>(this->model());
-    if(!model) {
-        QTreeView::mouseDoubleClickEvent(event);
-        return;
-    }
-
-    const auto *node = model->getItem(currentIndex());
-    if(node->isLeaf()) {
-        chooseValue(event);
-    }
-}
+void PopupTree<Wallet>::mouseDoubleClickEvent(QMouseEvent *event);
 
 template <>
-void PopupTree<Wallet>::focusOutEvent(QFocusEvent *event) {
-    WalletsModel *model = dynamic_cast<WalletsModel *>(this->model());
-    if(!model) {
-        selfDestroy();
-        return;
-    }
-
-    QModelIndex index = currentIndex();
-    if(!index.isValid()) {
-        selfDestroy();
-        return;
-    }
-
-    const auto *node = model->getItem(index);
-    if(!node) {
-        selfDestroy();
-        return;
-    }
-
-    if(node->isLeaf()) {
-        chooseValue(event);
-        return;
-    } else {
-        selfDestroy();
-        return;
-    }
-}
+void PopupTree<Wallet>::focusOutEvent(QFocusEvent *event);
 
 } // namespace cashbook
 

@@ -21,7 +21,8 @@ LIBS += -L$${ASKE_LIB_PATH} -laskelib_std$${ASKE_LIB_SUFFIX}
 
 FORMS += \
     mainwindow.ui \
-    innodedialog.ui
+    innodedialog.ui \
+    selectwalletdialog.ui
 
 HEADERS += \
     bookkeeping/basic_types.h \
@@ -32,7 +33,8 @@ HEADERS += \
     mainwindow.h \
     common.h \
     innodedialog.h \
-    serialization.h
+    serialization.h \
+    selectwalletdialog.h
 
 SOURCES += \
     bookkeeping/basic_types.cpp \
@@ -42,7 +44,9 @@ SOURCES += \
     mainwindow.cpp \
     main.cpp \
     innodedialog.cpp \
-    serialization.cpp
+    serialization.cpp \
+    selectwalletdialog.cpp \
+    bookkeeping/widgets.cpp
 
 #QMAKE_CXXFLAGS += -std:c++latest
 
