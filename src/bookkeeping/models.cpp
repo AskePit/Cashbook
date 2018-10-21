@@ -12,6 +12,9 @@
 #include <QPainter>
 #include <QDebug>
 
+#include <unordered_map>
+#include <askelib_qt/askelib/std/opt.h>
+
 namespace cashbook
 {
 
@@ -751,12 +754,7 @@ template <class T>
 static QVariant archNodeData(const ArchNode<T> &archNode, int role)
 {
     if(role == Qt::DisplayRole) {
-        if(archNode.isValidPointer()) {
-            const Node<T> *node = archNode.toPointer();
-            return pathToShortString(node);
-        } else {
-            return archNode.toString();
-        }
+        return archNodeToShortString(archNode);
     } else if(role == Qt::EditRole) {
         return archNode;
     } else if(role == Qt::BackgroundRole) {
@@ -1097,8 +1095,8 @@ void LogModel::normalizeData()
     auto history = log.getStdVector(); // get log (from now till eldest record) in reverse manner (from eldest record till now)
 
     QDate date = history.front().date;
-    std::vector<Transaction> res;
-    std::vector<std::reference_wrapper<const Transaction>> day;
+    std::vector<Transaction> res; // our result
+    std::vector<std::reference_wrapper<const Transaction>> day; // temp container for every day
 
     res.reserve(history.size());
 
@@ -1120,10 +1118,16 @@ void LogModel::normalizeData()
                           && iRec.note == jRec.note;
 
                 if(merge) {
-                    qDebug() << QString("Merge: Date %1, Category \'%2\' Amount %3 merges with Amount %4").arg(iRec.date.toString(), (iRec.category.toPointer() ? iRec.category.toPointer()->data : "TRANSFER"), formatMoney(iRec.amount), formatMoney(jRec.amount));
+                    qDebug() << QString("Merge: %1, \'%2\' %3 merges with %4").arg(
+                        iRec.date.toString(),
+                        (iRec.category.toPointer() ? iRec.category.toPointer()->data : "TRANSFER"),
+                        formatMoney(iRec.amount, false),
+                        formatMoney(jRec.amount, false)
+                    ).toStdString().c_str();
 
                     iRec.amount += jRec.amount;
-                    day.erase(std::next(day.begin(), j));
+                    std::swap(*std::next(day.begin(), j), day.back());
+                    day.pop_back();
                     changedMonths.insert(Month(iRec.date));
                     setChanged();
                     --j;
@@ -1134,11 +1138,195 @@ void LogModel::normalizeData()
         }
 
         // 2. Merge Transer Transactions like: from A->B->C to A->C for same amounts of money
+        {
+            // collect all transfer transactions for a day
+            std::vector<std::reference_wrapper<const Transaction>> transfers;
+            for(const auto& t : normalizedDay) {
+                if(t.type == Transaction::Type::Transfer) {
+                    transfers.push_back(t);
+                }
+            }
 
-        // 3.
+            // calculate wallets' balances for all transactions
+            std::unordered_map<ArchNode<Wallet>, int> balances;
+
+            for(const Transaction& t : transfers) {
+                balances[t.from] -= t.amount.as_cents();
+                balances[t.to] += t.amount.as_cents();
+            }
+
+            // container for optimized transfer trnsactions
+            std::vector<Transaction> newTransfers;
+
+            // if a pair of wallets refers to only one transaction, remove it from balances and just move to a result container unchanged
+            {
+                auto it = transfers.begin();
+                while(it != transfers.end()) {
+                    const Transaction& t = *it;
+                    if(balances[t.from] + balances[t.to] == 0) {
+                        newTransfers.push_back(t);
+                        balances.erase(t.from);
+                        balances.erase(t.to);
+
+                        std::swap(*it, transfers.back());
+                        transfers.pop_back();
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+
+            // if remained transfers have only one source or destination wallet, then just cancel transfers optimization
+            if(!transfers.empty())
+            {
+                ArchNode<Wallet> firstOut = transfers.begin()->get().from;
+                ArchNode<Wallet> firstIn = transfers.begin()->get().to;
+
+                bool sameOut = true;
+                bool sameIn = true;
+
+                for(const auto& t : transfers) {
+                    const auto& out = t.get().from;
+                    const auto& in = t.get().to;
+
+                    sameOut = sameOut && out == firstOut;
+                    sameIn = sameIn && in == firstIn;
+                }
+
+                if(sameOut || sameIn) {
+                    goto skipTransferNormalization;
+                }
+            }
+
+            // remove all zeros in balance
+            auto it = balances.begin();
+            while(it != balances.end()) {
+                if(it->second == 0) {
+                    it = balances.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+
+            // no balances - no optimization
+            if(balances.empty()) {
+                goto skipTransferNormalization; // one of rare places, where it is reasonable, i think
+            }
+
+            changedMonths.insert(Month(date));
+
+            // spread balance records between outs and ins depending on sign of wallets' balance
+            std::vector<std::pair<ArchNode<Wallet>, int>> outs;
+            std::vector<std::pair<ArchNode<Wallet>, int>> ins;
+
+            for(const auto acc : balances) {
+                if(acc.second > 0) {
+                    ins.emplace_back(acc);
+                } else {
+                    outs.emplace_back(std::make_pair(acc.first, -acc.second));
+                }
+            }
+
+            // sort ins and outs
+            const auto less = [](const std::pair<ArchNode<Wallet>, int>& p1, const std::pair<ArchNode<Wallet>, int>& p2) -> bool {
+                return p1.second < p2.second;
+            };
+
+            std::sort(outs.begin(), outs.end(), less);
+            std::sort(ins.begin(), ins.end(), less);
+
+            // resolve transport task
+            std::vector<std::vector<aske::opt<int>>> tt(outs.size());
+            for(auto& vec : tt) {
+                vec.resize(ins.size());
+            }
+
+            for(int o = 0; o<tt.size(); ++o) {
+                auto& oRow = tt[o];
+                for(int i = 0; i<oRow.size(); ++i) {
+                    auto& cell = oRow[i];
+
+                    if(cell) {
+                        continue;
+                    }
+
+                    auto& out = outs[o].second;
+                    auto& in = ins[i].second;
+
+                    if(out < in) {
+                        cell = out;
+                        in -= out;
+                        out = 0;
+                        for(auto& c : oRow) {
+                            if(!c) {
+                                c = 0;
+                            }
+                        }
+                    } else {
+                        cell = in;
+                        out -= in;
+                        in = 0;
+                        for(int n = 0; n<outs.size(); ++n) {
+                            auto& c = tt[n][i];
+                            if(!c) {
+                                c = 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // create new transfer transactions from result of transport task in `tt`
+            for(int o = 0; o<tt.size(); ++o) {
+                auto& oRow = tt[o];
+                for(int i = 0; i<oRow.size(); ++i) {
+                    auto& cell = oRow[i];
+
+                    if(!cell || cell.get() == 0) {
+                        continue;
+                    }
+
+                    auto& out = outs[o].first;
+                    auto& in = ins[i].first;
+
+                    Transaction t;
+                    t.type = Transaction::Type::Transfer;
+                    t.date = date;
+                    t.from = out;
+                    t.to = in;
+                    t.amount = Money(static_cast<intmax_t>(cell.get()));
+
+                    newTransfers.push_back(t);
+                }
+            }
+
+            // remove all transfers from normalizedDay
+            qDebug() << QString("Before transfer optimization for '%1' day:").arg(date.toString()).toStdString().c_str();
+            {
+                auto it = normalizedDay.begin();
+                while(it != normalizedDay.end()) {
+                    if(it->type == Transaction::Type::Transfer) {
+                        qDebug() << '\t' << archNodeToShortString(it->from).toStdString().c_str() << "->" << archNodeToShortString(it->to).toStdString().c_str() << formatMoney(it->amount, false).toStdString().c_str();
+                        std::swap(*it, normalizedDay.back());
+                        normalizedDay.pop_back();
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+
+            // add new transfers to normalizedDay
+            qDebug() << "After transfer optimization:";
+            for(const auto& t : newTransfers) {
+                qDebug() << '\t' << archNodeToShortString(t.from).toStdString().c_str() << "->" << archNodeToShortString(t.to).toStdString().c_str() << formatMoney(t.amount, false).toStdString().c_str();
+            }
+            normalizedDay.insert(normalizedDay.end(), newTransfers.begin(), newTransfers.end());
+            qDebug() << "";
+        }
+
+        skipTransferNormalization:
 
         // Add normalized day to res
-
         res.insert(res.end(), normalizedDay.begin(), normalizedDay.end());
     };
 
