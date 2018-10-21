@@ -208,7 +208,7 @@ static QString getCurrencySymbol(Currency::t type)
     }
 }
 
-QString formatMoney(const Money &money)
+QString formatMoney(const Money &money, bool symbol /*= true*/)
 {
     QString units = QString::number(money.units());
 
@@ -225,7 +225,7 @@ QString formatMoney(const Money &money)
         units.insert(index, ' ');
     }
 
-    QString symbol = getCurrencySymbol(money.currency());
+    QString symbolSign = symbol ? getCurrencySymbol(money.currency()) : "";
 
     if(money.cents()) {
         QString cents = QString::number(money.cents());
@@ -235,9 +235,9 @@ QString formatMoney(const Money &money)
         if(cents.size() == 1) {
             cents = QStringLiteral("0") + cents;
         }
-        return QString("%1,%2 %3").arg(units, cents, symbol);
+        return symbol ? QString("%1,%2 %3").arg(units, cents, symbolSign) : QString("%1,%2").arg(units, cents);
     } else {
-        return QString("%1 %2").arg(units, symbol);
+        return symbol ? QString("%1 %2").arg(units, symbolSign) : QString("%1").arg(units);
     }
 }
 

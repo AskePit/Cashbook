@@ -9,6 +9,7 @@
 #include <QUuid>
 #include <QDate>
 #include <QVariant>
+#include <functional>
 
 namespace cashbook
 {
@@ -254,9 +255,45 @@ QString pathToShortString(const Node<T> *node)
     return path;
 }
 
-QString formatMoney(const Money &money);
+template <class T>
+QString archNodeToString(ArchNode<T> arch)
+{
+    if(arch.isValidPointer()) {
+        return pathToString(arch.toPointer());
+    } else {
+        return arch.toString();
+    }
+}
+
+template <class T>
+QString archNodeToShortString(ArchNode<T> arch)
+{
+    if(arch.isValidPointer()) {
+        return pathToShortString(arch.toPointer());
+    } else {
+        return arch.toString();
+    }
+}
+
+QString formatMoney(const Money &money, bool symbol = true);
 
 } // namespace cashbook
+
+namespace std
+{
+    template <class T>
+    struct hash<cashbook::ArchNode<T>>
+    {
+        std::size_t operator()(const cashbook::ArchNode<T>& node) const
+        {
+            if(node.isValidPointer()) {
+                return std::hash<const Node<T>*>()(node.toPointer());
+            } else {
+                return std::hash<std::string>()(node.toString().toStdString());
+            }
+        }
+    };
+}
 
 Q_DECLARE_METATYPE(cashbook::IdableString *)
 Q_DECLARE_METATYPE(const cashbook::IdableString *)
