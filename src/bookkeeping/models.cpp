@@ -1086,6 +1086,12 @@ void LogModel::updateTask(Task &task) const
     task.rest = task.amount - task.spent;
 }
 
+struct Balance
+{
+    int sum {0}; // wallet's balance
+    std::vector<ArchNode<Wallet>> ins; // pointers to wallets that received money from this wallet
+};
+
 void LogModel::normalizeData()
 {
     if(log.empty()) {
@@ -1148,11 +1154,12 @@ void LogModel::normalizeData()
             }
 
             // calculate wallets' balances for all transactions
-            std::unordered_map<ArchNode<Wallet>, int> balances;
+            std::unordered_map<ArchNode<Wallet>, Balance> balances;
 
             for(const Transaction& t : transfers) {
-                balances[t.from] -= t.amount.as_cents();
-                balances[t.to] += t.amount.as_cents();
+                balances[t.from].sum -= t.amount.as_cents();
+                balances[t.to].sum += t.amount.as_cents();
+                balances[t.from].ins.push_back(t.to);
             }
 
             // container for optimized transfer trnsactions
@@ -1163,7 +1170,7 @@ void LogModel::normalizeData()
                 auto it = transfers.begin();
                 while(it != transfers.end()) {
                     const Transaction& t = *it;
-                    if(balances[t.from] + balances[t.to] == 0) {
+                    if(balances[t.from].sum + balances[t.to].sum == 0) {
                         newTransfers.push_back(t);
                         balances.erase(t.from);
                         balances.erase(t.to);
@@ -1176,24 +1183,22 @@ void LogModel::normalizeData()
                 }
             }
 
-            // if remained transfers have only one source or destination wallet, then just cancel transfers optimization
-            if(!transfers.empty())
+            // if remained transfers have a picture of graph with paths no longer than 1, discard it as nonoptimizable
+            if(!balances.empty())
             {
-                ArchNode<Wallet> firstOut = transfers.begin()->get().from;
-                ArchNode<Wallet> firstIn = transfers.begin()->get().to;
-
-                bool sameOut = true;
-                bool sameIn = true;
-
-                for(const auto& t : transfers) {
-                    const auto& out = t.get().from;
-                    const auto& in = t.get().to;
-
-                    sameOut = sameOut && out == firstOut;
-                    sameIn = sameIn && in == firstIn;
+                // we avoided recursive check because it's enough to check 2nd nesting level to deside that graph needs normalization
+                bool allShortPaths = true;
+                for(const auto& p : balances) {
+                    const Balance& balance = p.second;
+                    for(const ArchNode<Wallet>& in : balance.ins) {
+                        if(!balances[in].ins.empty()) {
+                            allShortPaths = false;
+                            break;
+                        }
+                    }
                 }
 
-                if(sameOut || sameIn) {
+                if(allShortPaths) {
                     goto skipTransferNormalization;
                 }
             }
@@ -1201,7 +1206,7 @@ void LogModel::normalizeData()
             // remove all zeros in balance
             auto it = balances.begin();
             while(it != balances.end()) {
-                if(it->second == 0) {
+                if(it->second.sum == 0) {
                     it = balances.erase(it);
                 } else {
                     ++it;
@@ -1214,16 +1219,17 @@ void LogModel::normalizeData()
             }
 
             changedMonths.insert(Month(date));
+            setChanged();
 
             // spread balance records between outs and ins depending on sign of wallets' balance
             std::vector<std::pair<ArchNode<Wallet>, int>> outs;
             std::vector<std::pair<ArchNode<Wallet>, int>> ins;
 
             for(const auto acc : balances) {
-                if(acc.second > 0) {
-                    ins.emplace_back(acc);
+                if(acc.second.sum > 0) {
+                    ins.emplace_back(std::make_pair(acc.first, acc.second.sum));
                 } else {
-                    outs.emplace_back(std::make_pair(acc.first, -acc.second));
+                    outs.emplace_back(std::make_pair(acc.first, -acc.second.sum));
                 }
             }
 
