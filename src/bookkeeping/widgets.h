@@ -118,7 +118,6 @@ public:
 
         setStyleSheet("QTreeView::item { height: 18px;}");
         setAlternatingRowColors(true);
-        expandToDepth(0);
         header()->hide();
         for(int i = CategoriesColumn::Name+1; i<CategoriesColumn::Count; ++i) {
             hideColumn(i);
