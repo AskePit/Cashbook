@@ -9,7 +9,7 @@ SelectWalletDialog::SelectWalletDialog(WalletsModel &model, QWidget *parent) :
     m_model(model)
 {
     ui->setupUi(this);
-    ui->pushButton->setModel(model);
+    ui->pushButton->setModel(model, true);
 }
 
 SelectWalletDialog::~SelectWalletDialog()

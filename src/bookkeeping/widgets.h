@@ -46,10 +46,10 @@ public:
         }*/
     }
 
-    void setModel(QAbstractItemModel &model) {
-        connect(this, &QPushButton::clicked, [this, &model]() {
+    void setModel(QAbstractItemModel &model, bool setParent = false) {
+        connect(this, &QPushButton::clicked, [this, &model, setParent]() {
             this->setState(NodeButtonState::Expanded);
-            QTreeView *view = new PopupTree<T>(model, this, this);
+            QTreeView *view = new PopupTree<T>(model, this, setParent ? this : nullptr);
             UNUSED(view);
         });
     }
