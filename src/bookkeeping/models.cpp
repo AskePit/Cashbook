@@ -636,6 +636,10 @@ bool LogModel::anchoreTransactions()
 
     for(int i = unanchored-1; i>=0; --i) {
         Transaction &t = log[i];
+        if(t.note.startsWith('*')) {
+            t.note.clear();
+        }
+
         if(t.type != Transaction::Type::In && t.from.isValidPointer()) {
             Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
             if(w) {
@@ -796,8 +800,10 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    int column = index.column();
+
     if(role == Qt::ForegroundRole) {
-        if(index.row() >= unanchored) {
+        if(index.row() >= unanchored && column != LogColumn::Note) { // notes are always editable
             return colors::inactive;
         } else {
             return colors::normal;
@@ -809,7 +815,6 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     }
 
     const Transaction &t = log[index.row()];
-    int column = index.column();
 
     if(column == LogColumn::Date) {
         if(role == Qt::DisplayRole) {
@@ -913,15 +918,15 @@ static Qt::ItemFlags archNodeFlags(const QAbstractItemModel *model, const QModel
 
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
-    if(index.row() > unanchored-1) {
+    auto column = as<LogColumn::t>(index.column());
+
+    if(index.row() > unanchored-1 && column != LogColumn::Note) { // notes are always editable
         return Qt::NoItemFlags;
     }
 
     if (!index.isValid()) {
         return 0;
     }
-
-    auto column = as<LogColumn::t>(index.column());
 
     if(!archNodeColumns.contains(column)) {
         return common::flags(this, index);

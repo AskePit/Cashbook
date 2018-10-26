@@ -221,7 +221,7 @@ void Data::importReceiptFile(const QString &json, const Node<Wallet> *wallet)
         i = p.second;
 
         Transaction t;
-        t.note = name;
+        t.note = "*" + name; // all notes which starts with '*' will be removed after anchoring
         t.amount = Money(static_cast<intmax_t>(sum.toInt()));
         t.date = date;
         t.from = wallet;

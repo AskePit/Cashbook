@@ -1090,15 +1090,17 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
     if(!downloadFolders.empty()) {
         downloadFolder = downloadFolders.front();
     }
-    QString json = QFileDialog::getOpenFileName(this, tr("Открыть файл для импорта..."), downloadFolder, tr("JSON-файл (*.json)"));
+    QString jsonFile = QFileDialog::getOpenFileName(this, tr("Открыть файл для импорта..."), downloadFolder, tr("JSON-файл (*.json)"));
 
+    if(jsonFile.isNull()) {
+        return;
+    }
 
     cashbook::SelectWalletDialog d(m_data.walletsModel, this);
     const Node<Wallet> *node = nullptr;
     if(d.exec()) {
         node = d.getWalletNode();
-    } else {
     }
 
-    m_data.importReceiptFile(json, node);
+    m_data.importReceiptFile(jsonFile, node);
 }
