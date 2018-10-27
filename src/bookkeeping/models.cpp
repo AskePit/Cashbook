@@ -1115,10 +1115,10 @@ struct Balance
     std::vector<ArchNode<Wallet>> ins; // pointers to wallets that received money from this wallet
 };
 
-void LogModel::normalizeData()
+bool LogModel::normalizeData()
 {
     if(log.empty()) {
-        return;
+        return false;
     }
 
     QDate date = log.front().date;
@@ -1378,10 +1378,15 @@ void LogModel::normalizeData()
     }
     processDay(); // process last day
 
-    std::swap(log, res);
+    bool changed = isChanged();
+    if(changed) {
+        std::swap(log, res);
 
-    beginResetModel();
-    endResetModel();
+        beginResetModel();
+        endResetModel();
+    }
+
+    return changed;
 }
 
 FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)

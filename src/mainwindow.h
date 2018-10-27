@@ -126,8 +126,8 @@ private:
     void preLoadSetup();
     void postLoadSetup();
 
-    void loadFile();
-    void saveFile();
+    void loadData();
+    void saveData();
 
     void showCategoryStatement(Transaction::Type::t type);
 

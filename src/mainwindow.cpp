@@ -118,7 +118,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_modelsDelegate(m_data)
 {
     preLoadSetup();
-    loadFile();
+    loadData();
     postLoadSetup();
 
     showMaximized();
@@ -268,7 +268,7 @@ void MainWindow::preLoadSetup()
     connect(&m_data.tasks[TaskStatus::Completed], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
 }
 
-void MainWindow::loadFile()
+void MainWindow::loadData()
 {
     cashbook::load(m_data);
 }
@@ -332,12 +332,16 @@ void MainWindow::postLoadSetup()
     recalculateHeight(ui->activeTasksTable);
     recalculateHeight(ui->completedTasksTable);
 
-    m_data.logModel.normalizeData();
+    bool changed = m_data.logModel.normalizeData();
+    if(changed) {
+        saveData();
+    }
 }
 
-void MainWindow::saveFile()
+void MainWindow::saveData()
 {
     cashbook::save(m_data);
+    m_data.resetChanged();
 }
 
 } // namespace cashbook
@@ -732,8 +736,7 @@ void cashbook::MainWindow::on_actionSave_triggered()
         return;
     }*/
 
-    saveFile();
-    m_data.resetChanged();
+    saveData();
 }
 
 void cashbook::MainWindow::closeEvent(QCloseEvent *event)
