@@ -1014,7 +1014,7 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     beginInsertRows(parent, position, position + rows - 1);
     Transaction t;
     t.date = today;
-    log.insert(position, rows, t);
+    log.insert(std::next(log.begin(), position), rows, t);
     unanchored += rows;
     changedMonths.insert(Month(t.date));
     endInsertRows();
@@ -1031,7 +1031,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
 
     changedMonths.insert(Month(log[position].date));
-    log.remove(position, rows);
+    log.erase(std::next(log.begin(), position), std::next(log.begin(), position+rows));
     unanchored -= 1;
 
     endRemoveRows();
@@ -1121,13 +1121,9 @@ void LogModel::normalizeData()
         return;
     }
 
-    auto history = log.getStdVector(); // get log (from now till eldest record) in reverse manner (from eldest record till now)
-
-    QDate date = history.front().date;
-    std::vector<Transaction> res; // our result
+    QDate date = log.front().date;
+    std::deque<Transaction> res; // our result
     std::vector<std::reference_wrapper<const Transaction>> day; // temp container for every day
-
-    res.reserve(history.size());
 
     const auto processDay = [this, &day, &date, &res]() {
         std::vector<Transaction> normalizedDay;
@@ -1335,7 +1331,12 @@ void LogModel::normalizeData()
                 auto it = normalizedDay.begin();
                 while(it != normalizedDay.end()) {
                     if(it->type == Transaction::Type::Transfer) {
-                        qDebug() << '\t' << archNodeToShortString(it->from).toStdString().c_str() << "->" << archNodeToShortString(it->to).toStdString().c_str() << formatMoney(it->amount, false).toStdString().c_str();
+                        qDebug()
+                                << '\t'
+                                << archNodeToShortString(it->from).toStdString().c_str()
+                                << "->"
+                                << archNodeToShortString(it->to).toStdString().c_str()
+                                << formatMoney(it->amount, false).toStdString().c_str();
                         std::swap(*it, normalizedDay.back());
                         normalizedDay.pop_back();
                     } else {
@@ -1347,7 +1348,12 @@ void LogModel::normalizeData()
             // add new transfers to normalizedDay
             qDebug() << "After transfer optimization:";
             for(const auto& t : newTransfers) {
-                qDebug() << '\t' << archNodeToShortString(t.from).toStdString().c_str() << "->" << archNodeToShortString(t.to).toStdString().c_str() << formatMoney(t.amount, false).toStdString().c_str();
+                qDebug()
+                        << '\t'
+                        << archNodeToShortString(t.from).toStdString().c_str()
+                        << "->"
+                        << archNodeToShortString(t.to).toStdString().c_str()
+                        << formatMoney(t.amount, false).toStdString().c_str();
             }
             normalizedDay.insert(normalizedDay.end(), newTransfers.begin(), newTransfers.end());
             qDebug() << "";
@@ -1357,9 +1363,9 @@ void LogModel::normalizeData()
 
         // Add normalized day to res
         res.insert(res.end(), normalizedDay.begin(), normalizedDay.end());
-    };
+    }; // end of processDay
 
-    for(const auto &record : history)
+    for(const auto &record : log)
     {
         if(record.date != date) {
             // process previous day
@@ -1372,7 +1378,7 @@ void LogModel::normalizeData()
     }
     processDay(); // process last day
 
-    log.setStdVector(res);
+    std::swap(log, res);
 
     beginResetModel();
     endResetModel();

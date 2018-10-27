@@ -4,12 +4,12 @@
 #include "basic_types.h"
 #include "statistics.h"
 
-#include <askelib_qt/askelib/std/rvector.h>
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QItemDelegate>
 #include <set>
+#include <deque>
 
 class QTreeView;
 
@@ -249,7 +249,7 @@ class LogModel : public TableModel
     Q_OBJECT
 
 public:
-    aske::rvector<Transaction> log;
+    std::deque<Transaction> log;
     Statistics &statistics;
     int unanchored {0};
     std::set<Month> changedMonths;
