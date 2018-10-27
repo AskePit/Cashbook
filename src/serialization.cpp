@@ -668,7 +668,12 @@ static void loadLog(Data &data)
     while (it.hasNext()) {
         it.next();
 
-        QFile f(it.filePath());
+        auto filePath = it.filePath();
+        if(filePath == storage::headFile) {
+            continue;
+        }
+
+        QFile f(filePath);
         f.open(QIODevice::ReadOnly);
         QByteArray bytes = f.readAll();
         f.close();
