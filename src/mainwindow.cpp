@@ -546,8 +546,13 @@ static bool downListItem(QAbstractItemView &view, ListModel &model)
 //
 void cashbook::MainWindow::on_addTransactionButton_clicked()
 {
-    m_data.logModel.insertRow(0);
-    showUnanchoredSum();
+    bool copied = m_data.logModel.copyTop();
+    if(copied) {
+        updateUnanchoredSum();
+    } else {
+        m_data.logModel.insertRow(0);
+        showUnanchoredSum();
+    }
 }
 
 void cashbook::MainWindow::on_removeTransactionButton_clicked()
@@ -556,13 +561,6 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
     if(index.isValid()) {
         m_data.logModel.removeRow(index.row());
     }
-
-    updateUnanchoredSum();
-}
-
-void cashbook::MainWindow::on_copyTransactionButton_clicked()
-{
-    m_data.logModel.copyTop();
 
     updateUnanchoredSum();
 }

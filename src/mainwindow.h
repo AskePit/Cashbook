@@ -56,7 +56,6 @@ private slots:
 
     void on_addTransactionButton_clicked();
     void on_removeTransactionButton_clicked();
-    void on_copyTransactionButton_clicked();
     void on_anchoreTransactionsButton_clicked();
 
     void on_addWalletSiblingButton_clicked();

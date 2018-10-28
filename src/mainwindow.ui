@@ -510,25 +510,6 @@ QToolButton:hover:!checked {
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="copyTransactionButton">
-                 <property name="minimumSize">
-                  <size>
-                   <width>65</width>
-                   <height>23</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>23</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Копировать</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
                 <widget class="QPushButton" name="anchoreTransactionsButton">
                  <property name="minimumSize">
                   <size>
