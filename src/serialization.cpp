@@ -79,7 +79,6 @@ static void save(const CategoriesModel &data, PitmArray &pitm)
 static void save(const ArchPointer<Owner> &data, PitmObject &pitm)
 {
     bool valid = data.isValidPointer();
-    pitm[QLatin1String("valid")] = valid;
     if(valid) {
         const Owner *pointer = data.toPointer();
         if(pointer) {
@@ -134,7 +133,6 @@ template <class T>
 static void save(const ArchNode<T> &data, PitmObject &pitm)
 {
     bool valid = data.isValidPointer();
-    pitm[QLatin1String("valid")] = valid;
     if(valid) {
         const Node<T> *pointer = data.toPointer();
         if(pointer) {
@@ -404,9 +402,7 @@ static void load(CategoriesModel &data, PitmArray arr)
 
 static void load(ArchPointer<Owner> &data, PitmObject pitm, const OwnersModel &ownersModel)
 {
-    bool valid = pitm[QLatin1String("valid")].toBool();
-
-    if(valid) {
+    if(pitm.contains(QLatin1String("ref"))) {
         QString id = pitm[QLatin1String("ref")].toString();
         QUuid uid = QUuid{id};
 
@@ -467,9 +463,7 @@ static void load(WalletsModel &data, PitmArray arr, const OwnersModel &ownersMod
 template <class T, class Model>
 static void load(ArchNode<T> &data, PitmObject pitm, const Model &refModel)
 {
-    bool valid = pitm[QLatin1String("valid")].toBool();
-
-    if(valid) {
+    if(pitm.contains(QLatin1String("ref"))) {
         QString id = pitm[QLatin1String("ref")].toString();
         QUuid uid = QUuid{id};
 
@@ -486,18 +480,6 @@ static void load(ArchNode<T> &data, PitmObject pitm, const Model &refModel)
         }
     } else {
         data = pitm[QLatin1String("archive")].toString();
-    }
-
-
-    if(valid) {
-        const Node<T> *pointer = data.toPointer();
-        if(pointer) {
-            pitm[QLatin1String("ref")] = pointer->data.id.toString();
-        } else {
-            pitm[QLatin1String("ref")] = QUuid().toString();
-        }
-    } else {
-        pitm[QLatin1String("archive")] = data.toString();
     }
 }
 

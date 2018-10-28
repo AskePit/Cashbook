@@ -16,6 +16,7 @@ namespace cashbook
 
 struct Month
 {
+    Month() = default;
     Month(const QDate &date);
 
     int year {0};
