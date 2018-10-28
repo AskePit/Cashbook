@@ -82,6 +82,13 @@ IdableString::IdableString(const QString &str)
     : QString(str)
 {}
 
+void IdableString::setId(const QUuid &uid) {
+    id = uid;
+}
+
+void IdableString::setString(const QString &str) {
+    QString::operator =(str);
+}
 
 QString Wallet::Type::toString(Type::t type) {
     switch(type) {

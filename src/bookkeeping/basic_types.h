@@ -47,6 +47,9 @@ public:
     IdableString();
     IdableString(const char *str);
     IdableString(const QString &str);
+
+    void setId(const QUuid &id);
+    void setString(const QString &str);
 };
 
 using Owner = IdableString;
@@ -148,6 +151,10 @@ struct Category : public IdableString
     Category() : IdableString() {}
     Category(const char *str) : IdableString(str) {}
     Category(const QString &str) : IdableString(str) {}
+
+    void setName(const QString &name) {
+        IdableString::setString(name);
+    }
 };
 
 /**

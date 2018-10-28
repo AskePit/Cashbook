@@ -367,7 +367,7 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
     Node<Category> *item = getItem(index);
     switch(index.column())
     {
-        case CategoriesColumn::Name: item->data = value.toString(); break;
+        case CategoriesColumn::Name: item->data.setName(value.toString()); break;
         case CategoriesColumn::Regular: item->data.regular = value.toBool(); break;
     }
     emit dataChanged(index, index);
@@ -566,7 +566,7 @@ bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int r
         return false;
     }
 
-    owners[index.row()] = value.toString();
+    owners[index.row()].setString(value.toString());
     emit dataChanged(index, index);
     setChanged();
 
