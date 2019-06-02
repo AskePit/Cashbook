@@ -1194,8 +1194,7 @@ bool LogModel::normalizeData()
                         balances.erase(t.from);
                         balances.erase(t.to);
 
-                        std::swap(*it, transfers.back());
-                        transfers.pop_back();
+                        it = transfers.erase(it);
                     } else {
                         ++it;
                     }
