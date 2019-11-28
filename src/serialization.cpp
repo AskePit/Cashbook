@@ -517,11 +517,11 @@ static void load(Transaction &t, PitmObject pitm,
 
 static void load(LogModel &logModel, PitmArray pitm, Data &data){
     int n = pitm.size();
-    for (int i = n-1; i>=0; --i) {
+    for (int i = 0; i<n; ++i) {
         PitmObject tObj = pitm[i].toObject();
         Transaction t;
         load(t, tObj, data.walletsModel, data.inCategoriesModel, data.outCategoriesModel);
-        logModel.log.push_front(t);
+        logModel.log.push_back(t);
 
         // update brief statistics
         if(t.type == Transaction::Type::In) {
@@ -644,16 +644,33 @@ static void loadMonth(Data &data, PitmArray pitm)
     load(data.logModel, pitm, data);
 }
 
-static void loadLog(Data &data)
+static void loadLog(Data &data, int recentMonths = -1) /* (recentMonths == -1) means load all */
 {
-    QDirIterator it(storage::rootDir, {QStringLiteral("*")+storage::ext}, QDir::Files);
-    while (it.hasNext()) {
-        it.next();
+    QDir dir(storage::rootDir, {QStringLiteral("*")+storage::ext});
+    dir.setFilter(QDir::Files);
+    dir.setSorting(QDir::Name | QDir::Reversed);
 
-        auto filePath = it.filePath();
-        if(filePath == storage::headFile) {
-            continue;
+    QFileInfoList files = dir.entryInfoList();
+    {
+        QMutableListIterator<QFileInfo> it(files);
+        while (it.hasNext()) {
+            if (it.next().filePath() == storage::headFile) {
+                it.remove();
+            }
         }
+    }
+
+    if(recentMonths == -1) {
+        recentMonths = INT_MAX;
+    }
+
+    const int n = files.size();
+    int i = 0;
+
+    while (i < n && i <= recentMonths) {
+        const QFileInfo& file = files[i++];
+
+        auto filePath = file.filePath();
 
         QFile f(filePath);
         f.open(QIODevice::ReadOnly);
@@ -691,8 +708,10 @@ void load(Data &data)
 {
     data.clear();
 
+    constexpr int LoadMonths = -1;
+
     loadHead(data);
-    loadLog(data);
+    loadLog(data, LoadMonths);
 }
 
 } // namespace cashbook
