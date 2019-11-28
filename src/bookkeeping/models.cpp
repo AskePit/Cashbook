@@ -706,6 +706,7 @@ bool LogModel::copyTop()
     }
 
     log[0] = log[1];
+    log[0].note.clear();
     emit dataChanged(index(0, LogColumn::Start), index(0, LogColumn::Count), {Qt::DisplayRole});
     setChanged();
     return true;
