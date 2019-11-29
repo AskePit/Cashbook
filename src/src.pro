@@ -15,6 +15,7 @@ include( ../askelib_qt/public.pri )
 include( ../askelib_qt/askelib/public.pri )
 
 INCLUDEPATH += ..
+INCLUDEPATH += ../askelib_qt
 
 LIBS += -L$${ASKELIB_QT_LIB_PATH} -laskelib_qt_std$${ASKELIB_QT_LIB_SUFFIX}
 LIBS += -L$${ASKE_LIB_PATH} -laskelib_std$${ASKE_LIB_SUFFIX}

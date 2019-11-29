@@ -2,8 +2,8 @@
 #define BOOKKEEPING_BASIC_TYPES_H
 
 #include "common.h"
-#include <askelib_qt/askelib/std/tree.h>
-#include <askelib_qt/askelib/std/money.h>
+#include <askelib/std/tree.h>
+#include <askelib/std/money.h>
 #include <QString>
 #include <QVector>
 #include <QUuid>
