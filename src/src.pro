@@ -17,8 +17,8 @@ include( ../askelib_qt/askelib/public.pri )
 INCLUDEPATH += ..
 INCLUDEPATH += ../askelib_qt
 
-LIBS += -L$${ASKELIB_QT_LIB_PATH} -laskelib_qt_std$${ASKELIB_QT_LIB_SUFFIX}
-LIBS += -L$${ASKE_LIB_PATH} -laskelib_std$${ASKE_LIB_SUFFIX}
+LIBS += -L$${ASKELIBQT_LIB_PATH} -laskelib_qt_std$${ASKELIBQT_LIB_SUFFIX}
+LIBS += -L$${ASKELIB_LIB_PATH} -laskelib_std$${ASKELIB_LIB_SUFFIX}
 
 FORMS += \
     mainwindow.ui \
