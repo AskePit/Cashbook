@@ -105,7 +105,7 @@ static QModelIndex index(const Model *model, int row, int column, const QModelIn
         return QModelIndex();
     }
 
-    auto *childItem = parentItem->at(row);
+    auto *childItem = parentItem->at(as<size_t>(row));
     if (childItem) {
         return model->createIndex(row, column, childItem);
     } else {
@@ -120,7 +120,7 @@ static bool insertRows(Model *model, std::function<DataType()> createData, int p
 
     model->beginInsertRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
-        parentItem->addChildAt(createData(), position);
+        parentItem->addChildAt(createData(), as<size_t>(position));
     }
 
     model->endInsertRows();
@@ -165,7 +165,7 @@ static bool removeRows(Model *model, int position, int rows, const QModelIndex &
      * Traverse each node to be deleted and dump all of their nested nodes as
      * nodes to be removed.
      */
-    for(int i = position; i<position + rows; ++i) {
+    for(size_t i = as<size_t>(position); i<as<size_t>(position + rows); ++i) {
         auto node = parentItem->at(i);
         auto l = node->toList();
         for(const auto *n : l) {
@@ -176,7 +176,7 @@ static bool removeRows(Model *model, int position, int rows, const QModelIndex &
 
     model->beginRemoveRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
-        parentItem->removeChildAt(position);
+        parentItem->removeChildAt(as<size_t>(position));
     }
     model->endRemoveRows();
 
@@ -188,12 +188,12 @@ static bool moveRow(Model *model, const QModelIndex &sourceParent, int sourceRow
 {
     auto *srcParentItem = model->getItem(sourceParent);
     auto *dstParentItem = model->getItem(destinationParent);
-    auto *srcChildItem = srcParentItem->at(sourceRow);
+    auto *srcChildItem = srcParentItem->at(as<size_t>(sourceRow));
 
     bool down = sourceParent == destinationParent && sourceRow < destinationChild;
 
     model->beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild);
-    srcChildItem->attachSelfAsChildAt(dstParentItem, destinationChild-as<int>(down));
+    srcChildItem->attachSelfAsChildAt(dstParentItem, as<size_t>(destinationChild)-as<size_t>(down));
     model->endMoveRows();
 
     return true;
@@ -224,6 +224,7 @@ static void destructor(Model *model)
 namespace colors {
     // Foregrounds
     static const QColor normal {Qt::black};
+    static const QColor dim {180, 180, 180};
     static const QColor inactive {120, 120, 120};
     static const QColor readonly {100, 100, 100};
     static const QColor profit {34, 120, 53};
@@ -397,17 +398,37 @@ int WalletsModel::columnCount(const QModelIndex &parent) const
     return WalletColumn::Count;
 }
 
+static Money calcTreeAmount(Node<Wallet> *item)
+{
+    if(item->isLeaf()) {
+        return item->data.amount;
+    } else {
+        Money res;
+        for(size_t i = 0; i<item->childCount(); ++i) {
+            res += calcTreeAmount(item->at(i));
+        }
+
+        return res;
+    }
+}
+
 QVariant WalletsModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) {
         return QVariant();
     }
 
+    Node<Wallet> *item = getItem(index);
+
+    if(index.column() == WalletColumn::Amount && role == Qt::ForegroundRole) {
+        if(!item->isLeaf()) {
+            return colors::dim;
+        }
+    }
+
     if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
     }
-
-    Node<Wallet> *item = getItem(index);
 
     switch(index.column())
     {
@@ -421,6 +442,8 @@ QVariant WalletsModel::data(const QModelIndex &index, int role) const
                 } else { // Qt::EditRole
                     return as<double>(money);
                 }
+            } else {
+                return formatMoney(calcTreeAmount(item));
             }
     }
 
@@ -635,7 +658,7 @@ bool LogModel::anchoreTransactions()
     }
 
     for(int i = unanchored-1; i>=0; --i) {
-        Transaction &t = log[i];
+        Transaction &t = log[as<size_t>(i)];
         if(t.note.startsWith('*')) {
             t.note.clear();
         }
@@ -731,7 +754,7 @@ static bool isErrorNode(const ArchNode<T> &node)
 bool LogModel::canAnchore() const
 {
     for(int i = 0; i<unanchored; ++i) {
-        const Transaction &t = log[i];
+        const Transaction &t = log[as<size_t>(i)];
 
         if(t.type == Transaction::Type::In || t.type == Transaction::Type::Out) {
            if(isErrorNode(t.category)) {
@@ -815,7 +838,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Transaction &t = log[index.row()];
+    const Transaction &t = log[as<size_t>(index.row())];
 
     if(column == LogColumn::Date) {
         if(role == Qt::DisplayRole) {
@@ -926,13 +949,13 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
     }
 
     if (!index.isValid()) {
-        return 0;
+        return Qt::NoItemFlags;
     }
 
     if(!archNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Transaction &t = log[index.row()];
+        const Transaction &t = log[as<size_t>(index.row())];
         switch(column) {
             case LogColumn::Category: {
                 if(t.type == Transaction::Type::Transfer) {
@@ -967,7 +990,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         return false;
     }
 
-    Transaction &t = log[index.row()];
+    Transaction &t = log[as<size_t>(index.row())];
 
     switch(index.column())
     {
@@ -1015,7 +1038,7 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     beginInsertRows(parent, position, position + rows - 1);
     Transaction t;
     t.date = today;
-    log.insert(std::next(log.begin(), position), rows, t);
+    log.insert(std::next(log.begin(), position), as<size_t>(rows), t);
     unanchored += rows;
     changedMonths.insert(Month(t.date));
     endInsertRows();
@@ -1031,7 +1054,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
 
-    changedMonths.insert(Month(log[position].date));
+    changedMonths.insert(Month(log[as<size_t>(position)].date));
     log.erase(std::next(log.begin(), position), std::next(log.begin(), position+rows));
     unanchored -= 1;
 
@@ -1040,13 +1063,13 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     return true;
 }
 
-void LogModel::updateNote(int row, const QString &note)
+void LogModel::updateNote(size_t row, const QString &note)
 {
     Transaction &t = log[row];
     t.note = note;
 
     changedMonths.insert(Month(t.date));
-    QModelIndex i = index(row, LogColumn::Note);
+    QModelIndex i = index(as<int>(row), LogColumn::Note);
     emit dataChanged(i, i, {Qt::DisplayRole});
     setChanged();
 }
@@ -1113,6 +1136,7 @@ void LogModel::updateTask(Task &task) const
 struct Balance
 {
     int sum {0}; // wallet's balance
+    uint32_t padding;
     std::vector<ArchNode<Wallet>> ins; // pointers to wallets that received money from this wallet
 };
 
@@ -1131,10 +1155,10 @@ bool LogModel::normalizeData()
         normalizedDay.reserve(day.size());
 
         // 1. Merge same Categories for same Transaction Type that has same Note (or have no any)
-        for(int i = 0; i<day.size(); ++i) {
+        for(size_t i = 0; i<day.size(); ++i) {
             Transaction iRec = day[i];
 
-            for(int j = i+1; j<day.size(); ++j) {
+            for(size_t j = i+1; j<day.size(); ++j) {
                 const Transaction& jRec = day[j];
 
                 bool merge = iRec.type == jRec.type
@@ -1152,7 +1176,7 @@ bool LogModel::normalizeData()
                     ).toStdString().c_str();
 
                     iRec.amount += jRec.amount;
-                    std::swap(*std::next(day.begin(), j), day.back());
+                    std::swap(*std::next(day.begin(), as<ptrdiff_t>(j)), day.back());
                     day.pop_back();
                     changedMonths.insert(Month(iRec.date));
                     setChanged();
@@ -1244,7 +1268,7 @@ bool LogModel::normalizeData()
             std::vector<std::pair<ArchNode<Wallet>, int>> outs;
             std::vector<std::pair<ArchNode<Wallet>, int>> ins;
 
-            for(const auto acc : balances) {
+            for(const auto& acc : balances) {
                 if(acc.second.sum > 0) {
                     ins.emplace_back(std::make_pair(acc.first, acc.second.sum));
                 } else {
@@ -1266,9 +1290,9 @@ bool LogModel::normalizeData()
                 vec.resize(ins.size());
             }
 
-            for(int o = 0; o<tt.size(); ++o) {
+            for(size_t o = 0; o<tt.size(); ++o) {
                 auto& oRow = tt[o];
-                for(int i = 0; i<oRow.size(); ++i) {
+                for(size_t i = 0; i<oRow.size(); ++i) {
                     auto& cell = oRow[i];
 
                     if(cell) {
@@ -1291,7 +1315,7 @@ bool LogModel::normalizeData()
                         cell = in;
                         out -= in;
                         in = 0;
-                        for(int n = 0; n<outs.size(); ++n) {
+                        for(size_t n = 0; n<outs.size(); ++n) {
                             auto& c = tt[n][i];
                             if(!c) {
                                 c = 0;
@@ -1302,9 +1326,9 @@ bool LogModel::normalizeData()
             }
 
             // create new transfer transactions from result of transport task in `tt`
-            for(int o = 0; o<tt.size(); ++o) {
+            for(size_t o = 0; o<tt.size(); ++o) {
                 auto& oRow = tt[o];
-                for(int i = 0; i<oRow.size(); ++i) {
+                for(size_t i = 0; i<oRow.size(); ++i) {
                     auto& cell = oRow[i];
 
                     if(!cell || cell.get() == 0) {
@@ -1403,7 +1427,7 @@ bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &source
 
     LogModel *model = qobject_cast<LogModel*>(sourceModel());
 
-    const Transaction &t = model->log[sourceRow];
+    const Transaction &t = model->log[as<size_t>(sourceRow)];
     if(t.type != m_type) {
         return false;
     }
@@ -1464,17 +1488,17 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
             } else {
                 return QVariant::fromValue<Transaction::Type::t>(item.type);
             }
-        } break;
+        }
         case PlansColumn::Category: {
             return archNodeData(item.category, role);
-        } break;
+        }
         case PlansColumn::Money: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.amount);
             } else { // Qt::EditRole
                 return as<double>(item.amount);
             }
-        } break;
+        }
     }
 
     return QVariant();
@@ -1513,7 +1537,7 @@ static const QSet<PlansColumn::t> planArchNodeColumns = {
 Qt::ItemFlags PlansModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid()) {
-        return 0;
+        return Qt::NoItemFlags;
     }
 
     auto column = as<PlansColumn::t>(index.column());
@@ -1667,45 +1691,45 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
             } else {
                 return QVariant::fromValue<Transaction::Type::t>(item.type);
             }
-        } break;
+        }
         case TasksColumn::Category: {
             return archNodeData(item.category, role);
-        } break;
+        }
         case TasksColumn::From: {
             if(role == Qt::DisplayRole) {
                 return item.from.toString("dd.MM.yy");
             } else {
                 return item.from;
             }
-        } break;
+        }
         case TasksColumn::To: {
             if(role == Qt::DisplayRole) {
                 return item.to.toString("dd.MM.yy");
             } else {
                 return item.to;
             }
-        } break;
+        }
         case TasksColumn::Money: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.amount);
             } else { // Qt::EditRole
                 return as<double>(item.amount);
             }
-        } break;
+        }
         case TasksColumn::Spent: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.spent);
             } else { // Qt::EditRole
                 return as<double>(item.spent);
             }
-        } break;
+        }
         case TasksColumn::Rest: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.rest);
             } else { // Qt::EditRole
                 return as<double>(item.rest);
             }
-        } break;
+        }
     }
 
     return QVariant();
@@ -1747,7 +1771,7 @@ static const QSet<TasksColumn::t> taskNodeColumns = {
 Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid()) {
-        return 0;
+        return Qt::NoItemFlags;
     }
 
     auto column = as<TasksColumn::t>(index.column());
@@ -1898,7 +1922,7 @@ int BriefModel::columnCount(const QModelIndex &parent) const
 Qt::ItemFlags BriefModel::flags(const QModelIndex &index) const
 {
     UNUSED(index);
-    return 0;
+    return Qt::NoItemFlags;
 }
 
 QVariant BriefModel::data(const QModelIndex &index, int role) const
@@ -1934,7 +1958,7 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                     case BriefRow::Received: return "▲ " + formatMoney(common.received);
                     case BriefRow::Spent: return "▼ " + formatMoney(common.spent);
                 }
-            } break;
+            }
             case BriefColumn::Balance: {
                 if(header) {
                     return tr("Баланс");
@@ -1946,7 +1970,7 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
 
                 const auto &common = record.common;
                 return formatMoney(common.received - common.spent);
-            } break;
+            }
             case BriefColumn::Regular: {
                 if(header) {
                     return tr("Регулярные");
@@ -1959,7 +1983,7 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                     case BriefRow::Received: return formatMoney(regular.received);
                     case BriefRow::Spent: return formatMoney(regular.spent);
                 }
-            } break;
+            }
             case BriefColumn::Nonregular: {
                 if(header) {
                     return tr("Нерегулярные");
@@ -2080,7 +2104,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
             QDate min;
             QDate max {today};
             if(as<int>(m_data.logModel.log.size()) > index.row()+1) {
-                min = m_data.logModel.log[index.row()+1].date;
+                min = m_data.logModel.log[as<size_t>(index.row()+1)].date;
             }
 
             if(min == max) {
@@ -2112,7 +2136,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
     }
 
     if(customType == categoryNodeType) {
-        int column;
+        int column = LogColumn::Type;
         if(qobject_cast<const LogModel*>(index.model())) {
             column = LogColumn::Type;
         } else if(qobject_cast<const PlansModel*>(index.model())) {

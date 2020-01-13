@@ -1065,7 +1065,7 @@ static QString getTextDialog(const QString &title, const QString &message, const
 {
     bool ok = false;
     QString answer = QInputDialog::getText(parent, title, message, QLineEdit::Normal, text, &ok);
-    return ok ? answer : QString::null;
+    return ok ? answer : QString();
 }
 
 void cashbook::MainWindow::on_actionEditNote_triggered()

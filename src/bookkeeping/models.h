@@ -282,7 +282,7 @@ public:
         unanchored = 0;
     }
 
-    void updateNote(int row, const QString &note);
+    void updateNote(size_t row, const QString &note);
     void updateTask(Task &task) const;
     bool normalizeData();
 };
