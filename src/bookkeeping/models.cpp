@@ -47,7 +47,7 @@ template <class List>
 static int rowCount(const List &list, const QModelIndex &parent)
 {
     UNUSED(parent);
-    return as<int>(list.size());
+    return static_cast<int>(list.size());
 }
 
 } // namespace list
@@ -58,7 +58,7 @@ template<class Model, class DataType>
 static Node<DataType> *getItem(const Model *model, const QModelIndex &index)
 {
     if (index.isValid()) {
-        Node<DataType> *item = as<Node<DataType>*>(index.internalPointer());
+        Node<DataType> *item = static_cast<Node<DataType>*>(index.internalPointer());
         if (item) {
             return item;
         }
@@ -101,11 +101,11 @@ static QModelIndex index(const Model *model, int row, int column, const QModelIn
 
     auto *parentItem = model->getItem(parent);
 
-    if(row >= as<int>(parentItem->childCount())) {
+    if(row >= static_cast<int>(parentItem->childCount())) {
         return QModelIndex();
     }
 
-    auto *childItem = parentItem->at(as<size_t>(row));
+    auto *childItem = parentItem->at(static_cast<size_t>(row));
     if (childItem) {
         return model->createIndex(row, column, childItem);
     } else {
@@ -120,7 +120,7 @@ static bool insertRows(Model *model, std::function<DataType()> createData, int p
 
     model->beginInsertRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
-        parentItem->addChildAt(createData(), as<size_t>(position));
+        parentItem->addChildAt(createData(), static_cast<size_t>(position));
     }
 
     model->endInsertRows();
@@ -151,7 +151,7 @@ static QModelIndex parent(const Model *model, const QModelIndex &index)
         }
     }
 
-    return model->createIndex(as<int>(row), 0, parentItem);
+    return model->createIndex(static_cast<int>(row), 0, parentItem);
 }
 
 template<class Model>
@@ -162,10 +162,10 @@ static bool removeRows(Model *model, int position, int rows, const QModelIndex &
 
     QStringList nodeIds;
     /*
-     * Traverse each node to be deleted and dump all of their nested nodes as
+     * Traverse each node to be deleted and dump all of their nested nodes static_cast
      * nodes to be removed.
      */
-    for(size_t i = as<size_t>(position); i<as<size_t>(position + rows); ++i) {
+    for(size_t i = static_cast<size_t>(position); i<static_cast<size_t>(position + rows); ++i) {
         auto node = parentItem->at(i);
         auto l = node->toList();
         for(const auto *n : l) {
@@ -176,7 +176,7 @@ static bool removeRows(Model *model, int position, int rows, const QModelIndex &
 
     model->beginRemoveRows(parent, position, position + rows - 1);
     for(int i = 0; i<rows; ++i) {
-        parentItem->removeChildAt(as<size_t>(position));
+        parentItem->removeChildAt(static_cast<size_t>(position));
     }
     model->endRemoveRows();
 
@@ -188,12 +188,12 @@ static bool moveRow(Model *model, const QModelIndex &sourceParent, int sourceRow
 {
     auto *srcParentItem = model->getItem(sourceParent);
     auto *dstParentItem = model->getItem(destinationParent);
-    auto *srcChildItem = srcParentItem->at(as<size_t>(sourceRow));
+    auto *srcChildItem = srcParentItem->at(static_cast<size_t>(sourceRow));
 
     bool down = sourceParent == destinationParent && sourceRow < destinationChild;
 
     model->beginMoveRows(sourceParent, sourceRow, sourceRow, destinationParent, destinationChild);
-    srcChildItem->attachSelfAsChildAt(dstParentItem, as<size_t>(destinationChild)-as<size_t>(down));
+    srcChildItem->attachSelfAsChildAt(dstParentItem, static_cast<size_t>(destinationChild)-static_cast<size_t>(down));
     model->endMoveRows();
 
     return true;
@@ -203,7 +203,7 @@ template<class Model>
 static int rowCount(const Model *model, const QModelIndex &parent)
 {
     auto *parentItem = model->getItem(parent);
-    return as<int>(parentItem->childCount());
+    return static_cast<int>(parentItem->childCount());
 }
 
 template<class Model, class DataType>
@@ -440,7 +440,7 @@ QVariant WalletsModel::data(const QModelIndex &index, int role) const
                 if(role == Qt::DisplayRole) {
                     return formatMoney(money);
                 } else { // Qt::EditRole
-                    return as<double>(money);
+                    return static_cast<double>(money);
                 }
             } else {
                 return formatMoney(calcTreeAmount(item));
@@ -630,7 +630,7 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
     }
 
     bool down = sourceRow < destinationChild;
-    int shift = as<int>(down);
+    int shift = static_cast<int>(down);
     owners.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
@@ -658,7 +658,7 @@ bool LogModel::anchoreTransactions()
     }
 
     for(int i = unanchored-1; i>=0; --i) {
-        Transaction &t = log[as<size_t>(i)];
+        Transaction &t = log[static_cast<size_t>(i)];
         if(t.note.startsWith('*')) {
             t.note.clear();
         }
@@ -754,7 +754,7 @@ static bool isErrorNode(const ArchNode<T> &node)
 bool LogModel::canAnchore() const
 {
     for(int i = 0; i<unanchored; ++i) {
-        const Transaction &t = log[as<size_t>(i)];
+        const Transaction &t = log[static_cast<size_t>(i)];
 
         if(t.type == Transaction::Type::In || t.type == Transaction::Type::Out) {
            if(isErrorNode(t.category)) {
@@ -838,7 +838,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Transaction &t = log[as<size_t>(index.row())];
+    const Transaction &t = log[static_cast<size_t>(index.row())];
 
     if(column == LogColumn::Date) {
         if(role == Qt::DisplayRole) {
@@ -867,7 +867,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         if(role == Qt::DisplayRole) {
             return formatMoney(t.amount);
         } else if(role == Qt::EditRole) {
-            return as<double>(t.amount);
+            return static_cast<double>(t.amount);
         }
 
     } else if(column == LogColumn::From) {
@@ -942,7 +942,7 @@ static Qt::ItemFlags archNodeFlags(const QAbstractItemModel *model, const QModel
 
 Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
-    auto column = as<LogColumn::t>(index.column());
+    auto column = static_cast<LogColumn::t>(index.column());
 
     if(index.row() > unanchored-1 && column != LogColumn::Note) { // notes are always editable
         return Qt::NoItemFlags;
@@ -955,7 +955,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
     if(!archNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Transaction &t = log[as<size_t>(index.row())];
+        const Transaction &t = log[static_cast<size_t>(index.row())];
         switch(column) {
             case LogColumn::Category: {
                 if(t.type == Transaction::Type::Transfer) {
@@ -990,7 +990,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         return false;
     }
 
-    Transaction &t = log[as<size_t>(index.row())];
+    Transaction &t = log[static_cast<size_t>(index.row())];
 
     switch(index.column())
     {
@@ -1038,7 +1038,7 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
     beginInsertRows(parent, position, position + rows - 1);
     Transaction t;
     t.date = today;
-    log.insert(std::next(log.begin(), position), as<size_t>(rows), t);
+    log.insert(std::next(log.begin(), position), static_cast<size_t>(rows), t);
     unanchored += rows;
     changedMonths.insert(Month(t.date));
     endInsertRows();
@@ -1054,7 +1054,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
 
-    changedMonths.insert(Month(log[as<size_t>(position)].date));
+    changedMonths.insert(Month(log[static_cast<size_t>(position)].date));
     log.erase(std::next(log.begin(), position), std::next(log.begin(), position+rows));
     unanchored -= 1;
 
@@ -1069,7 +1069,7 @@ void LogModel::updateNote(size_t row, const QString &note)
     t.note = note;
 
     changedMonths.insert(Month(t.date));
-    QModelIndex i = index(as<int>(row), LogColumn::Note);
+    QModelIndex i = index(static_cast<int>(row), LogColumn::Note);
     emit dataChanged(i, i, {Qt::DisplayRole});
     setChanged();
 }
@@ -1176,7 +1176,7 @@ bool LogModel::normalizeData()
                     ).toStdString().c_str();
 
                     iRec.amount += jRec.amount;
-                    std::swap(*std::next(day.begin(), as<ptrdiff_t>(j)), day.back());
+                    std::swap(*std::next(day.begin(), static_cast<ptrdiff_t>(j)), day.back());
                     day.pop_back();
                     changedMonths.insert(Month(iRec.date));
                     setChanged();
@@ -1226,7 +1226,7 @@ bool LogModel::normalizeData()
                 }
             }
 
-            // if remained transfers have a picture of graph with paths no longer than 1, discard it as nonoptimizable
+            // if remained transfers have a picture of graph with paths no longer than 1, discard it static_cast nonoptimizable
             if(!balances.empty())
             {
                 // we avoided recursive check because it's enough to check 2nd nesting level to deside that graph needs normalization
@@ -1427,7 +1427,7 @@ bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &source
 
     LogModel *model = qobject_cast<LogModel*>(sourceModel());
 
-    const Transaction &t = model->log[as<size_t>(sourceRow)];
+    const Transaction &t = model->log[static_cast<size_t>(sourceRow)];
     if(t.type != m_type) {
         return false;
     }
@@ -1496,7 +1496,7 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.amount);
             } else { // Qt::EditRole
-                return as<double>(item.amount);
+                return static_cast<double>(item.amount);
             }
         }
     }
@@ -1540,7 +1540,7 @@ Qt::ItemFlags PlansModel::flags(const QModelIndex &index) const
         return Qt::NoItemFlags;
     }
 
-    auto column = as<PlansColumn::t>(index.column());
+    auto column = static_cast<PlansColumn::t>(index.column());
 
     if(!planArchNodeColumns.contains(column)) {
         return common::flags(this, index);
@@ -1630,7 +1630,7 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     }
 
     bool down = sourceRow < destinationChild;
-    int shift = as<int>(down);
+    int shift = static_cast<int>(down);
     plans.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
@@ -1641,7 +1641,7 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 
 void PlansModel::insertPlan(const Plan &plan)
 {
-    int size = plans.size();
+    int size = static_cast<int>(plans.size());
 
     insertRow(size);
     plans[size] = plan;
@@ -1713,21 +1713,21 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.amount);
             } else { // Qt::EditRole
-                return as<double>(item.amount);
+                return static_cast<double>(item.amount);
             }
         }
         case TasksColumn::Spent: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.spent);
             } else { // Qt::EditRole
-                return as<double>(item.spent);
+                return static_cast<double>(item.spent);
             }
         }
         case TasksColumn::Rest: {
             if(role == Qt::DisplayRole) {
                 return formatMoney(item.rest);
             } else { // Qt::EditRole
-                return as<double>(item.rest);
+                return static_cast<double>(item.rest);
             }
         }
     }
@@ -1774,7 +1774,7 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
         return Qt::NoItemFlags;
     }
 
-    auto column = as<TasksColumn::t>(index.column());
+    auto column = static_cast<TasksColumn::t>(index.column());
 
     if(column == TasksColumn::Spent || column == TasksColumn::Rest) {
         return Qt::NoItemFlags;
@@ -1886,7 +1886,7 @@ bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     }
 
     bool down = sourceRow < destinationChild;
-    int shift = as<int>(down);
+    int shift = static_cast<int>(down);
     tasks.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
@@ -1909,7 +1909,7 @@ BriefModel::~BriefModel()
 int BriefModel::rowCount(const QModelIndex &parent) const
 {
     UNUSED(parent);
-    return as<int>(brief.size())*BriefRow::Count;
+    return static_cast<int>(brief.size())*BriefRow::Count;
 }
 
 int BriefModel::columnCount(const QModelIndex &parent) const
@@ -1933,7 +1933,7 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
 
     int col = index.column();
     int realRow = index.row()/BriefRow::Count;
-    BriefRow::t rowType = as<BriefRow::t>(index.row()%BriefRow::Count);
+    BriefRow::t rowType = static_cast<BriefRow::t>(index.row()%BriefRow::Count);
 
     const auto &monthIt = std::next(brief.begin(), realRow);
     const auto &month = monthIt->first;
@@ -2065,7 +2065,7 @@ ModelsDelegate::~ModelsDelegate()
 
 void ModelsDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    if(index.data().type() != QVariant::Bool) {
+    if(index.data().metaType().id() != QMetaType::Bool) {
         QItemDelegate::paint(painter, option, index);
         return;
     }
@@ -2085,17 +2085,13 @@ void ModelsDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
 QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QVariant data = index.data(Qt::EditRole);
-    QVariant::Type type = data.type();
+    int type = data.metaType().id();
 
-    if(type != QVariant::Date && type != QVariant::Bool && type != QVariant::UserType) {
-        return QItemDelegate::createEditor(parent, option, index);
-    }
-
-    if(type == QVariant::Bool) {
+    if(type == QMetaType::Type::Bool) {
         return new QCheckBox(parent);
     }
 
-    if(type == QVariant::Date) {
+    if(type == QMetaType::Type::QDate) {
         QDateEdit *edit = new QDateEdit(parent);
         edit->setCalendarPopup(true);
 
@@ -2103,8 +2099,8 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         if(log) {
             QDate min;
             QDate max {today};
-            if(as<int>(m_data.logModel.log.size()) > index.row()+1) {
-                min = m_data.logModel.log[as<size_t>(index.row()+1)].date;
+            if(static_cast<int>(m_data.logModel.log.size()) > index.row()+1) {
+                min = m_data.logModel.log[static_cast<size_t>(index.row()+1)].date;
             }
 
             if(min == max) {
@@ -2119,8 +2115,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
     }
 
     // custom types
-    int customType = data.userType();
-    if(customType == transactionTypeType) {
+    if(type == transactionTypeType) {
         QComboBox *box = new QComboBox(parent);
         QVector<Transaction::Type::t> v {Transaction::Type::In, Transaction::Type::Out};
 
@@ -2130,12 +2125,12 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         }
 
         for(auto t : v) {
-            box->addItem(Transaction::Type::toString(t), as<int>(t));
+            box->addItem(Transaction::Type::toString(t), static_cast<int>(t));
         }
         return box;
     }
 
-    if(customType == categoryNodeType) {
+    if(type == categoryNodeType) {
         int column = LogColumn::Type;
         if(qobject_cast<const LogModel*>(index.model())) {
             column = LogColumn::Type;
@@ -2147,7 +2142,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
 
         QModelIndex typeIndex = index.model()->index(index.row(), column);
         QVariant data = typeIndex.data(Qt::EditRole);
-        Transaction::Type::t type = as<Transaction::Type::t>(data.toInt());
+        Transaction::Type::t type = static_cast<Transaction::Type::t>(data.toInt());
         if(type == Transaction::Type::Transfer) {
             return nullptr;
         }
@@ -2161,11 +2156,11 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         return button;
     }
 
-    if(customType == walletNodeType) {
+    if(type == walletNodeType) {
         // assume that only LogModel uses wallets tree editor
         QModelIndex typeIndex = index.model()->index(index.row(), LogColumn::Type);
         QVariant data = typeIndex.data(Qt::EditRole);
-        Transaction::Type::t type = as<Transaction::Type::t>(data.toInt());
+        Transaction::Type::t type = static_cast<Transaction::Type::t>(data.toInt());
 
         int col = index.column();
 

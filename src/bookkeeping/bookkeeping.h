@@ -125,7 +125,7 @@ signals:
 private:
     template<class T, class Model>
     Node<T> *nodeFromPath(const Model &model, const QString &path) {
-        QStringList l = path.split(pathConcat, QString::KeepEmptyParts);
+        QStringList l = path.split(pathConcat, Qt::KeepEmptyParts);
         Node<T> *node = model.rootItem;
         for(const auto &s : l) {
             bool found = false;

@@ -5,7 +5,6 @@
 #include <vector>
 
 #define UNUSED(x) (void)(x)
-#define as static_cast
 
 static const QDate today {QDate::currentDate()};
 

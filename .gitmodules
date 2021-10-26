@@ -1,3 +1,6 @@
 [submodule "askelib_qt"]
 	path = askelib_qt
 	url = https://github.com/AskePit/askelib_qt.git
+[submodule "third-party/yaml-cpp"]
+	path = third-party/yaml-cpp
+	url = git@github.com:jbeder/yaml-cpp.git

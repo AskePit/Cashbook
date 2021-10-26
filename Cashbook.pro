@@ -8,5 +8,5 @@ TEMPLATE = subdirs
 
 SUBDIRS += src \
         askelib_qt
-	
+
 src.depends = askelib_qt

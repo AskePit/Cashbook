@@ -16,6 +16,8 @@ include( ../askelib_qt/askelib/public.pri )
 
 INCLUDEPATH += ..
 INCLUDEPATH += ../askelib_qt
+INCLUDEPATH += ../third-party/yaml-cpp/include
+INCLUDEPATH += ../third-party/
 
 LIBS += -L$${ASKELIBQT_LIB_PATH} -laskelib_qt_std$${ASKELIBQT_LIB_SUFFIX}
 LIBS += -L$${ASKELIB_LIB_PATH} -laskelib_std$${ASKELIB_LIB_SUFFIX}
@@ -35,7 +37,9 @@ HEADERS += \
     common.h \
     innodedialog.h \
     serialization.h \
-    selectwalletdialog.h
+    selectwalletdialog.h \
+    $$files($$PWD/../third-party/yaml-cpp/src/*.h) \
+    $$PWD/../third-party/qtyaml.h
 
 SOURCES += \
     bookkeeping/basic_types.cpp \
@@ -47,7 +51,8 @@ SOURCES += \
     innodedialog.cpp \
     serialization.cpp \
     selectwalletdialog.cpp \
-    bookkeeping/widgets.cpp
+    bookkeeping/widgets.cpp \
+    $$files($$PWD/../third-party/yaml-cpp/src/*.cpp)
 
 #QMAKE_CXXFLAGS += -std:c++latest
 

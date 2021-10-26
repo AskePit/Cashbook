@@ -189,19 +189,20 @@ void Data::importReceiptFile(const QString &json, const Node<Wallet> *wallet)
 {
     QString data = aske::readFile(json);
 
-    const auto findWord = [&data](const QLatin1String &startMarker, const QLatin1String &endMarker, int from) -> std::pair<QStringRef, int> {
+    const auto findWord = [&data](const QLatin1String &startMarker, const QLatin1String &endMarker, qsizetype from) -> std::pair<QStringView, int> {
         from = data.indexOf(startMarker, from);
         if(from < 0) {
-            return std::make_pair(QStringRef(), from);
+            return std::make_pair(QStringView(), from);
         }
         from += startMarker.size();
-        int to = data.indexOf(endMarker, from);
-        QStringRef str = data.midRef(from, to-from);
+        qsizetype to = data.indexOf(endMarker, from);
+
+        QStringView str(&data.data()[from], to-from);
         to += endMarker.size();
         return std::make_pair(str, to);
     };
 
-    QStringRef dateString = findWord(QLatin1String(R"("dateTime":)"), QLatin1String(R"(,")"), 0).first;
+    QStringView dateString = findWord(QLatin1String(R"("dateTime":)"), QLatin1String(R"(,")"), 0).first;
     QDate date = QDateTime::fromSecsSinceEpoch(dateString.toInt()).date();
 
     std::vector<Transaction> transactions;

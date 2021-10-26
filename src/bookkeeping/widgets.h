@@ -137,7 +137,7 @@ protected:
         bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
         bool atTop = verticalScrollBar()->value() == verticalScrollBar()->minimum();
 
-        bool scrollDown = event->delta() < 0;
+        bool scrollDown = event->pixelDelta().x() < 0 && event->pixelDelta().y() < 0;
         bool scrollUp = !scrollDown;
 
         bool noWay = (atBottom && scrollDown) || (atTop && scrollUp);
@@ -154,7 +154,7 @@ private:
     bool m_gonnaDestroy {false};
 
     void chooseValue(QEvent *event){
-        Q_UNUSED(event);
+        Q_UNUSED(event)
 
         if(m_gonnaDestroy) {
             return;
