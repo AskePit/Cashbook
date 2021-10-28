@@ -1147,6 +1147,10 @@ bool LogModel::normalizeData()
     }
 
     QDate date = log.front().date;
+    if(date.isNull()) {
+        return false;
+    }
+
     std::deque<Transaction> res; // our result
     std::vector<std::reference_wrapper<const Transaction>> day; // temp container for every day
 
