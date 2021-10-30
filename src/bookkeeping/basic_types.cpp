@@ -1,5 +1,4 @@
 #include "basic_types.h"
-#include "common.h"
 
 namespace cashbook
 {

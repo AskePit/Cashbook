@@ -2,7 +2,6 @@
 #define BOOKKEEPING_MODELS_H
 
 #include "basic_types.h"
-#include "statistics.h"
 
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
@@ -15,6 +14,10 @@ class QTreeView;
 
 namespace cashbook
 {
+
+class CategoryMoneyMap;
+class Statistics;
+class BriefStatistics;
 
 /**
  * @brief The TreeModel class

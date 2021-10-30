@@ -1,6 +1,6 @@
 #include "models.h"
 #include "bookkeeping.h"
-#include "widgets.h"
+#include "widgets/widgets.h"
 
 #include <QSet>
 #include <functional>
@@ -35,9 +35,9 @@ static inline Qt::ItemFlags flags(const Model *model, const QModelIndex &index)
 
 static QVariant headerData(int section, Qt::Orientation orientation, int role)
 {
-    UNUSED(section);
-    UNUSED(orientation);
-    UNUSED(role);
+    Q_UNUSED(section);
+    Q_UNUSED(orientation);
+    Q_UNUSED(role);
     return QVariant();
 }
 
@@ -46,7 +46,7 @@ namespace list {
 template <class List>
 static int rowCount(const List &list, const QModelIndex &parent)
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return static_cast<int>(list.size());
 }
 
@@ -254,7 +254,7 @@ CategoriesModel::~CategoriesModel()
 
 int CategoriesModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return CategoriesColumn::Count;
 }
 
@@ -394,7 +394,7 @@ WalletsModel::~WalletsModel()
 
 int WalletsModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return WalletColumn::Count;
 }
 
@@ -570,7 +570,7 @@ int OwnersModel::rowCount(const QModelIndex &parent) const
 
 int OwnersModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return WalletColumn::Count;
 }
 
@@ -598,7 +598,7 @@ bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int r
 
 bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     owners.insert(position, rows, tr("Новый пользователь"));
     endInsertRows();
@@ -608,7 +608,7 @@ bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
 
 bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
 
     QStringList names;
     for(int i = position; i<position + rows; ++i) {
@@ -920,7 +920,7 @@ int LogModel::rowCount(const QModelIndex &parent) const
 
 int LogModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return LogColumn::Count;
 }
 
@@ -1034,7 +1034,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
 
 bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Transaction t;
     t.date = today;
@@ -1051,7 +1051,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     // always assume that rows == 1
 
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
 
     changedMonths.insert(Month(log[static_cast<size_t>(position)].date));
@@ -1427,7 +1427,7 @@ FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transacti
 
 bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
-    UNUSED(sourceParent);
+    Q_UNUSED(sourceParent);
 
     LogModel *model = qobject_cast<LogModel*>(sourceModel());
 
@@ -1530,7 +1530,7 @@ int PlansModel::rowCount(const QModelIndex &parent) const
 
 int PlansModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return PlansColumn::Count;
 }
 
@@ -1606,7 +1606,7 @@ bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     // always assume that rows == 1
 
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Plan item;
     plans.insert(position, item);
@@ -1619,7 +1619,7 @@ bool PlansModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     // always assume that rows == 1
 
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
     plans.removeAt(position);
     endRemoveRows();
@@ -1764,7 +1764,7 @@ int TasksModel::rowCount(const QModelIndex &parent) const
 
 int TasksModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return TasksColumn::Count;
 }
 
@@ -1860,7 +1860,7 @@ bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     // always assume that rows == 1
 
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Task item;
     item.from = today;
@@ -1875,7 +1875,7 @@ bool TasksModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     // always assume that rows == 1
 
-    UNUSED(parent);
+    Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
     tasks.removeAt(position);
     endRemoveRows();
@@ -1912,20 +1912,20 @@ BriefModel::~BriefModel()
 
 int BriefModel::rowCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return static_cast<int>(brief.size())*BriefRow::Count;
 }
 
 int BriefModel::columnCount(const QModelIndex &parent) const
 {
-    UNUSED(parent);
+    Q_UNUSED(parent);
     return BriefColumn::Count;
 }
 
 
 Qt::ItemFlags BriefModel::flags(const QModelIndex &index) const
 {
-    UNUSED(index);
+    Q_UNUSED(index);
     return Qt::NoItemFlags;
 }
 

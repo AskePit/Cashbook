@@ -1,7 +1,7 @@
 #ifndef BOOKKEEPING_WIDGETS_H
 #define BOOKKEEPING_WIDGETS_H
 
-#include "models.h"
+#include "bookkeeping/models.h"
 #include <QTreeView>
 #include <QMouseEvent>
 #include <QPushButton>
@@ -50,7 +50,7 @@ public:
         connect(this, &QPushButton::clicked, [this, &model, setParent]() {
             this->setState(NodeButtonState::Expanded);
             QTreeView *view = new PopupTree<T>(model, this, setParent ? this : nullptr);
-            UNUSED(view);
+            Q_UNUSED(view);
         });
     }
 

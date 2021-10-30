@@ -6,6 +6,35 @@
 namespace cashbook
 {
 
+struct SpentReceived
+{
+    Money spent;
+    Money received;
+};
+
+struct BriefStatisticsRecord
+{
+    SpentReceived common;
+    SpentReceived regular;
+};
+
+class BriefStatistics : public std::map<Month, BriefStatisticsRecord, std::greater<Month>>
+{};
+
+class CategoryMoneyMap : public std::map<const Node<Category> *, Money>
+{
+public:
+    void propagateMoney(const Node<Category> *node, const Money &amount);
+};
+
+struct Statistics {
+    BriefStatistics brief;
+    CategoryMoneyMap inCategories;
+    CategoryMoneyMap outCategories;
+    QDate categoriesFrom;
+    QDate categoriesTo;
+};
+
 struct PlanTerm {
     enum t {
         Short = 0,

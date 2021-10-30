@@ -4,7 +4,7 @@
 #include <askelib_qt/std/fs.h>
 #include "innodedialog.h"
 #include "bookkeeping/bookkeeping.h"
-#include "serialization.h"
+#include "bookkeeping/serialization.h"
 #include "selectwalletdialog.h"
 
 #include <QFileDialog>
