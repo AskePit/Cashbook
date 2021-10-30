@@ -17,7 +17,7 @@
 namespace cashbook
 {
 
-static const QStringList months = {
+static const std::array<QString, 12> months = {
     QObject::tr("Январь"),
     QObject::tr("Февраль"),
     QObject::tr("Март"),
@@ -1016,7 +1016,7 @@ void cashbook::MainWindow::showPlansContextMenu(const QPoint& point)
         menu.addAction(action);
 
         connections[term] = std::make_shared<QMetaObject::Connection>();
-        *connections[term] = connect(action, &QAction::triggered, [this, &model, &index, term](){
+        *connections[term] = connect(action, &QAction::triggered, [this, &model, index, term](){
             for(auto term : PlanTerm::enumerate()) {
                 if(connections[term]) QObject::disconnect(*connections[term]);
             }
