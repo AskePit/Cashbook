@@ -55,6 +55,7 @@ SOURCES += \
     $$files($$PWD/../third-party/yaml-cpp/src/*.cpp)
 
 #QMAKE_CXXFLAGS += -std:c++latest
+QMAKE_CXXFLAGS_RELEASE += -O3
 
 RESOURCES += \
     resources/resources.qrc
