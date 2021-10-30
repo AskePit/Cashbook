@@ -134,13 +134,15 @@ protected:
 
     // do not forward scroll to parents in case of nonscrolling state
     void wheelEvent(QWheelEvent* event) {
-        bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
-        bool atTop = verticalScrollBar()->value() == verticalScrollBar()->minimum();
+        const bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
+        const bool atTop = verticalScrollBar()->value() == verticalScrollBar()->minimum();
 
-        bool scrollDown = event->pixelDelta().x() < 0 && event->pixelDelta().y() < 0;
-        bool scrollUp = !scrollDown;
+        const QPoint delta = event->angleDelta();
 
-        bool noWay = (atBottom && scrollDown) || (atTop && scrollUp);
+        const bool scrollDown = delta.y() < 0;
+        const bool scrollUp = delta.y() > 0;
+
+        const bool noWay = (atBottom && scrollDown) || (atTop && scrollUp);
 
         if(noWay) {
             event->accept();
