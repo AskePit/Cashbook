@@ -63,7 +63,7 @@
   <customwidget>
    <class>cashbook::NodeButton&lt;cashbook::Wallet&gt;</class>
    <extends>QPushButton</extends>
-   <header>bookkeeping/widgets.h</header>
+   <header>widgets/widgets.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
