@@ -13,7 +13,7 @@
 #include <QDebug>
 
 #include <unordered_map>
-#include <askelib_qt/askelib/std/opt.h>
+#include <optional>
 
 namespace cashbook
 {
@@ -1289,7 +1289,7 @@ bool LogModel::normalizeData()
             std::sort(ins.begin(), ins.end(), less);
 
             // resolve transport task
-            std::vector<std::vector<aske::opt<int>>> tt(outs.size());
+            std::vector<std::vector<std::optional<int>>> tt(outs.size());
             for(auto& vec : tt) {
                 vec.resize(ins.size());
             }
@@ -1335,7 +1335,7 @@ bool LogModel::normalizeData()
                 for(size_t i = 0; i<oRow.size(); ++i) {
                     auto& cell = oRow[i];
 
-                    if(!cell || cell.get() == 0) {
+                    if(!cell || cell.value() == 0) {
                         continue;
                     }
 
@@ -1347,7 +1347,7 @@ bool LogModel::normalizeData()
                     t.date = date;
                     t.from = out;
                     t.to = in;
-                    t.amount = Money(static_cast<intmax_t>(cell.get()));
+                    t.amount = Money(static_cast<intmax_t>(cell.value()));
 
                     newTransfers.push_back(t);
                 }
