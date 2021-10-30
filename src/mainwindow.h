@@ -49,11 +49,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_addUserButton_clicked();
-    void on_removeUserButton_clicked();
-    void on_upUserButton_clicked();
-    void on_downUserButton_clicked();
-
     void on_addTransactionButton_clicked();
     void on_removeTransactionButton_clicked();
     void on_anchoreTransactionsButton_clicked();

@@ -165,12 +165,6 @@ void MainWindow::preLoadSetup()
             /* .contextMenu = */ nullptr,
         },
         {
-            /* .view =        */ ui->ownersList,
-            /* .model =       */ &m_data.ownersModel,
-            /* .delegate =    */ nullptr,
-            /* .contextMenu = */ nullptr,
-        },
-        {
             /* .view =        */ ui->logTable,
             /* .model =       */ &m_data.logModel,
             /* .delegate =    */ &m_modelsDelegate,
@@ -651,22 +645,6 @@ void cashbook::MainWindow::on_outOutCategoryButton_clicked() {
 }
 void cashbook::MainWindow::on_inOutCategoryButton_clicked() {
     inNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
-}
-
-//
-// Users
-//
-void cashbook::MainWindow::on_addUserButton_clicked() {
-    addListItem(m_data.ownersModel);
-}
-void cashbook::MainWindow::on_removeUserButton_clicked() {
-    removeListItem(*ui->ownersList, m_data.ownersModel);
-}
-void cashbook::MainWindow::on_upUserButton_clicked() {
-    upListItem(*ui->ownersList, m_data.ownersModel);
-}
-void cashbook::MainWindow::on_downUserButton_clicked() {
-    downListItem(*ui->ownersList, m_data.ownersModel);
 }
 
 //
