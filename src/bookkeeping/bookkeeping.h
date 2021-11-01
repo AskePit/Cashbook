@@ -19,13 +19,78 @@ struct Wallet : public Idable
             Card,
             Account,
             Deposit,
+            Investment,
             EMoney,
+            Points,
+
+            Count
         };
 
         static QString toString(Type::t type);
         static QString toConfigString(Type::t type);
         static Type::t fromConfigString(const QString &str);
-        static QVector<Type::t> enumerate();
+        static constexpr std::array<Type::t, Type::Count> enumerate();
+    };
+
+    struct Info
+    {
+        ArchPointer<Owner> owner;
+        bool canBeNegative {false};
+    };
+
+    struct CashInfo : public Info
+    {
+
+    };
+
+    struct AccountInfo : public Info
+    {
+        ArchPointer<Bank> bank;
+    };
+
+    struct CardInfo : public AccountInfo
+    {
+    };
+
+    struct DepositInfo : public AccountInfo
+    {
+        float incomePercent {0.0f};
+        QDate expirationDate;
+    };
+
+    struct InvestmentInfo : public Info
+    {
+        class Type
+        {
+        public:
+            enum t {
+                Common = 0,
+                Currency,
+                Stocks,
+                Metals,
+                RealEstate,
+
+                Count
+            };
+
+            static QString toString(Type::t type);
+            static QString toConfigString(Type::t type);
+            static Type::t fromConfigString(const QString &str);
+            static constexpr std::array<Type::t, Type::Count> enumerate();
+        };
+
+        Type::t type;
+        std::optional<AccountInfo> account;
+    };
+
+    struct EMoneyInfo : public Info
+    {
+        QString moneyName;
+    };
+
+    struct PointsInfo : public Info
+    {
+        QString serviceName;
     };
 
     Wallet();
@@ -36,9 +101,9 @@ struct Wallet : public Idable
 
     Type::t type {Type::Common};
     QString name;
-    ArchPointer<Owner> owner;
-    bool canBeNegative {false};
     Money amount;
+
+    std::shared_ptr<Info> info {std::make_shared<Info>()};
 };
 
 struct Category : public IdableString
@@ -63,12 +128,14 @@ struct Transaction
             In = 0,
             Out,
             Transfer,
+
+            Count
         };
 
         static QString toString(Type::t type);
         static QString toConfigString(Type::t type);
         static Type::t fromConfigString(const QString &str);
-        static QVector<Type::t> enumerate();
+        static constexpr std::array<Type::t, Type::Count> enumerate();
     };
 
     QDate date;
@@ -143,7 +210,7 @@ struct PlanTerm {
         Count
     };
 
-    static QVector<PlanTerm::t> enumerate() {
+    static constexpr std::array<PlanTerm::t, PlanTerm::Count> enumerate() {
         return {Short, Middle, Long};
     }
 };
@@ -162,6 +229,13 @@ class OwnersData : public Changable
 public:
 
     QVector<Owner> owners;
+};
+
+class BanksData : public Changable
+{
+public:
+
+    QVector<Bank> banks;
 };
 
 class WalletsData : public Changable
@@ -262,6 +336,7 @@ public:
     Data();
 
     OwnersData owners;
+    BanksData banks;
     WalletsData wallets;
     CategoriesData inCategories;
     CategoriesData outCategories;

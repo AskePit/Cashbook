@@ -46,8 +46,54 @@ Wallet::Type::t Wallet::Type::fromConfigString(const QString &str) {
     }
 }
 
-QVector<Wallet::Type::t> Wallet::Type::enumerate() {
+constexpr std::array<Wallet::Type::t, Wallet::Type::Count> Wallet::Type::enumerate() {
     return {Common, Cash, Card, Account, Deposit, EMoney};
+}
+
+QString Wallet::InvestmentInfo::Type::toString(Type::t type)
+{
+    switch(type) {
+        default:
+        case Common: return QObject::tr("Общий");
+        case Currency: return QObject::tr("Валюта");
+        case Stocks: return QObject::tr("Акции");
+        case Metals: return QObject::tr("Металлы");
+        case RealEstate: return QObject::tr("Недвжимость");
+    }
+}
+
+QString Wallet::InvestmentInfo::Type::toConfigString(Type::t type)
+{
+    switch(type) {
+        default:
+        case Common: return QStringLiteral("Common");
+        case Currency: return QStringLiteral("Currency");
+        case Stocks: return QStringLiteral("Stocks");
+        case Metals: return QStringLiteral("Metals");
+        case RealEstate: return QStringLiteral("RealEstate");
+    }
+}
+
+Wallet::InvestmentInfo::Type::t Wallet::InvestmentInfo::Type::fromConfigString(const QString &str)
+{
+    if(str == "Common") {
+        return Common;
+    } else if(str == "Currency") {
+        return Currency;
+    } else if(str == "Stocks") {
+        return Stocks;
+    } else if(str == "Metals") {
+        return Metals;
+    } else if(str == "RealEstate") {
+        return RealEstate;
+    } else {
+        return Common;
+    }
+}
+
+constexpr std::array<Wallet::InvestmentInfo::Type::t, Wallet::InvestmentInfo::Type::Count> Wallet::InvestmentInfo::Type::enumerate()
+{
+    return {Common, Currency, Stocks, Metals, RealEstate};
 }
 
 Wallet::Wallet()
@@ -67,9 +113,7 @@ bool Wallet::operator==(const Wallet &other) const
     return name == other.name
         && id == other.id
         && amount == other.amount
-        && type == other.type
-        && canBeNegative == other.canBeNegative
-        && owner == other.owner;
+        && type == other.type;
 }
 
 QString Transaction::Type::toString(Type::t type) {
@@ -102,7 +146,7 @@ Transaction::Type::t Transaction::Type::fromConfigString(const QString &str) {
     }
 }
 
-QVector<Transaction::Type::t> Transaction::Type::enumerate() {
+constexpr std::array<Transaction::Type::t, Transaction::Type::Count> Transaction::Type::enumerate() {
     return {In, Out, Transfer};
 }
 
@@ -635,7 +679,7 @@ void Data::onOwnersRemove(QStringList paths)
 {
     auto nodes = wallets.rootItem->toList();
     for(auto *node : nodes) {
-        ArchPointer<Owner> &owner = node->data.owner;
+        ArchPointer<Owner> &owner = node->data.info->owner;
         if(owner.isValidPointer()) {
             QString name = *owner.toPointer();
             if(paths.contains(name)) {

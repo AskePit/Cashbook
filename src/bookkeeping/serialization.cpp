@@ -51,6 +51,15 @@ static void save(const OwnersData &data, YAML::Node& node)
     }
 }
 
+static void save(const BanksData &data, YAML::Node& node)
+{
+    for(const auto &bank : data.banks) {
+        YAML::Node obj;
+        save(bank, obj);
+        node.push_back(obj);
+    }
+}
+
 static void save(const Node<Category> *node, YAML::Node& nodeNodes)
 {
     YAML::Node nodeNode;
@@ -76,7 +85,8 @@ static void save(const CategoriesData &data, YAML::Node& node)
     save(data.rootItem, node);
 }
 
-static void save(const ArchPointer<Owner> &data, YAML::Node& node)
+template <class T>
+static void save(const ArchPointer<T> &data, YAML::Node& node)
 {
     bool valid = data.isValidPointer();
     if(valid) {
@@ -96,12 +106,62 @@ static void save(const Wallet &wallet, YAML::Node& node)
     node["id"] = wallet.id.toString();
     node["type"] = Wallet::Type::toConfigString(wallet.type);
     node["name"] = wallet.name;
-    node["canBeNegative"] = wallet.canBeNegative;
     node["amount"] = wallet.amount.as_cents();
 
     YAML::Node ownerJson;
-    save(wallet.owner, ownerJson);
+    save(wallet.info->owner, ownerJson);
     node["owner"] = ownerJson;
+    node["canBeNegative"] = wallet.info->canBeNegative;
+
+    switch(wallet.type)
+    {
+        default:
+        case Wallet::Type::Common:
+        case Wallet::Type::Cash:
+            break;
+        case Wallet::Type::Deposit:
+        {
+            const auto* info = static_cast<const Wallet::DepositInfo*>(wallet.info.get());
+            node["incomePercent"] = info->incomePercent;
+            node["expirationDate"] = info->expirationDate.toString(QStringLiteral("dd.MM.yyyy"));
+        }
+        // [[fallthrough]]
+        case Wallet::Type::Account:
+        case Wallet::Type::Card:
+        {
+            const auto* info = static_cast<const Wallet::AccountInfo*>(wallet.info.get());
+
+            YAML::Node bankJson;
+            save(info->bank, bankJson);
+            node["bank"] = bankJson;
+        }
+        break;
+        case Wallet::Type::Investment:
+        {
+            const auto* info = static_cast<const Wallet::InvestmentInfo*>(wallet.info.get());
+
+            node["investmentType"] = Wallet::InvestmentInfo::Type::toConfigString(info->type);
+
+            if(info->account) {
+                YAML::Node bankJson;
+                save(info->account->bank, bankJson);
+                node["investmentBank"] = bankJson;
+            }
+        }
+        break;
+        case Wallet::Type::EMoney:
+        {
+            const auto* info = static_cast<const Wallet::EMoneyInfo*>(wallet.info.get());
+            node["eMoneyType"] = info->moneyName;
+        }
+        break;
+        case Wallet::Type::Points:
+        {
+            const auto* info = static_cast<const Wallet::PointsInfo*>(wallet.info.get());
+            node["pointsService"] = info->serviceName;
+        }
+        break;
+    }
 }
 
 static void save(const Node<Wallet> *node, YAML::Node& nodeNodes)
@@ -309,6 +369,7 @@ static void saveLog(Data &data)
 static void saveHead(const Data &data, YAML::Node& node)
 {
     YAML::Node owners;
+    YAML::Node banks;
     YAML::Node wallets;
     YAML::Node inCategories;
     YAML::Node outCategories;
@@ -316,6 +377,7 @@ static void saveHead(const Data &data, YAML::Node& node)
     YAML::Node tasks;
 
     save(data.owners, owners);
+    save(data.banks, banks);
     save(data.wallets, wallets);
     save(data.inCategories, inCategories);
     save(data.outCategories, outCategories);
@@ -323,6 +385,7 @@ static void saveHead(const Data &data, YAML::Node& node)
     save(data.tasks, tasks);
 
     node["owners"] = owners;
+    node["banks"] = banks;
     node["wallets"] = wallets;
     node["inCategories"] = inCategories;
     node["outCategories"] = outCategories;
@@ -367,6 +430,15 @@ static void load(OwnersData &data, const YAML::Node& node)
     }
 }
 
+static void load(BanksData &data, const YAML::Node& node)
+{
+    for(const YAML::Node& v : node) {
+        Bank bank;
+        load(bank, v);
+        data.banks.push_back(bank);
+    }
+}
+
 static void load(CategoriesData &data, const YAML::Node& node)
 {
     Node<Category> *currNode = data.rootItem;
@@ -391,7 +463,8 @@ static void load(CategoriesData &data, const YAML::Node& node)
     }
 }
 
-static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersData &owners)
+template <class T, class Model>
+static void load(ArchPointer<T> &data, const YAML::Node& node, const Model &model)
 {
     const YAML::Node& refNode = node["ref"];
 
@@ -400,9 +473,9 @@ static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersD
         QUuid uid = QUuid{id};
 
         if(!uid.isNull()) {
-            for(const Owner &owner : owners.owners) {
-                if(owner.id == uid) {
-                    data = &owner;
+            for(const T &el : model) {
+                if(el.id == uid) {
+                    data = &el;
                     return;
                 }
             }
@@ -414,27 +487,96 @@ static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersD
     }
 }
 
-static void load(Wallet &wallet, const YAML::Node& node, const OwnersData &owners)
+static void load(Wallet &wallet, const YAML::Node& node, const OwnersData &owners, const BanksData &banks)
 {
     QString id = node["id"].as<QString>();
     wallet.id = QUuid(id);
     wallet.type = Wallet::Type::fromConfigString( node["type"].as<QString>() );
     wallet.name = node["name"].as<QString>();
-    wallet.canBeNegative = node["canBeNegative"].as<bool>();
     wallet.amount = Money(static_cast<intmax_t>(node["amount"].as<double>()));
 
+    switch(wallet.type)
+    {
+        default:
+        case Wallet::Type::Common:
+            wallet.info = std::make_shared<Wallet::Info>();
+            break;
+        case Wallet::Type::Cash:
+            wallet.info = std::make_shared<Wallet::CashInfo>();
+            break;
+        case Wallet::Type::Deposit:
+        {
+            auto info = std::make_shared<Wallet::DepositInfo>();
+
+            info->incomePercent = node["incomePercent"].as<float>();
+            info->expirationDate = QDate::fromString(node["expirationDate"].as<QString>(), "dd.MM.yyyy");
+
+            const YAML::Node& bankObj = node["bank"];
+            load(info->bank, bankObj, banks.banks);
+
+            wallet.info = std::move(info);
+        }
+        break;
+        case Wallet::Type::Account:
+        {
+            auto info = std::make_shared<Wallet::AccountInfo>();
+            const YAML::Node& bankObj = node["bank"];
+            load(info->bank, bankObj, banks.banks);
+
+            wallet.info = std::move(info);
+        }
+        break;
+        case Wallet::Type::Card:
+        {
+            auto info = std::make_shared<Wallet::CardInfo>();
+            const YAML::Node& bankObj = node["bank"];
+            load(info->bank, bankObj, banks.banks);
+
+            wallet.info = std::move(info);
+        }
+        break;
+        case Wallet::Type::Investment:
+        {
+            auto info = std::make_shared<Wallet::InvestmentInfo>();
+            info->type = Wallet::InvestmentInfo::Type::fromConfigString(node["investmentType"].as<QString>());
+
+            const YAML::Node& investmentank = node["investmentBank"];
+            if(investmentank.IsDefined()) {
+                info->account = Wallet::AccountInfo();
+                load(info->account->bank, investmentank, banks.banks);
+            }
+            wallet.info = std::move(info);
+        }
+        break;
+        case Wallet::Type::EMoney:
+        {
+            auto info = std::make_shared<Wallet::EMoneyInfo>();
+            info->moneyName = node["eMoneyType"].as<QString>();
+            wallet.info = std::move(info);
+        }
+        break;
+        case Wallet::Type::Points:
+        {
+            auto info = std::make_shared<Wallet::PointsInfo>();
+            info->serviceName = node["pointsService"].as<QString>();
+            wallet.info = std::move(info);
+        }
+        break;
+    }
+
     const YAML::Node& ownerObj = node["owner"];
-    load(wallet.owner, ownerObj, owners);
+    load(wallet.info->owner, ownerObj, owners.owners);
+    wallet.info->canBeNegative = node["canBeNegative"].as<bool>();
 }
 
-static void load(WalletsData &data, const YAML::Node& arr, const OwnersData &owners)
+static void load(WalletsData &data, const YAML::Node& arr, const OwnersData &owners, const BanksData &banks)
 {
     Node<Wallet> *currNode = data.rootItem;
     std::stack<int> children;
 
     for(const YAML::Node& v : arr) {
         const YAML::Node& walletObj = v["wallet"];
-        load(currNode->data, walletObj, owners);
+        load(currNode->data, walletObj, owners, banks);
         int ch = v["children"].as<int>(0);
         children.push(ch);
 
@@ -621,7 +763,8 @@ static void load(TasksData &data, const YAML::Node& arr,
 static void loadHead(Data &data, const YAML::Node& node)
 {
     load(data.owners, node["owners"]);
-    load(data.wallets, node["wallets"], data.owners);
+    load(data.banks, node["banks"]);
+    load(data.wallets, node["wallets"], data.owners, data.banks);
     load(data.inCategories, node["inCategories"]);
     load(data.outCategories, node["outCategories"]);
     load(data.plans, node["plans"], data.inCategories, data.outCategories);
