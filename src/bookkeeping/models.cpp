@@ -1,6 +1,5 @@
 #include "models.h"
-#include "bookkeeping.h"
-#include "widgets/widgets.h"
+#include "gui/widgets/widgets.h"
 
 #include <QSet>
 #include <functional>
@@ -63,7 +62,7 @@ static Node<DataType> *getItem(const Model *model, const QModelIndex &index)
             return item;
         }
     }
-    return model->rootItem;
+    return model->m_data.rootItem;
 }
 
 template<class Model, class DataType>
@@ -72,7 +71,7 @@ QModelIndex itemIndex(const Model *model, const Node<DataType> *item)
     std::stack<const Node<DataType> *> path;
 
 
-    while(item != model->rootItem) {
+    while(item != model->m_data.rootItem) {
         path.push(item);
         item = item->parent;
     }
@@ -138,7 +137,7 @@ static QModelIndex parent(const Model *model, const QModelIndex &index)
     auto *childItem = model->getItem(index);
     auto *parentItem = childItem->parent;
 
-    if (parentItem == model->rootItem) {
+    if (parentItem == model->m_data.rootItem) {
         return QModelIndex();
     }
 
@@ -206,18 +205,6 @@ static int rowCount(const Model *model, const QModelIndex &parent)
     return static_cast<int>(parentItem->childCount());
 }
 
-template<class Model, class DataType>
-static void constructor(Model *model)
-{
-    model->rootItem = new Node<DataType>;
-}
-
-template<class Model>
-static void destructor(Model *model)
-{
-    delete model->rootItem;
-}
-
 } // namespace tree
 } // namespace common
 
@@ -240,16 +227,10 @@ namespace colors {
 // Categories
 //
 
-CategoriesModel::CategoriesModel(CategoryMoneyMap &statistics, QObject *parent)
+CategoriesModel::CategoriesModel(CategoriesData &data, QObject *parent)
     : TreeModel(parent)
-    , statistics(statistics)
+    , m_data(data)
 {
-    common::tree::constructor<CategoriesModel, Category>(this);
-}
-
-CategoriesModel::~CategoriesModel()
-{
-    common::tree::destructor(this);
 }
 
 int CategoriesModel::columnCount(const QModelIndex &parent) const
@@ -285,8 +266,8 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
                 return QVariant();
             }
         case CategoriesColumn::Statistics: {
-            const Money &money = statistics[item];
-            return money == 0 ? QVariant() : formatMoney(statistics[item]);
+            const Money &money = m_data.statistics[item];
+            return money == 0 ? QVariant() : formatMoney(m_data.statistics[item]);
         }
     }
 
@@ -336,7 +317,7 @@ bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &pare
     auto createCategory = [](){
         return tr("Новая категория");
     };
-    return changeFilter( common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent) );
+    return m_data.changeFilter( common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent) );
 }
 
 QModelIndex CategoriesModel::parent(const QModelIndex &index) const
@@ -346,12 +327,12 @@ QModelIndex CategoriesModel::parent(const QModelIndex &index) const
 
 bool CategoriesModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    return changeFilter( common::tree::removeRows(this, position, rows, parent) );
+    return m_data.changeFilter( common::tree::removeRows(this, position, rows, parent) );
 }
 
 bool CategoriesModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
 {
-    return changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild));
+    return m_data.changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild));
 }
 
 int CategoriesModel::rowCount(const QModelIndex &parent) const
@@ -372,7 +353,7 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
         case CategoriesColumn::Regular: item->data.regular = value.toBool(); break;
     }
     emit dataChanged(index, index);
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
@@ -381,15 +362,10 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
 // Wallets
 //
 
-WalletsModel::WalletsModel(QObject *parent)
+WalletsModel::WalletsModel(WalletsData& data, QObject *parent)
     : TreeModel(parent)
+    , m_data(data)
 {
-    common::tree::constructor<WalletsModel, Wallet>(this);
-}
-
-WalletsModel::~WalletsModel()
-{
-    common::tree::destructor(this);
 }
 
 int WalletsModel::columnCount(const QModelIndex &parent) const
@@ -491,7 +467,7 @@ bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
         w.name = tr("Новый кошелек");
         return w;
     };
-    return changeFilter( common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent) );
+    return m_data.changeFilter( common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent) );
 }
 
 QModelIndex WalletsModel::parent(const QModelIndex &index) const
@@ -501,12 +477,12 @@ QModelIndex WalletsModel::parent(const QModelIndex &index) const
 
 bool WalletsModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    return changeFilter( common::tree::removeRows(this, position, rows, parent) );
+    return m_data.changeFilter( common::tree::removeRows(this, position, rows, parent) );
 }
 
 bool WalletsModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
 {
-    return changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild) );
+    return m_data.changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild) );
 }
 
 int WalletsModel::rowCount(const QModelIndex &parent) const
@@ -529,7 +505,7 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
     }
 
     emit dataChanged(index, index);
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
@@ -538,8 +514,9 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
 // Owners
 //
 
-OwnersModel::OwnersModel(QObject *parent)
+OwnersModel::OwnersModel(OwnersData& ownersData, QObject *parent)
     : TableModel(parent)
+    , m_data(ownersData)
 {}
 
 OwnersModel::~OwnersModel()
@@ -555,7 +532,7 @@ QVariant OwnersModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    return owners[index.row()];
+    return m_data.owners[index.row()];
 }
 
 QVariant OwnersModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -565,7 +542,7 @@ QVariant OwnersModel::headerData(int section, Qt::Orientation orientation, int r
 
 int OwnersModel::rowCount(const QModelIndex &parent) const
 {
-    return common::list::rowCount(owners, parent);
+    return common::list::rowCount(m_data.owners, parent);
 }
 
 int OwnersModel::columnCount(const QModelIndex &parent) const
@@ -589,9 +566,9 @@ bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int r
         return false;
     }
 
-    owners[index.row()].setString(value.toString());
+    m_data.owners[index.row()].setString(value.toString());
     emit dataChanged(index, index);
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
@@ -600,9 +577,9 @@ bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
-    owners.insert(position, rows, tr("Новый пользователь"));
+    m_data.owners.insert(position, rows, tr("Новый пользователь"));
     endInsertRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
@@ -612,14 +589,14 @@ bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
 
     QStringList names;
     for(int i = position; i<position + rows; ++i) {
-        names << owners[i];
+        names << m_data.owners[i];
     }
     emit nodesGonnaBeRemoved(names);
 
     beginRemoveRows(parent, position, position + rows - 1);
-    owners.remove(position, rows);
+    m_data.owners.remove(position, rows);
     endRemoveRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
@@ -631,10 +608,10 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 
     bool down = sourceRow < destinationChild;
     int shift = static_cast<int>(down);
-    owners.move(sourceRow, destinationChild - shift);
+    m_data.owners.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
@@ -643,158 +620,13 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
 // Log
 //
 
-LogModel::LogModel(Statistics &statistics, QObject *parent)
+LogModel::LogModel(LogData &data, QObject *parent)
     : TableModel(parent)
-    , statistics(statistics)
+    , m_data(data)
 {}
 
 LogModel::~LogModel()
 {}
-
-bool LogModel::anchoreTransactions()
-{
-    if(!unanchored) {
-        return false;
-    }
-
-    for(int i = unanchored-1; i>=0; --i) {
-        Transaction &t = log[static_cast<size_t>(i)];
-        if(t.note.startsWith('*')) {
-            t.note.clear();
-        }
-
-        if(t.type != Transaction::Type::In && t.from.isValidPointer()) {
-            Node<Wallet> *w = const_cast<Node<Wallet>*>(t.from.toPointer());
-            if(w) {
-                w->data.amount -= t.amount;
-            }
-            if(t.type == Transaction::Type::Out) {
-                Month month(t.date);
-                statistics.brief[month].common.spent += t.amount;
-
-                const auto &archNode = t.category;
-                if(archNode.isValidPointer()) {
-                    const Node<Category> *category = archNode.toPointer();
-                    if(category && category->data.regular) {
-                        statistics.brief[month].regular.spent += t.amount;
-                    }
-
-                    statistics.outCategories.propagateMoney(category, t.amount);
-                }
-            }
-        }
-
-        if(t.type != Transaction::Type::Out && t.to.isValidPointer()) {
-            Node<Wallet> *w = const_cast<Node<Wallet>*>(t.to.toPointer());
-            if(w) {
-                w->data.amount += t.amount;
-            }
-            if(t.type == Transaction::Type::In) {
-                Month month(t.date);
-                statistics.brief[month].common.received += t.amount;
-
-                const auto &archNode = t.category;
-                if(archNode.isValidPointer()) {
-                    const Node<Category> *category = archNode.toPointer();
-                    if(category && category->data.regular) {
-                        statistics.brief[month].regular.received += t.amount;
-                    }
-
-                    statistics.inCategories.propagateMoney(category, t.amount);
-                }
-            }
-        }
-    }
-
-    const int left = 0;
-    const int top = 0;
-    const int bottom = unanchored-1;
-    const int right = LogColumn::Count-1;
-
-    emit dataChanged(index(top, left), index(bottom, right));
-    setChanged();
-
-    unanchored = 0;
-    return true;
-}
-
-bool LogModel::copyTop()
-{
-    if(unanchored == 0 || log.empty()) {
-        return false;
-    }
-
-    if(!insertRow(0)) {
-        return false;
-    }
-
-    log[0] = log[1];
-    log[0].note.clear();
-    emit dataChanged(index(0, LogColumn::Start), index(0, LogColumn::Count), {Qt::DisplayRole});
-    setChanged();
-    return true;
-}
-
-template <class T>
-static bool isErrorNode(const ArchNode<T> &node)
-{
-    if(node.isValidPointer()) {
-        if(node.toPointer() == nullptr) {
-            return true;
-        }
-    } else {
-        if(node.toString().isEmpty()) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool LogModel::canAnchore() const
-{
-    for(int i = 0; i<unanchored; ++i) {
-        const Transaction &t = log[static_cast<size_t>(i)];
-
-        if(t.type == Transaction::Type::In || t.type == Transaction::Type::Out) {
-           if(isErrorNode(t.category)) {
-               return false;
-           }
-        }
-
-        if(t.type != Transaction::Type::Out) {
-            if(isErrorNode(t.to)) {
-                return false;
-            }
-        }
-
-        if(t.type != Transaction::Type::In) {
-            if(isErrorNode(t.from)) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-void LogModel::appendTransactions(const std::vector<Transaction> &transactions)
-{
-    if(transactions.empty()) {
-        return;
-    }
-    QDate date = transactions.front().date;
-    changedMonths.insert(Month(date));
-    setChanged();
-
-    for(const auto &t : transactions) {
-        log.push_front(t);
-    }
-
-    unanchored += static_cast<int>(transactions.size());
-
-    emit dataChanged(index(0, LogColumn::Start), index(static_cast<int>(transactions.size()-1), LogColumn::Count), {Qt::DisplayRole});
-}
 
 template <class T>
 static QVariant archNodeData(const ArchNode<T> &archNode, int role)
@@ -827,7 +659,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     int column = index.column();
 
     if(role == Qt::ForegroundRole) {
-        if(index.row() >= unanchored && column != LogColumn::Note) { // notes are always editable
+        if(index.row() >= m_data.unanchored && column != LogColumn::Note) { // notes are always editable
             return colors::inactive;
         } else {
             return colors::normal;
@@ -838,7 +670,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Transaction &t = log[static_cast<size_t>(index.row())];
+    const Transaction &t = m_data.log[static_cast<size_t>(index.row())];
 
     if(column == LogColumn::Date) {
         if(role == Qt::DisplayRole) {
@@ -915,7 +747,7 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
 int LogModel::rowCount(const QModelIndex &parent) const
 {
-    return common::list::rowCount(log, parent);
+    return common::list::rowCount(m_data.log, parent);
 }
 
 int LogModel::columnCount(const QModelIndex &parent) const
@@ -944,7 +776,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
     auto column = static_cast<LogColumn::t>(index.column());
 
-    if(index.row() > unanchored-1 && column != LogColumn::Note) { // notes are always editable
+    if(index.row() > m_data.unanchored-1 && column != LogColumn::Note) { // notes are always editable
         return Qt::NoItemFlags;
     }
 
@@ -955,7 +787,7 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
     if(!archNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Transaction &t = log[static_cast<size_t>(index.row())];
+        const Transaction &t = m_data.log[static_cast<size_t>(index.row())];
         switch(column) {
             case LogColumn::Category: {
                 if(t.type == Transaction::Type::Transfer) {
@@ -990,7 +822,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         return false;
     }
 
-    Transaction &t = log[static_cast<size_t>(index.row())];
+    Transaction &t = m_data.log[static_cast<size_t>(index.row())];
 
     switch(index.column())
     {
@@ -1026,8 +858,8 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
     }
 
     emit dataChanged(index, index);
-    changedMonths.insert(Month(t.date));
-    setChanged();
+    m_data.changedMonths.insert(Month(t.date));
+    m_data.setChanged();
 
     return true;
 }
@@ -1036,14 +868,9 @@ bool LogModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
-    Transaction t;
-    t.date = today;
-    log.insert(std::next(log.begin(), position), static_cast<size_t>(rows), t);
-    unanchored += rows;
-    changedMonths.insert(Month(t.date));
+    m_data.insertRows(position, rows);
     endInsertRows();
 
-    setChanged();
     return true;
 }
 
@@ -1054,367 +881,73 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
 
-    changedMonths.insert(Month(log[static_cast<size_t>(position)].date));
-    log.erase(std::next(log.begin(), position), std::next(log.begin(), position+rows));
-    unanchored -= 1;
+    m_data.changedMonths.insert(Month(m_data.log[static_cast<size_t>(position)].date));
+    m_data.log.erase(std::next(m_data.log.begin(), position), std::next(m_data.log.begin(), position+rows));
+    m_data.unanchored -= 1;
 
     endRemoveRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
-void LogModel::updateNote(size_t row, const QString &note)
+bool LogModel::copyTop()
 {
-    Transaction &t = log[row];
-    t.note = note;
-
-    changedMonths.insert(Month(t.date));
-    QModelIndex i = index(static_cast<int>(row), LogColumn::Note);
-    emit dataChanged(i, i, {Qt::DisplayRole});
-    setChanged();
-}
-
-static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
-    while(node) {
-        if(node == parent) {
-            return true;
-        }
-        node = node->parent;
+    if(m_data.unanchored == 0 || m_data.log.empty()) {
+        return false;
     }
 
-    return false;
+    insertRow(0);
+
+    m_data.log[0] = m_data.log[1];
+    m_data.log[0].note.clear();
+    emit dataChanged(index(0, LogColumn::Start), index(0, LogColumn::Count), {Qt::DisplayRole});
+    m_data.setChanged();
+    return true;
+}
+
+bool LogModel::anchoreTransactions()
+{
+    if(!m_data.anchoreTransactions()) {
+        return false;
+    }
+
+    const int left = 0;
+    const int top = 0;
+    const int bottom = m_data.unanchored-1;
+    const int right = LogColumn::Count-1;
+    emit dataChanged(index(top, left), index(bottom, right));
+
+    return true;
+}
+
+void LogModel::appendTransactions(const std::vector<Transaction> &transactions)
+{
+    m_data.appendTransactions(transactions);
+    emit dataChanged(index(0, LogColumn::Start), index(static_cast<int>(transactions.size()-1), LogColumn::Count), {Qt::DisplayRole});
+}
+
+
+void LogModel::updateNote(size_t row, const QString &note)
+{
+    m_data.updateNote(row, note);
+    QModelIndex i = index(static_cast<int>(row), LogColumn::Note);
+    emit dataChanged(i, i, {Qt::DisplayRole});
 }
 
 void LogModel::updateTask(Task &task) const
 {
-    task.spent = 0;
-    task.rest = 0;
-
-    if(log.empty()) {
-        task.rest = task.amount;
-        return;
-    }
-
-    const QDate &logBegin = log.at(log.size()-1).date;
-    const QDate &logEnd = log.at(0).date;
-
-    if(task.to < logBegin || task.from > logEnd) {
-        task.rest = task.amount;
-        return;
-    }
-
-    size_t i = 0;
-    while(i < log.size()) {
-        const Transaction &t = log[i++];
-
-        if(task.type != t.type) {
-            continue;
-        }
-
-        if(t.date > task.to) {
-            continue;
-        }
-
-        if(t.date < task.from) {
-            break;
-        }
-
-        const ArchNode<Category> &trArchNode = t.category;
-        const ArchNode<Category> &taskArchNode = task.category;
-        if(trArchNode.isValidPointer() && taskArchNode.isValidPointer()) {
-            const Node<Category> *trNode = trArchNode.toPointer();
-            const Node<Category> *taskNode = taskArchNode.toPointer();
-            if(isNodeBelongsTo(trNode, taskNode)) {
-                task.spent += t.amount;
-            }
-        }
-    }
-
-    task.rest = task.amount - task.spent;
+    m_data.updateTask(task);
 }
-
-struct Balance
-{
-    int sum {0}; // wallet's balance
-    uint32_t padding;
-    std::vector<ArchNode<Wallet>> ins; // pointers to wallets that received money from this wallet
-};
 
 bool LogModel::normalizeData()
 {
-    if(log.empty()) {
-        return false;
-    }
-
-    QDate date = log.front().date;
-    if(date.isNull()) {
-        return false;
-    }
-
-    std::deque<Transaction> res; // our result
-    std::vector<std::reference_wrapper<const Transaction>> day; // temp container for every day
-
-    const auto processDay = [this, &day, &date, &res]() {
-        std::vector<Transaction> normalizedDay;
-        normalizedDay.reserve(day.size());
-
-        // 1. Merge same Categories for same Transaction Type that has same Note (or have no any)
-        for(size_t i = 0; i<day.size(); ++i) {
-            Transaction iRec = day[i];
-
-            for(size_t j = i+1; j<day.size(); ++j) {
-                const Transaction& jRec = day[j];
-
-                bool merge = iRec.type == jRec.type
-                          && iRec.category == jRec.category
-                          && iRec.from == jRec.from
-                          && iRec.to == jRec.to
-                          && iRec.note == jRec.note;
-
-                if(merge) {
-                    qDebug() << QString("Merge: %1, \'%2\' %3 merges with %4").arg(
-                        iRec.date.toString(),
-                        (iRec.category.toPointer() ? iRec.category.toPointer()->data : "TRANSFER"),
-                        formatMoney(iRec.amount, false),
-                        formatMoney(jRec.amount, false)
-                    ).toStdString().c_str();
-
-                    iRec.amount += jRec.amount;
-                    std::swap(*std::next(day.begin(), static_cast<ptrdiff_t>(j)), day.back());
-                    day.pop_back();
-                    changedMonths.insert(Month(iRec.date));
-                    setChanged();
-                    --j;
-                }
-            }
-
-            normalizedDay.emplace_back(std::move(iRec));
-        }
-
-        // 2. Merge Transer Transactions like: from A->B->C to A->C for same amounts of money
-        {
-            // collect all transfer transactions for a day
-            std::vector<std::reference_wrapper<const Transaction>> transfers;
-            for(const auto& t : normalizedDay) {
-                if(t.type == Transaction::Type::Transfer) {
-                    transfers.push_back(t);
-                }
-            }
-
-            // calculate wallets' balances for all transactions
-            std::unordered_map<ArchNode<Wallet>, Balance> balances;
-
-            for(const Transaction& t : transfers) {
-                balances[t.from].sum -= t.amount.as_cents();
-                balances[t.to].sum += t.amount.as_cents();
-                balances[t.from].ins.push_back(t.to);
-            }
-
-            // container for optimized transfer trnsactions
-            std::vector<Transaction> newTransfers;
-
-            // if a pair of wallets refers to only one transaction, remove it from balances and just move to a result container unchanged
-            {
-                auto it = transfers.begin();
-                while(it != transfers.end()) {
-                    const Transaction& t = *it;
-                    if(balances[t.from].sum + balances[t.to].sum == 0) {
-                        newTransfers.push_back(t);
-                        balances.erase(t.from);
-                        balances.erase(t.to);
-
-                        it = transfers.erase(it);
-                    } else {
-                        ++it;
-                    }
-                }
-            }
-
-            // if remained transfers have a picture of graph with paths no longer than 1, discard it static_cast nonoptimizable
-            if(!balances.empty())
-            {
-                // we avoided recursive check because it's enough to check 2nd nesting level to deside that graph needs normalization
-                bool allShortPaths = true;
-                for(const auto& p : balances) {
-                    const Balance& balance = p.second;
-                    for(const ArchNode<Wallet>& in : balance.ins) {
-                        if(!balances[in].ins.empty()) {
-                            allShortPaths = false;
-                            break;
-                        }
-                    }
-                }
-
-                if(allShortPaths) {
-                    goto skipTransferNormalization;
-                }
-            }
-
-            // remove all zeros in balance
-            auto it = balances.begin();
-            while(it != balances.end()) {
-                if(it->second.sum == 0) {
-                    it = balances.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-
-            // no balances - no optimization
-            if(balances.empty()) {
-                goto skipTransferNormalization; // one of rare places, where it is reasonable, i think
-            }
-
-            changedMonths.insert(Month(date));
-            setChanged();
-
-            // spread balance records between outs and ins depending on sign of wallets' balance
-            std::vector<std::pair<ArchNode<Wallet>, int>> outs;
-            std::vector<std::pair<ArchNode<Wallet>, int>> ins;
-
-            for(const auto& acc : balances) {
-                if(acc.second.sum > 0) {
-                    ins.emplace_back(std::make_pair(acc.first, acc.second.sum));
-                } else {
-                    outs.emplace_back(std::make_pair(acc.first, -acc.second.sum));
-                }
-            }
-
-            // sort ins and outs
-            const auto less = [](const std::pair<ArchNode<Wallet>, int>& p1, const std::pair<ArchNode<Wallet>, int>& p2) -> bool {
-                return p1.second < p2.second;
-            };
-
-            std::sort(outs.begin(), outs.end(), less);
-            std::sort(ins.begin(), ins.end(), less);
-
-            // resolve transport task
-            std::vector<std::vector<std::optional<int>>> tt(outs.size());
-            for(auto& vec : tt) {
-                vec.resize(ins.size());
-            }
-
-            for(size_t o = 0; o<tt.size(); ++o) {
-                auto& oRow = tt[o];
-                for(size_t i = 0; i<oRow.size(); ++i) {
-                    auto& cell = oRow[i];
-
-                    if(cell) {
-                        continue;
-                    }
-
-                    auto& out = outs[o].second;
-                    auto& in = ins[i].second;
-
-                    if(out < in) {
-                        cell = out;
-                        in -= out;
-                        out = 0;
-                        for(auto& c : oRow) {
-                            if(!c) {
-                                c = 0;
-                            }
-                        }
-                    } else {
-                        cell = in;
-                        out -= in;
-                        in = 0;
-                        for(size_t n = 0; n<outs.size(); ++n) {
-                            auto& c = tt[n][i];
-                            if(!c) {
-                                c = 0;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // create new transfer transactions from result of transport task in `tt`
-            for(size_t o = 0; o<tt.size(); ++o) {
-                auto& oRow = tt[o];
-                for(size_t i = 0; i<oRow.size(); ++i) {
-                    auto& cell = oRow[i];
-
-                    if(!cell || cell.value() == 0) {
-                        continue;
-                    }
-
-                    auto& out = outs[o].first;
-                    auto& in = ins[i].first;
-
-                    Transaction t;
-                    t.type = Transaction::Type::Transfer;
-                    t.date = date;
-                    t.from = out;
-                    t.to = in;
-                    t.amount = Money(static_cast<intmax_t>(cell.value()));
-
-                    newTransfers.push_back(t);
-                }
-            }
-
-            // remove all transfers from normalizedDay
-            qDebug() << QString("Before transfer optimization for '%1' day:").arg(date.toString()).toStdString().c_str();
-            {
-                auto it = normalizedDay.begin();
-                while(it != normalizedDay.end()) {
-                    if(it->type == Transaction::Type::Transfer) {
-                        qDebug()
-                                << '\t'
-                                << archNodeToShortString(it->from).toStdString().c_str()
-                                << "->"
-                                << archNodeToShortString(it->to).toStdString().c_str()
-                                << formatMoney(it->amount, false).toStdString().c_str();
-                        std::swap(*it, normalizedDay.back());
-                        normalizedDay.pop_back();
-                    } else {
-                        ++it;
-                    }
-                }
-            }
-
-            // add new transfers to normalizedDay
-            qDebug() << "After transfer optimization:";
-            for(const auto& t : newTransfers) {
-                qDebug()
-                        << '\t'
-                        << archNodeToShortString(t.from).toStdString().c_str()
-                        << "->"
-                        << archNodeToShortString(t.to).toStdString().c_str()
-                        << formatMoney(t.amount, false).toStdString().c_str();
-            }
-            normalizedDay.insert(normalizedDay.end(), newTransfers.begin(), newTransfers.end());
-            qDebug() << "";
-        }
-
-        skipTransferNormalization:
-
-        // Add normalized day to res
-        res.insert(res.end(), normalizedDay.begin(), normalizedDay.end());
-    }; // end of processDay
-
-    for(const auto &record : log)
-    {
-        if(record.date != date) {
-            // process previous day
-            processDay();
-            date = record.date;
-            day.clear();
-        }
-
-        day.push_back(record);
-    }
-    processDay(); // process last day
-
-    bool changed = isChanged();
-    if(changed) {
-        std::swap(log, res);
-
+    if(m_data.normalizeData()) {
         beginResetModel();
         endResetModel();
+        return true;
     }
 
-    return changed;
+    return false;
 }
 
 FilteredLogModel::FilteredLogModel(const QDate &from, const QDate &to, Transaction::Type::t type, const Node<Category> *category, QObject *parent)
@@ -1431,7 +964,7 @@ bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &source
 
     LogModel *model = qobject_cast<LogModel*>(sourceModel());
 
-    const Transaction &t = model->log[static_cast<size_t>(sourceRow)];
+    const Transaction &t = model->m_data.log[static_cast<size_t>(sourceRow)];
     if(t.type != m_type) {
         return false;
     }
@@ -1460,8 +993,9 @@ bool FilteredLogModel::filterAcceptsRow(int sourceRow, const QModelIndex &source
 //
 // Plans
 //
-PlansModel::PlansModel(QObject *parent)
+PlansModel::PlansModel(PlansTermData& data, QObject *parent)
     : TableModel(parent)
+    , m_data(data)
 {}
 
 PlansModel::~PlansModel()
@@ -1481,7 +1015,7 @@ QVariant PlansModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Plan &item = plans[index.row()];
+    const Plan &item = m_data.plans[index.row()];
 
     switch(index.column())
     {
@@ -1525,7 +1059,7 @@ QVariant PlansModel::headerData(int section, Qt::Orientation orientation, int ro
 
 int PlansModel::rowCount(const QModelIndex &parent) const
 {
-    return common::list::rowCount(plans, parent);
+    return common::list::rowCount(m_data.plans, parent);
 }
 
 int PlansModel::columnCount(const QModelIndex &parent) const
@@ -1549,7 +1083,7 @@ Qt::ItemFlags PlansModel::flags(const QModelIndex &index) const
     if(!planArchNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Plan &item = plans[index.row()];
+        const Plan &item = m_data.plans[index.row()];
         switch(column) {
             case PlansColumn::Category: {
                 if(item.type == Transaction::Type::Transfer) {
@@ -1571,7 +1105,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
         return false;
     }
 
-    Plan &item = plans[index.row()];
+    Plan &item = m_data.plans[index.row()];
 
     switch(index.column())
     {
@@ -1597,7 +1131,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     emit dataChanged(index, index);
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
@@ -1609,9 +1143,9 @@ bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
     Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Plan item;
-    plans.insert(position, item);
+    m_data.plans.insert(position, item);
     endInsertRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
@@ -1621,9 +1155,9 @@ bool PlansModel::removeRows(int position, int rows, const QModelIndex &parent)
 
     Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
-    plans.removeAt(position);
+    m_data.plans.removeAt(position);
     endRemoveRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
@@ -1635,30 +1169,31 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 
     bool down = sourceRow < destinationChild;
     int shift = static_cast<int>(down);
-    plans.move(sourceRow, destinationChild - shift);
+    m_data.plans.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
 
 void PlansModel::insertPlan(const Plan &plan)
 {
-    int size = static_cast<int>(plans.size());
+    int size = static_cast<int>(m_data.plans.size());
 
     insertRow(size);
-    plans[size] = plan;
+    m_data.plans[size] = plan;
 
     emit dataChanged(index(size, PlansColumn::Count), index(size, PlansColumn::Count));
-    setChanged();
+    m_data.setChanged();
 }
 
 //
 // Tasks
 //
-TasksModel::TasksModel(const LogModel &log, QObject *parent)
+TasksModel::TasksModel(TasksListsData& data, const LogData &log, QObject *parent)
     : TableModel(parent)
+    , m_data(data)
     , m_log(log)
 {}
 
@@ -1685,7 +1220,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const Task &item = tasks[index.row()];
+    const Task &item = m_data.tasks[index.row()];
 
     switch(column)
     {
@@ -1759,7 +1294,7 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
 
 int TasksModel::rowCount(const QModelIndex &parent) const
 {
-    return common::list::rowCount(tasks, parent);
+    return common::list::rowCount(m_data.tasks, parent);
 }
 
 int TasksModel::columnCount(const QModelIndex &parent) const
@@ -1787,7 +1322,7 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
     if(!taskNodeColumns.contains(column)) {
         return common::flags(this, index);
     } else {
-        const Task &item = tasks[index.row()];
+        const Task &item = m_data.tasks[index.row()];
         switch(column) {
             case TasksColumn::Category: {
                 if(item.type == Transaction::Type::Transfer) {
@@ -1809,7 +1344,7 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
         return false;
     }
 
-    Task &task = tasks[index.row()];
+    Task &task = m_data.tasks[index.row()];
     Task origin(task);
 
     switch(index.column())
@@ -1839,7 +1374,7 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     emit dataChanged(index, index);
-    setChanged();
+    m_data.setChanged();
 
     if(origin.category != task.category
     || origin.from != task.from
@@ -1865,9 +1400,9 @@ bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
     Task item;
     item.from = today;
     item.to = today;
-    tasks.insert(position, item);
+    m_data.tasks.insert(position, item);
     endInsertRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
@@ -1877,9 +1412,9 @@ bool TasksModel::removeRows(int position, int rows, const QModelIndex &parent)
 
     Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
-    tasks.removeAt(position);
+    m_data.tasks.removeAt(position);
     endRemoveRows();
-    setChanged();
+    m_data.setChanged();
     return true;
 }
 
@@ -1891,10 +1426,10 @@ bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
 
     bool down = sourceRow < destinationChild;
     int shift = static_cast<int>(down);
-    tasks.move(sourceRow, destinationChild - shift);
+    m_data.tasks.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
-    setChanged();
+    m_data.setChanged();
 
     return true;
 }
@@ -2059,9 +1594,9 @@ static int categoryNodeType = qRegisterMetaType<const Node<Category> *>();
 static int walletNodeType = qRegisterMetaType<const Node<Wallet> *>();
 static int transactionTypeType = qRegisterMetaType<Transaction::Type::t>();
 
-ModelsDelegate::ModelsDelegate(Data &data, QObject* parent)
+ModelsDelegate::ModelsDelegate(DataModels &dataModels, QObject* parent)
     : QItemDelegate(parent)
-    , m_data(data)
+    , m_data(dataModels)
 {}
 
 ModelsDelegate::~ModelsDelegate()
@@ -2103,8 +1638,8 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         if(log) {
             QDate min;
             QDate max {today};
-            if(static_cast<int>(m_data.logModel.log.size()) > index.row()+1) {
-                min = m_data.logModel.log[static_cast<size_t>(index.row()+1)].date;
+            if(static_cast<int>(m_data.logModel.m_data.log.size()) > index.row()+1) {
+                min = m_data.logModel.m_data.log[static_cast<size_t>(index.row()+1)].date;
             }
 
             if(min == max) {
@@ -2322,6 +1857,41 @@ bool CategoriesViewEventFilter::eventFilter(QObject *watched, QEvent *event)
     }
 
     return QObject::eventFilter(watched, event);
+}
+
+DataModels::DataModels(Data& data)
+    : ownersModel(data.owners)
+    , walletsModel(data.wallets)
+    , inCategoriesModel(data.inCategories)
+    , outCategoriesModel(data.outCategories)
+    , logModel(data.log)
+    , plansModels(decltype(plansModels){
+        PlansModel(data.plans.shortTerm),
+        PlansModel(data.plans.middleTerm),
+        PlansModel(data.plans.longTerm),
+    })
+    , tasksModels(decltype(tasksModels){
+        TasksModel(data.tasks.active, data.log),
+        TasksModel(data.tasks.completed, data.log),
+    })
+    , briefStatisticsModel(data.statistics.brief)
+    , m_data(data)
+{
+    QObject::connect(&ownersModel, &OwnersModel::nodesGonnaBeRemoved, &data, &Data::onOwnersRemove);
+    QObject::connect(&inCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, &data, &Data::onInCategoriesRemove);
+    QObject::connect(&outCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, &data, &Data::onOutCategoriesRemove);
+    QObject::connect(&walletsModel, &WalletsModel::nodesGonnaBeRemoved, &data, &Data::onWalletsRemove);
+}
+
+bool DataModels::anchoreTransactions()
+{
+    if(logModel.anchoreTransactions()) {
+        walletsModel.update();
+        emit m_data.categoriesStatisticsUpdated();
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace cashbook

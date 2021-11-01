@@ -261,7 +261,7 @@ QToolButton:hover:!checked {
          <string>Траты</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources/resources.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/mainTab.png</normaloff>
           <activeon>:/mainTab_active.png</activeon>:/mainTab.png</iconset>
         </property>
@@ -323,7 +323,7 @@ QToolButton:hover:!checked {
          <string>Категории</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources/resources.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/categoriesTab.png</normaloff>
           <activeon>:/categoriesTab_active.png</activeon>:/categoriesTab.png</iconset>
         </property>
@@ -382,7 +382,7 @@ QToolButton:hover:!checked {
          <string>Планы</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources/resources.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/plansTab.png</normaloff>
           <normalon>:/plansTab_active.png</normalon>
           <activeon>:/plansTab_active.png</activeon>:/plansTab.png</iconset>
@@ -4287,7 +4287,7 @@ QTreeView::item { height: 18px;}</string>
   </widget>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="../resources/resources.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/save_file.png</normaloff>:/save_file.png</iconset>
    </property>
    <property name="text">
@@ -4350,7 +4350,7 @@ QTreeView::item { height: 18px;}</string>
   </action>
   <action name="actionImportReceipt">
    <property name="icon">
-    <iconset resource="../resources/resources.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/importReceipt.png</normaloff>:/importReceipt.png</iconset>
    </property>
    <property name="text">
@@ -4359,7 +4359,7 @@ QTreeView::item { height: 18px;}</string>
   </action>
  </widget>
  <resources>
-  <include location="../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

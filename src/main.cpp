@@ -1,4 +1,4 @@
-#include "widgets/mainwindow.h"
+#include "gui/forms/mainwindow.h"
 #include <QApplication>
 #include <QStyleFactory>
 

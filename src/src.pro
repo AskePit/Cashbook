@@ -23,19 +23,19 @@ LIBS += -L$${ASKELIBQT_LIB_PATH} -laskelib_qt_std$${ASKELIBQT_LIB_SUFFIX}
 LIBS += -L$${ASKELIB_LIB_PATH} -laskelib_std$${ASKELIB_LIB_SUFFIX}
 
 FORMS += \
-    widgets/mainwindow.ui \
-    widgets/innodedialog.ui \
-    widgets/selectwalletdialog.ui
+    gui/forms/mainwindow.ui \
+    gui/forms/innodedialog.ui \
+    gui/forms/selectwalletdialog.ui
 
 HEADERS += \
     bookkeeping/basic_types.h \
     bookkeeping/models.h \
     bookkeeping/bookkeeping.h \
     bookkeeping/serialization.h \
-    widgets/mainwindow.h \
-    widgets/innodedialog.h \
-    widgets/selectwalletdialog.h \
-    widgets/widgets.h \
+    gui/forms/mainwindow.h \
+    gui/forms/innodedialog.h \
+    gui/forms/selectwalletdialog.h \
+    gui/widgets/widgets.h \
     $$files($$PWD/../third-party/yaml-cpp/src/*.h) \
     $$PWD/../third-party/qtyaml.h
 
@@ -44,15 +44,22 @@ SOURCES += \
     bookkeeping/models.cpp \
     bookkeeping/bookkeeping.cpp \
     bookkeeping/serialization.cpp \
-    widgets/mainwindow.cpp \
-    widgets/innodedialog.cpp \
-    widgets/selectwalletdialog.cpp \
-    widgets/widgets.cpp \
+    gui/forms/mainwindow.cpp \
+    gui/forms/innodedialog.cpp \
+    gui/forms/selectwalletdialog.cpp \
+    gui/widgets/widgets.cpp \
     main.cpp \
     $$files($$PWD/../third-party/yaml-cpp/src/*.cpp)
 
-#QMAKE_CXXFLAGS += -std:c++latest
-QMAKE_CXXFLAGS_RELEASE += -O3
+
+win32-msvc* {
+    QMAKE_CXXFLAGS_RELEASE += /O2
+    QMAKE_CXXFLAGS += /std:c++17
+}
+win32-g++ {
+    QMAKE_CXXFLAGS_RELEASE += -O3
+    QMAKE_CXXFLAGS += -std:c++17
+}
 
 RESOURCES += \
     resources/resources.qrc

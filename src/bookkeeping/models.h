@@ -1,14 +1,12 @@
 #ifndef BOOKKEEPING_MODELS_H
 #define BOOKKEEPING_MODELS_H
 
-#include "basic_types.h"
+#include "bookkeeping/bookkeeping.h"
 
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QItemDelegate>
-#include <set>
-#include <deque>
 
 class QTreeView;
 
@@ -16,7 +14,7 @@ namespace cashbook
 {
 
 class CategoryMoneyMap;
-class Statistics;
+struct Statistics;
 class BriefStatistics;
 
 /**
@@ -25,7 +23,7 @@ class BriefStatistics;
  *          methods to make it possible to use them in template nonmember
  *          functions.
  */
-class TreeModel : public QAbstractItemModel, public Changable
+class TreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 
@@ -71,12 +69,17 @@ signals:
     void recalculated();
 };
 
-class TableModel : public QAbstractTableModel, public Changable
+class TableModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
     TableModel(QObject *parent = 0) : QAbstractTableModel(parent) {}
+
+    void update() {
+        beginResetModel();
+        endResetModel();
+    }
 };
 
 class CategoriesColumn
@@ -96,11 +99,9 @@ class CategoriesModel : public TreeModel
     Q_OBJECT
 
 public:
-    Tree<Category> *rootItem;
-    CategoryMoneyMap &statistics;
+    CategoriesData& m_data;
 
-    CategoriesModel(CategoryMoneyMap &statistics, QObject *parent = 0);
-    ~CategoriesModel();
+    CategoriesModel(CategoriesData &data, QObject *parent = 0);
 
     Node<Category> *getItem(const QModelIndex &index) const;
     QModelIndex itemIndex(const Node<Category> *item) const;
@@ -126,13 +127,6 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
-
-    void clear() {
-        emit beginResetModel();
-        delete rootItem;
-        rootItem = new Tree<Category>;
-        emit endResetModel();
-    }
 };
 
 class WalletColumn
@@ -151,17 +145,16 @@ class WalletsModel : public TreeModel
     Q_OBJECT
 
 public:
-    Tree<Wallet> *rootItem;
+    WalletsData& m_data;
 
-    WalletsModel(QObject *parent = 0);
-    ~WalletsModel();
+    WalletsModel(WalletsData& data, QObject *parent = 0);
 
     Node<Wallet> *getItem(const QModelIndex &index) const;
     QModelIndex itemIndex(const Node<Wallet> *item) const;
 
     Node<Wallet> *addChild(const Wallet &data) {
-        auto node = new Node<Wallet>(data, rootItem);
-        rootItem->children.push_back(node);
+        auto node = new Node<Wallet>(data, m_data.rootItem);
+        m_data.rootItem->children.push_back(node);
         return node;
     }
 
@@ -186,13 +179,6 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
 
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
-
-    void clear() {
-        emit beginResetModel();
-        delete rootItem;
-        rootItem = new Tree<Wallet>;
-        emit endResetModel();
-    }
 };
 
 class OwnersModel : public TableModel
@@ -200,9 +186,9 @@ class OwnersModel : public TableModel
     Q_OBJECT
 
 public:
-    QVector<Owner> owners;
+    OwnersData& m_data;
 
-    OwnersModel(QObject *parent = 0);
+    OwnersModel(OwnersData& ownersData, QObject *parent = 0);
     ~OwnersModel();
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -218,12 +204,6 @@ public:
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
-
-    void clear() {
-        emit beginResetModel();
-        owners.clear();
-        emit endResetModel();
-    }
 
 signals:
     void nodesGonnaBeRemoved(QStringList nodeIds);
@@ -252,18 +232,10 @@ class LogModel : public TableModel
     Q_OBJECT
 
 public:
-    std::deque<Transaction> log;
-    Statistics &statistics;
-    int unanchored {0};
-    std::set<Month> changedMonths;
+    LogData& m_data;
 
-    LogModel(Statistics &statistics, QObject *parent = 0);
+    LogModel(LogData &data, QObject *parent = 0);
     ~LogModel();
-
-    bool anchoreTransactions();
-    bool copyTop();
-    bool canAnchore() const;
-    void appendTransactions(const std::vector<Transaction> &transactions);
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -278,12 +250,9 @@ public:
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
 
-    void clear() {
-        emit beginResetModel();
-        log.clear();
-        emit endResetModel();
-        unanchored = 0;
-    }
+    bool copyTop();
+    bool anchoreTransactions();
+    void appendTransactions(const std::vector<Transaction> &transactions);
 
     void updateNote(size_t row, const QString &note);
     void updateTask(Task &task) const;
@@ -323,9 +292,9 @@ class PlansModel : public TableModel
     Q_OBJECT
 
 public:
-    QVector<Plan> plans;
+    PlansTermData& m_data;
 
-    PlansModel(QObject *parent = 0);
+    PlansModel(PlansTermData& data, QObject *parent = 0);
     ~PlansModel();
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -341,12 +310,6 @@ public:
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
-
-    void clear() {
-        emit beginResetModel();
-        plans.clear();
-        emit endResetModel();
-    }
 
     void insertPlan(const Plan &plan);
 };
@@ -372,9 +335,9 @@ class TasksModel : public TableModel
     Q_OBJECT
 
 public:
-    QVector<Task> tasks;
+    TasksListsData& m_data;
 
-    TasksModel(const LogModel &log, QObject *parent = 0);
+    TasksModel(TasksListsData& data, const LogData &log, QObject *parent = 0);
     ~TasksModel();
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -391,14 +354,8 @@ public:
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild);
 
-    void clear() {
-        emit beginResetModel();
-        tasks.clear();
-        emit endResetModel();
-    }
-
 private:
-    const LogModel &m_log;
+    const LogData &m_log;
 };
 
 class BriefColumn
@@ -449,14 +406,14 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 };
 
-class Data;
+class DataModels;
 
 class ModelsDelegate : public QItemDelegate
 {
     Q_OBJECT
 
 public:
-    ModelsDelegate(Data &data, QObject* parent = nullptr);
+    ModelsDelegate(DataModels &dataModels, QObject* parent = nullptr);
     ~ModelsDelegate();
 
     virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
@@ -466,7 +423,7 @@ public:
     virtual bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
-    Data &m_data;
+    DataModels &m_data;
 };
 
 class CategoriesViewEventFilter : public QObject {
@@ -478,6 +435,25 @@ public:
 
 private:
     QTreeView *m_in, *m_out;
+};
+
+class DataModels
+{
+public:
+    DataModels(Data& data);
+
+    bool anchoreTransactions();
+
+    OwnersModel ownersModel;
+    WalletsModel walletsModel;
+    CategoriesModel inCategoriesModel;
+    CategoriesModel outCategoriesModel;
+    LogModel logModel;
+    std::array<PlansModel, PlanTerm::Count> plansModels;
+    std::array<TasksModel, TaskStatus::Count> tasksModels;
+    BriefModel briefStatisticsModel;
+
+    Data& m_data;
 };
 
 } // namespace cashbook

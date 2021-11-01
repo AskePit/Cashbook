@@ -42,7 +42,7 @@ static void save(const IdableString &data, YAML::Node& node)
     node["str"] = static_cast<QString>(data);
 }
 
-static void save(const OwnersModel &data, YAML::Node& node)
+static void save(const OwnersData &data, YAML::Node& node)
 {
     for(const auto &owner : data.owners) {
         YAML::Node obj;
@@ -71,7 +71,7 @@ static void save(const Node<Category> *node, YAML::Node& nodeNodes)
     }
 }
 
-static void save(const CategoriesModel &data, YAML::Node& node)
+static void save(const CategoriesData &data, YAML::Node& node)
 {
     save(data.rootItem, node);
 }
@@ -124,7 +124,7 @@ static void save(const Node<Wallet> *node, YAML::Node& nodeNodes)
     }
 }
 
-static void save(const WalletsModel &data, YAML::Node& node)
+static void save(const WalletsData &data, YAML::Node& node)
 {
     save(data.rootItem, node);
 }
@@ -190,7 +190,7 @@ static void save(const Plan &item, YAML::Node& node)
     node["amount"] = item.amount.as_cents();
 }
 
-static void save(const PlansModel &data, YAML::Node& node)
+static void save(const PlansTermData &data, YAML::Node& node)
 {
     for(const Plan &t : data.plans) {
         YAML::Node obj;
@@ -199,15 +199,15 @@ static void save(const PlansModel &data, YAML::Node& node)
     }
 }
 
-static void save(const Plans &data, YAML::Node& node)
+static void save(const PlansData &data, YAML::Node& node)
 {
     YAML::Node shortPlans;
     YAML::Node middlePlans;
     YAML::Node longPlans;
 
-    save(data[PlanTerm::Short], shortPlans);
-    save(data[PlanTerm::Middle], middlePlans);
-    save(data[PlanTerm::Long], longPlans);
+    save(data.shortTerm, shortPlans);
+    save(data.middleTerm, middlePlans);
+    save(data.longTerm, longPlans);
 
     node["short"] = shortPlans;
     node["middle"] = middlePlans;
@@ -228,18 +228,14 @@ static void save(const Task &item, YAML::Node& node)
     node["amount"] = item.amount.as_cents();
 }
 
-static void save(const Tasks &data, YAML::Node& node)
+static void save(const TasksData &data, YAML::Node& node)
 {
-    for(const Task &task : data[TaskStatus::Active].tasks) {
-        YAML::Node obj;
-        save(task, obj);
-        node.push_back(obj);
-    }
-
-    for(const Task &task : data[TaskStatus::Completed].tasks) {
-        YAML::Node obj;
-        save(task, obj);
-        node.push_back(obj);
+    for(auto tasks : {data.active.tasks, data.completed.tasks}) {
+        for(const Task &task : tasks) {
+            YAML::Node obj;
+            save(task, obj);
+            node.push_back(obj);
+        }
     }
 }
 
@@ -279,8 +275,8 @@ static void saveFile(const QString &fileName, ObjectOrArray data)
 
 static void saveLog(Data &data)
 {
-    const auto &log = data.logModel.log;
-    auto &changedMonths = data.logModel.changedMonths;
+    const auto &log = data.log.log;
+    auto &changedMonths = data.log.changedMonths;
 
     if(log.empty()) {
         return;
@@ -319,10 +315,10 @@ static void saveHead(const Data &data, YAML::Node& node)
     YAML::Node plans;
     YAML::Node tasks;
 
-    save(data.ownersModel, owners);
-    save(data.walletsModel, wallets);
-    save(data.inCategoriesModel, inCategories);
-    save(data.outCategoriesModel, outCategories);
+    save(data.owners, owners);
+    save(data.wallets, wallets);
+    save(data.inCategories, inCategories);
+    save(data.outCategories, outCategories);
     save(data.plans, plans);
     save(data.tasks, tasks);
 
@@ -332,7 +328,7 @@ static void saveHead(const Data &data, YAML::Node& node)
     node["outCategories"] = outCategories;
     node["plans"] = plans;
     node["tasks"] = tasks;
-    node["unanchored"] = data.logModel.unanchored;
+    node["unanchored"] = data.log.unanchored;
 }
 
 static void saveHead(const Data &data)
@@ -362,7 +358,7 @@ static void load(IdableString &data, const YAML::Node& node)
     static_cast<QString &>(data) = node["str"].as<QString>();
 }
 
-static void load(OwnersModel &data, const YAML::Node& node)
+static void load(OwnersData &data, const YAML::Node& node)
 {
     for(const YAML::Node& v : node) {
         Owner owner;
@@ -371,7 +367,7 @@ static void load(OwnersModel &data, const YAML::Node& node)
     }
 }
 
-static void load(CategoriesModel &data, const YAML::Node& node)
+static void load(CategoriesData &data, const YAML::Node& node)
 {
     Node<Category> *currNode = data.rootItem;
     std::stack<int> children;
@@ -395,7 +391,7 @@ static void load(CategoriesModel &data, const YAML::Node& node)
     }
 }
 
-static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersModel &ownersModel)
+static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersData &owners)
 {
     const YAML::Node& refNode = node["ref"];
 
@@ -404,7 +400,7 @@ static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersM
         QUuid uid = QUuid{id};
 
         if(!uid.isNull()) {
-            for(const Owner &owner : ownersModel.owners) {
+            for(const Owner &owner : owners.owners) {
                 if(owner.id == uid) {
                     data = &owner;
                     return;
@@ -418,7 +414,7 @@ static void load(ArchPointer<Owner> &data, const YAML::Node& node, const OwnersM
     }
 }
 
-static void load(Wallet &wallet, const YAML::Node& node, const OwnersModel &ownersModel)
+static void load(Wallet &wallet, const YAML::Node& node, const OwnersData &owners)
 {
     QString id = node["id"].as<QString>();
     wallet.id = QUuid(id);
@@ -428,17 +424,17 @@ static void load(Wallet &wallet, const YAML::Node& node, const OwnersModel &owne
     wallet.amount = Money(static_cast<intmax_t>(node["amount"].as<double>()));
 
     const YAML::Node& ownerObj = node["owner"];
-    load(wallet.owner, ownerObj, ownersModel);
+    load(wallet.owner, ownerObj, owners);
 }
 
-static void load(WalletsModel &data, const YAML::Node& arr, const OwnersModel &ownersModel)
+static void load(WalletsData &data, const YAML::Node& arr, const OwnersData &owners)
 {
     Node<Wallet> *currNode = data.rootItem;
     std::stack<int> children;
 
     for(const YAML::Node& v : arr) {
         const YAML::Node& walletObj = v["wallet"];
-        load(currNode->data, walletObj, ownersModel);
+        load(currNode->data, walletObj, owners);
         int ch = v["children"].as<int>(0);
         children.push(ch);
 
@@ -452,8 +448,6 @@ static void load(WalletsModel &data, const YAML::Node& arr, const OwnersModel &o
             children.top() -= 1;
         }
     }
-
-    emit data.recalculated();
 }
 
 template <class T, class Model>
@@ -482,9 +476,9 @@ static void load(ArchNode<T> &data, const YAML::Node& node, const Model &refMode
 }
 
 static void load(Transaction &t, const YAML::Node& node,
-                 const WalletsModel &wallets,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
+                 const WalletsData &wallets,
+                 const CategoriesData &inCategories,
+                 const CategoriesData &outCategories
 ) {
     t.date = QDate::fromString(node["date"].as<QString>(), "dd.MM.yyyy");
     t.note = node["note"].as<QString>("");
@@ -513,38 +507,38 @@ static void load(Transaction &t, const YAML::Node& node,
     }
 }
 
-static void load(LogModel &logModel, const YAML::Node& node, Data &data){
+static void load(LogData &log, const YAML::Node& node, Data &data){
     size_t n = node.size();
     for (size_t i = 0; i<n; ++i) {
         const YAML::Node& tObj = node[i];
         Transaction t;
-        load(t, tObj, data.walletsModel, data.inCategoriesModel, data.outCategoriesModel);
-        logModel.log.push_back(t);
+        load(t, tObj, data.wallets, data.inCategories, data.outCategories);
+        log.log.push_back(t);
 
         // update brief statistics
         if(t.type == Transaction::Type::In) {
             Month month(t.date);
-            logModel.statistics.brief[month].common.received += t.amount;
+            log.statistics.brief[month].common.received += t.amount;
             const auto &archNode = t.category;
             if(archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular) {
-                logModel.statistics.brief[month].regular.received += t.amount;
+                log.statistics.brief[month].regular.received += t.amount;
             }
         }
 
         if(t.type == Transaction::Type::Out) {
             Month month(t.date);
-            logModel.statistics.brief[month].common.spent += t.amount;
+            log.statistics.brief[month].common.spent += t.amount;
             const auto &archNode = t.category;
             if(archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular) {
-                logModel.statistics.brief[month].regular.spent += t.amount;
+                log.statistics.brief[month].regular.spent += t.amount;
             }
         }
     }
 }
 
 static void load(Plan &item, const YAML::Node& node,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
+                 const CategoriesData &inCategories,
+                 const CategoriesData &outCategories
 ) {
     item.name = node["name"].as<QString>();
     item.type = Transaction::Type::fromConfigString( node["type"].as<QString>() );
@@ -563,9 +557,9 @@ static void load(Plan &item, const YAML::Node& node,
     item.amount = Money(static_cast<intmax_t>(node["amount"].as<int>()));
 }
 
-static void load(PlansModel &data, const YAML::Node& arr,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
+static void load(PlansTermData &data, const YAML::Node& arr,
+                 const CategoriesData &inCategories,
+                 const CategoriesData &outCategories
 )
 {
     for(const YAML::Node& v : arr) {
@@ -575,19 +569,19 @@ static void load(PlansModel &data, const YAML::Node& arr,
     }
 }
 
-static void load(Plans &data, const YAML::Node& node,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
+static void load(PlansData &data, const YAML::Node& node,
+                 const CategoriesData &inCategories,
+                 const CategoriesData &outCategories
 )
 {
-    load(data[PlanTerm::Short], node["short"], inCategories, outCategories);
-    load(data[PlanTerm::Middle], node["middle"], inCategories, outCategories);
-    load(data[PlanTerm::Long], node["long"], inCategories, outCategories);
+    load(data.shortTerm, node["short"], inCategories, outCategories);
+    load(data.middleTerm, node["middle"], inCategories, outCategories);
+    load(data.longTerm, node["long"], inCategories, outCategories);
 }
 
 static void load(Task &item, const YAML::Node& node,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
+                 const CategoriesData &inCategories,
+                 const CategoriesData &outCategories
 ) {
     item.type = Transaction::Type::fromConfigString( node["type"].as<QString>() );
 
@@ -608,36 +602,36 @@ static void load(Task &item, const YAML::Node& node,
     item.amount = Money(static_cast<intmax_t>(node["amount"].as<int>()));
 }
 
-static void load(Tasks &data, const YAML::Node& arr,
-                 const CategoriesModel &inCategories,
-                 const CategoriesModel &outCategories
+static void load(TasksData &data, const YAML::Node& arr,
+                 const CategoriesData &inCategories,
+                 const CategoriesData &outCategories
 )
 {
     for(const YAML::Node& v : arr) {
         Task item;
         load(item, v, inCategories, outCategories);
         if(item.to >= today) {
-            data[TaskStatus::Active].tasks.push_back(item);
+            data.active.tasks.push_back(item);
         } else {
-            data[TaskStatus::Completed].tasks.push_back(item);
+            data.completed.tasks.push_back(item);
         }
     }
 }
 
 static void loadHead(Data &data, const YAML::Node& node)
 {
-    load(data.ownersModel, node["owners"]);
-    load(data.walletsModel, node["wallets"], data.ownersModel);
-    load(data.inCategoriesModel, node["inCategories"]);
-    load(data.outCategoriesModel, node["outCategories"]);
-    load(data.plans, node["plans"], data.inCategoriesModel, data.outCategoriesModel);
-    load(data.tasks, node["tasks"], data.inCategoriesModel, data.outCategoriesModel);
-    data.logModel.unanchored = node["unanchored"].as<int>();
+    load(data.owners, node["owners"]);
+    load(data.wallets, node["wallets"], data.owners);
+    load(data.inCategories, node["inCategories"]);
+    load(data.outCategories, node["outCategories"]);
+    load(data.plans, node["plans"], data.inCategories, data.outCategories);
+    load(data.tasks, node["tasks"], data.inCategories, data.outCategories);
+    data.log.unanchored = node["unanchored"].as<int>();
 }
 
 static void loadMonth(Data &data, const YAML::Node& node)
 {
-    load(data.logModel, node, data);
+    load(data.log, node, data);
 }
 
 static void loadLog(Data &data, int recentMonths = -1) /* (recentMonths == -1) means load all */

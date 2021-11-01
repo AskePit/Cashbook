@@ -53,6 +53,7 @@ public:
 };
 
 using Owner = IdableString;
+using Bank = IdableString;
 
 /**
  * @brief Archiveable pointer.
@@ -111,52 +112,6 @@ public:
     }
 };
 
-struct Wallet : public Idable
-{
-    class Type
-    {
-    public:
-        enum t {
-            Common = 0,
-            Cash,
-            Card,
-            Account,
-            Deposit,
-            EMoney,
-        };
-
-        static QString toString(Type::t type);
-        static QString toConfigString(Type::t type);
-        static Type::t fromConfigString(const QString &str);
-        static QVector<Type::t> enumerate();
-    };
-
-    Wallet();
-    Wallet(const QString &n);
-    Wallet(const QString &n, Money a);
-
-    bool operator==(const Wallet &other) const;
-
-    Type::t type {Type::Common};
-    QString name;
-    ArchPointer<Owner> owner;
-    bool canBeNegative {false};
-    Money amount;
-};
-
-struct Category : public IdableString
-{
-    bool regular {false};
-
-    Category() : IdableString() {}
-    Category(const char *str) : IdableString(str) {}
-    Category(const QString &str) : IdableString(str) {}
-
-    void setName(const QString &name) {
-        IdableString::setString(name);
-    }
-};
-
 /**
  * @brief Archiveable node.
  * @details Wrapper around existing node OR archived nonexisting node.
@@ -173,61 +128,10 @@ struct Category : public IdableString
 template <class T>
 using ArchNode = ArchPointer<Node<T>>;
 
-struct Transaction
-{
-    class Type
-    {
-    public:
-        enum t {
-            In = 0,
-            Out,
-            Transfer,
-        };
-
-        static QString toString(Type::t type);
-        static QString toConfigString(Type::t type);
-        static Type::t fromConfigString(const QString &str);
-        static QVector<Type::t> enumerate();
-    };
-
-    QDate date;
-    QString note;
-    Type::t type {Type::Out};
-    ArchNode<Category> category;
-    Money amount;
-    ArchNode<Wallet> from;
-    ArchNode<Wallet> to;
-};
-
-struct Plan
-{
-    QString name;
-    Transaction::Type::t type {Transaction::Type::Out};
-    ArchNode<Category> category;
-    Money amount;
-};
-
-struct Task
-{
-    Transaction::Type::t type {Transaction::Type::Out};
-    ArchNode<Category> category;
-    QDate from;
-    QDate to;
-    Money amount;
-    Money spent;
-    Money rest;
-};
-
 const QString pathConcat {"/"};
 
 template <class T>
 QString extractPathString(const Node<T> *node);
-
-template <>
-QString extractPathString<Category>(const Node<Category> *node);
-
-template <>
-QString extractPathString<Wallet>(const Node<Wallet> *node);
 
 template <class T>
 QString pathToString(const Node<T> *node)
@@ -285,6 +189,95 @@ QString archNodeToShortString(ArchNode<T> arch)
 
 QString formatMoney(const Money &money, bool symbol = true);
 
+/**
+ * @brief The AbstractChangable interface.
+ * @details Interface for an object that has a "changed" state, which can be reseted.
+ */
+class AbstractChangable
+{
+public:
+    virtual bool isChanged() const = 0;
+    virtual void resetChanged() = 0;
+};
+
+/**
+ * @brief The Changable class.
+ * @details Represents spesific object that can be changed and can change itself.
+ */
+class Changable : public AbstractChangable
+{
+public:
+    bool isChanged() const override {
+        return m_changed;
+    }
+
+    void resetChanged() override {
+        m_changed = false;
+    }
+
+    virtual void setChanged() {
+        m_changed = true;
+    }
+
+    /**
+     * Proxy function that sets object changed if `changed` is `true`
+     * and returns `changed`.
+     *
+     * This function is usefull for oneliners which return result from function.
+     */
+    bool changeFilter(bool changed) {
+        m_changed |= changed;
+        return changed;
+    }
+
+private:
+    bool m_changed;
+};
+
+/**
+ * @brief The ChangeObservable class.
+ * @details Represents object that contains or owns AbstractChangeable objects.
+ *          If any of these objects are changed, this object is considered
+ *          being changed too.
+ */
+class ChangeObservable : public AbstractChangable
+{
+public:
+    void setChangableItems(std::vector<AbstractChangable*> items) {
+        m_items = items;
+    }
+
+    void addChangableItem(AbstractChangable* item) {
+        m_items.push_back(item);
+    }
+
+    std::vector<AbstractChangable*> &changableItems() {
+        return m_items;
+    }
+
+    void removeChangableItem(AbstractChangable* toRemove) {
+        m_items.erase( std::remove(m_items.begin(), m_items.end(), toRemove), m_items.end() );
+    }
+
+    bool isChanged() const final {
+        for(AbstractChangable *item : m_items) {
+            if(item->isChanged()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void resetChanged() final {
+        for(AbstractChangable *item : m_items) {
+            item->resetChanged();
+        }
+    }
+
+protected:
+    std::vector<AbstractChangable*> m_items;
+};
+
 } // namespace cashbook
 
 namespace std
@@ -303,108 +296,11 @@ namespace std
     };
 }
 
+static const QDate today {QDate::currentDate()};
+
 Q_DECLARE_METATYPE(cashbook::IdableString *)
 Q_DECLARE_METATYPE(const cashbook::IdableString *)
 Q_DECLARE_METATYPE(Node<cashbook::IdableString> *)
 Q_DECLARE_METATYPE(const Node<cashbook::IdableString> *)
-Q_DECLARE_METATYPE(Node<cashbook::Wallet> *)
-Q_DECLARE_METATYPE(const Node<cashbook::Wallet> *)
-Q_DECLARE_METATYPE(cashbook::Category *)
-Q_DECLARE_METATYPE(const cashbook::Category *)
-Q_DECLARE_METATYPE(Node<cashbook::Category> *)
-Q_DECLARE_METATYPE(const Node<cashbook::Category> *)
-Q_DECLARE_METATYPE(cashbook::Transaction::Type::t)
-
-static const QDate today {QDate::currentDate()};
-
-/**
- * @brief The AbstractChangable interface.
- * @details Interface for an object that has a "changed" state, which can be reseted.
- */
-class AbstractChangable
-{
-public:
-    virtual bool isChanged() const = 0;
-    virtual void resetChanged() = 0;
-};
-
-/**
- * @brief The Changable class.
- * @details Represents spesific object that can be changed and can change itself.
- */
-class Changable : public AbstractChangable
-{
-protected:
-    bool m_changed;
-
-public:
-    virtual bool isChanged() const override {
-        return m_changed;
-    }
-
-    virtual void resetChanged() override {
-        m_changed = false;
-    }
-
-protected:
-    void setChanged() {
-        m_changed = true;
-    }
-
-    /**
-     * Proxy function that sets object changed if `changed` is `true`
-     * and returns `changed`.
-     *
-     * This function is usefull for oneliners which return result from function.
-     */
-    bool changeFilter(bool changed) {
-        m_changed |= changed;
-        return changed;
-    }
-};
-
-/**
- * @brief The ChangeObservable class.
- * @details Represents object that contains or owns AbstractChangeable objects.
- *          If any of these objects are changed, this object is considered
- *          being changed too.
- */
-class ChangeObservable : public AbstractChangable
-{
-private:
-    std::vector<AbstractChangable*> m_items;
-
-public:
-    virtual void setChangableItems(std::vector<AbstractChangable*> items) {
-        m_items = items;
-    }
-
-    virtual void addChangableItem(AbstractChangable* item) {
-        m_items.push_back(item);
-    }
-
-    virtual std::vector<AbstractChangable*> &changableItems() {
-        return m_items;
-    }
-
-    virtual void removeChangableItem(AbstractChangable* toRemove) {
-        m_items.erase( std::remove(m_items.begin(), m_items.end(), toRemove), m_items.end() );
-    }
-
-    virtual bool isChanged() const override {
-        for(AbstractChangable *item : m_items) {
-            if(item->isChanged()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    virtual void resetChanged() override {
-        for(AbstractChangable *item : m_items) {
-            item->resetChanged();
-        }
-    }
-};
 
 #endif // BOOKKEEPING_BASIC_TYPES_H

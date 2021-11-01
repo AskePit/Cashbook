@@ -115,7 +115,8 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_data(data)
-    , m_modelsDelegate(m_data)
+    , m_models(data)
+    , m_modelsDelegate(m_models)
 {
     preLoadSetup();
     loadData();
@@ -148,55 +149,55 @@ void MainWindow::preLoadSetup()
     vm = {
         {
             /* .view =        */ ui->outCategoriesTree,
-            /* .model =       */ &m_data.outCategoriesModel,
+            /* .model =       */ &m_models.outCategoriesModel,
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ bindToThis(&MainWindow::showOutCategoryMenu),
         },
         {
             /* .view =        */ ui->inCategoriesTree,
-            /* .model =       */ &m_data.inCategoriesModel,
+            /* .model =       */ &m_models.inCategoriesModel,
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ bindToThis(&MainWindow::showInCategoryMenu),
         },
         {
             /* .view =        */ ui->walletsTree,
-            /* .model =       */ &m_data.walletsModel,
+            /* .model =       */ &m_models.walletsModel,
             /* .delegate =    */ nullptr,
             /* .contextMenu = */ nullptr,
         },
         {
             /* .view =        */ ui->logTable,
-            /* .model =       */ &m_data.logModel,
+            /* .model =       */ &m_models.logModel,
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ bindToThis(&MainWindow::showLogMenu),
         },
         {
             /* .view =        */ ui->shortPlansTable,
-            /* .model =       */ &m_data.plans[PlanTerm::Short],
+            /* .model =       */ &m_models.plansModels[PlanTerm::Short],
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ bindToThis(&MainWindow::showShortPlansMenu),
         },
         {
             /* .view =        */ ui->middlePlansTable,
-            /* .model =       */ &m_data.plans[PlanTerm::Middle],
+            /* .model =       */ &m_models.plansModels[PlanTerm::Middle],
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ bindToThis(&MainWindow::showMiddlePlansMenu),
         },
         {
             /* .view =        */ ui->longPlansTable,
-            /* .model =       */ &m_data.plans[PlanTerm::Long],
+            /* .model =       */ &m_models.plansModels[PlanTerm::Long],
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ bindToThis(&MainWindow::showLongPlansMenu),
         },
         {
             /* .view =        */ ui->activeTasksTable,
-            /* .model =       */ &m_data.tasks[TaskStatus::Active],
+            /* .model =       */ &m_models.tasksModels[TaskStatus::Active],
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ nullptr,
         },
         {
             /* .view =        */ ui->completedTasksTable,
-            /* .model =       */ &m_data.tasks[TaskStatus::Completed],
+            /* .model =       */ &m_models.tasksModels[TaskStatus::Completed],
             /* .delegate =    */ &m_modelsDelegate,
             /* .contextMenu = */ nullptr,
         },
@@ -225,8 +226,8 @@ void MainWindow::preLoadSetup()
 
     vm.connectModels();
 
-    connect(&m_data.walletsModel, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
-    connect(&m_data.logModel, &TreeModel::dataChanged, this, &MainWindow::updateUnanchoredSum);
+    connect(&m_models.walletsModel, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
+    connect(&m_models.logModel, &TreeModel::dataChanged, this, &MainWindow::updateUnanchoredSum);
 
     ui->shortPlansBar->installEventFilter(&m_clickFilter);
     ui->middlePlansBar->installEventFilter(&m_clickFilter);
@@ -250,16 +251,16 @@ void MainWindow::preLoadSetup()
 
     emit m_clickFilter.mouseClicked(ui->shortPlansBar);
 
-    connect(&m_data.plans[PlanTerm::Short], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
-    connect(&m_data.plans[PlanTerm::Short], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
-    connect(&m_data.plans[PlanTerm::Middle], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
-    connect(&m_data.plans[PlanTerm::Middle], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
-    connect(&m_data.plans[PlanTerm::Long], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
-    connect(&m_data.plans[PlanTerm::Long], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
-    connect(&m_data.tasks[TaskStatus::Active], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
-    connect(&m_data.tasks[TaskStatus::Active], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
-    connect(&m_data.tasks[TaskStatus::Completed], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
-    connect(&m_data.tasks[TaskStatus::Completed], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
+    connect(&m_models.plansModels[PlanTerm::Short], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_models.plansModels[PlanTerm::Short], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->shortPlansTable); });
+    connect(&m_models.plansModels[PlanTerm::Middle], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_models.plansModels[PlanTerm::Middle], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->middlePlansTable); });
+    connect(&m_models.plansModels[PlanTerm::Long], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_models.plansModels[PlanTerm::Long], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->longPlansTable); });
+    connect(&m_models.tasksModels[TaskStatus::Active], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_models.tasksModels[TaskStatus::Active], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->activeTasksTable); });
+    connect(&m_models.tasksModels[TaskStatus::Completed], &QAbstractItemModel::rowsInserted, [this](){ recalculateHeight(ui->completedTasksTable); });
+    connect(&m_models.tasksModels[TaskStatus::Completed], &QAbstractItemModel::rowsRemoved, [this](){ recalculateHeight(ui->completedTasksTable); });
 }
 
 void MainWindow::loadData()
@@ -269,23 +270,26 @@ void MainWindow::loadData()
 
 void MainWindow::postLoadSetup()
 {
+    m_models.logModel.update();
+    emit m_models.walletsModel.recalculated();
+
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
 
     connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
         m_data.loadCategoriesStatistics(from, m_data.statistics.categoriesTo);
-        m_data.inCategoriesModel.update();
-        m_data.outCategoriesModel.update();
+        m_models.inCategoriesModel.update();
+        m_models.outCategoriesModel.update();
     });
 
     connect(ui->dateTo, &QDateEdit::dateChanged, [this](const QDate &to) {
         m_data.loadCategoriesStatistics(m_data.statistics.categoriesFrom, to);
-        m_data.inCategoriesModel.update();
-        m_data.outCategoriesModel.update();
+        m_models.inCategoriesModel.update();
+        m_models.outCategoriesModel.update();
     });
 
     connect(&m_data, &Data::categoriesStatisticsUpdated, [this]() {
-        const auto *inRoot = m_data.inCategoriesModel.rootItem;
-        const auto *outRoot = m_data.outCategoriesModel.rootItem;
+        const auto *inRoot = m_data.inCategories.rootItem;
+        const auto *outRoot = m_data.outCategories.rootItem;
 
         const Money &in = m_data.statistics.inCategories[inRoot];
         const Money &out = m_data.statistics.outCategories[outRoot];
@@ -312,7 +316,7 @@ void MainWindow::postLoadSetup()
 
     updateUnanchoredSum();
 
-    ui->briefTable->setModel(&m_data.briefModel);
+    ui->briefTable->setModel(&m_models.briefStatisticsModel);
     for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
@@ -326,7 +330,7 @@ void MainWindow::postLoadSetup()
     recalculateHeight(ui->activeTasksTable);
     recalculateHeight(ui->completedTasksTable);
 
-    bool changed = m_data.logModel.normalizeData();
+    bool changed = m_models.logModel.normalizeData();
     if(changed) {
         saveData();
     }
@@ -349,7 +353,7 @@ static bool addSiblingNode(QTreeView &view, TreeModel &model)
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        if(model.rootItem->childCount() == 0) {
+        if(model.m_data.rootItem->childCount() == 0) {
             model.insertRow(0, QModelIndex());
         }
         return true;
@@ -366,7 +370,7 @@ static bool addChildNode(QTreeView &view, TreeModel &model)
     auto index = view.currentIndex();
 
     if(!index.isValid()) {
-        if(model.rootItem->childCount() == 0) {
+        if(model.m_data.rootItem->childCount() == 0) {
             model.insertRow(0, QModelIndex());
         }
         return true;
@@ -540,11 +544,11 @@ static bool downListItem(QAbstractItemView &view, ListModel &model)
 //
 void cashbook::MainWindow::on_addTransactionButton_clicked()
 {
-    bool copied = m_data.logModel.copyTop();
+    bool copied = m_models.logModel.copyTop();
     if(copied) {
         updateUnanchoredSum();
     } else {
-        m_data.logModel.insertRow(0);
+        m_models.logModel.insertRow(0);
         showUnanchoredSum();
     }
 }
@@ -553,7 +557,7 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
 {
     QModelIndex index = ui->logTable->currentIndex();
     if(index.isValid()) {
-        m_data.logModel.removeRow(index.row());
+        m_models.logModel.removeRow(index.row());
     }
 
     updateUnanchoredSum();
@@ -561,12 +565,12 @@ void cashbook::MainWindow::on_removeTransactionButton_clicked()
 
 void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 {
-    if(!m_data.logModel.canAnchore()) {
+    if(!m_models.logModel.m_data.canAnchore()) {
         callInfoDialog(tr("Заполните все поля,\nподсвеченные красным!"));
         return;
     }
 
-    m_data.anchoreTransactions();
+    m_models.anchoreTransactions();
     hideUnanchoredSum();
 }
 
@@ -575,135 +579,135 @@ void cashbook::MainWindow::on_anchoreTransactionsButton_clicked()
 // Wallets
 //
 void cashbook::MainWindow::on_addWalletSiblingButton_clicked() {
-    addSiblingNode(*ui->walletsTree, m_data.walletsModel);
+    addSiblingNode(*ui->walletsTree, m_models.walletsModel);
 }
 void cashbook::MainWindow::on_addWalletChildButton_clicked() {
-    addChildNode(*ui->walletsTree, m_data.walletsModel);
+    addChildNode(*ui->walletsTree, m_models.walletsModel);
 }
 void cashbook::MainWindow::on_removeWalletButton_clicked() {
-    removeNode(*ui->walletsTree, m_data.walletsModel);
+    removeNode(*ui->walletsTree, m_models.walletsModel);
 }
 void cashbook::MainWindow::on_upWalletButton_clicked() {
-    upNode(*ui->walletsTree, m_data.walletsModel);
+    upNode(*ui->walletsTree, m_models.walletsModel);
 }
 void cashbook::MainWindow::on_downWalletButton_clicked()
 {
-    downNode(*ui->walletsTree, m_data.walletsModel);
+    downNode(*ui->walletsTree, m_models.walletsModel);
 }
 void cashbook::MainWindow::on_outWalletButton_clicked() {
-    outNode(*ui->walletsTree, m_data.walletsModel);
+    outNode(*ui->walletsTree, m_models.walletsModel);
 }
 void cashbook::MainWindow::on_inWalletButton_clicked() {
-    inNode(*ui->walletsTree, m_data.walletsModel);
+    inNode(*ui->walletsTree, m_models.walletsModel);
 }
 
 //
 // In categories
 //
 void cashbook::MainWindow::on_addInCategorySiblingButton_clicked() {
-    addSiblingNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    addSiblingNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 void cashbook::MainWindow::on_addInCategoryChildButton_clicked() {
-    addChildNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    addChildNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 void cashbook::MainWindow::on_removeInCategoryButton_clicked() {
-    removeNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    removeNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 void cashbook::MainWindow::on_upInCategoryButton_clicked() {
-    upNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    upNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 void cashbook::MainWindow::on_downInCategoryButton_clicked() {
-    downNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    downNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 void cashbook::MainWindow::on_outInCategoryButton_clicked() {
-    outNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    outNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 void cashbook::MainWindow::on_inInCategoryButton_clicked() {
-    inNode(*ui->inCategoriesTree, m_data.inCategoriesModel);
+    inNode(*ui->inCategoriesTree, m_models.inCategoriesModel);
 }
 
 //
 // Out categories
 //
 void cashbook::MainWindow::on_addOutCategorySiblingButton_clicked() {
-    addSiblingNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    addSiblingNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 void cashbook::MainWindow::on_addOutCategoryChildButton_clicked() {
-    addChildNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    addChildNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 void cashbook::MainWindow::on_removeOutCategoryButton_clicked() {
-    removeNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    removeNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 void cashbook::MainWindow::on_upOutCategoryButton_clicked() {
-    upNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    upNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 void cashbook::MainWindow::on_downOutCategoryButton_clicked() {
-    downNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    downNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 void cashbook::MainWindow::on_outOutCategoryButton_clicked() {
-    outNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    outNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 void cashbook::MainWindow::on_inOutCategoryButton_clicked() {
-    inNode(*ui->outCategoriesTree, m_data.outCategoriesModel);
+    inNode(*ui->outCategoriesTree, m_models.outCategoriesModel);
 }
 
 //
 // Plans
 //
 void cashbook::MainWindow::on_addShortPlanButton_clicked() {
-    addListItem(m_data.plans[PlanTerm::Short]);
+    addListItem(m_models.plansModels[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_removeShortPlanButton_clicked() {
-    removeListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
+    removeListItem(*ui->shortPlansTable, m_models.plansModels[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_upShortPlanButton_clicked() {
-    upListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
+    upListItem(*ui->shortPlansTable, m_models.plansModels[PlanTerm::Short]);
 }
 void cashbook::MainWindow::on_downShortPlanButton_clicked() {
-    downListItem(*ui->shortPlansTable, m_data.plans[PlanTerm::Short]);
+    downListItem(*ui->shortPlansTable, m_models.plansModels[PlanTerm::Short]);
 }
 
 void cashbook::MainWindow::on_addMiddlePlanButton_clicked() {
-    addListItem(m_data.plans[PlanTerm::Middle]);
+    addListItem(m_models.plansModels[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_removeMiddlePlanButton_clicked() {
-    removeListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
+    removeListItem(*ui->middlePlansTable, m_models.plansModels[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_upMiddlePlanButton_clicked() {
-    upListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
+    upListItem(*ui->middlePlansTable, m_models.plansModels[PlanTerm::Middle]);
 }
 void cashbook::MainWindow::on_downMiddlePlanButton_clicked() {
-    downListItem(*ui->middlePlansTable, m_data.plans[PlanTerm::Middle]);
+    downListItem(*ui->middlePlansTable, m_models.plansModels[PlanTerm::Middle]);
 }
 
 void cashbook::MainWindow::on_addLongPlanButton_clicked() {
-    addListItem(m_data.plans[PlanTerm::Long]);
+    addListItem(m_models.plansModels[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_removeLongPlanButton_clicked() {
-    removeListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
+    removeListItem(*ui->longPlansTable, m_models.plansModels[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_upLongPlanButton_clicked() {
-    upListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
+    upListItem(*ui->longPlansTable, m_models.plansModels[PlanTerm::Long]);
 }
 void cashbook::MainWindow::on_downLongPlanButton_clicked() {
-    downListItem(*ui->longPlansTable, m_data.plans[PlanTerm::Long]);
+    downListItem(*ui->longPlansTable, m_models.plansModels[PlanTerm::Long]);
 }
 
 void cashbook::MainWindow::on_addActiveTaskButton_clicked() {
-    addListItem(m_data.tasks[TaskStatus::Active]);
+    addListItem(m_models.tasksModels[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_removeActiveTaskButton_clicked() {
-    removeListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
+    removeListItem(*ui->activeTasksTable, m_models.tasksModels[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_upActiveTaskButton_clicked() {
-    upListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
+    upListItem(*ui->activeTasksTable, m_models.tasksModels[TaskStatus::Active]);
 }
 void cashbook::MainWindow::on_downActiveTaskButton_clicked() {
-    downListItem(*ui->activeTasksTable, m_data.tasks[TaskStatus::Active]);
+    downListItem(*ui->activeTasksTable, m_models.tasksModels[TaskStatus::Active]);
 }
 
 void cashbook::MainWindow::on_removeCompletedTaskButton_clicked() {
-    removeListItem(*ui->completedTasksTable, m_data.tasks[TaskStatus::Completed]);
+    removeListItem(*ui->completedTasksTable, m_models.tasksModels[TaskStatus::Completed]);
 }
 
 void cashbook::MainWindow::on_actionSave_triggered()
@@ -791,7 +795,7 @@ static void showCategoryContextMenu(const cashbook::CategoriesModel &model, QTre
     const Node<cashbook::Category> *node = model.getItem(index);
     bool ok = false;
     if(node) {
-        ok = model.statistics[node].as_cents() != 0;
+        ok = model.m_data.statistics[node].as_cents() != 0;
     }
 
     if(!ok) {
@@ -805,12 +809,12 @@ static void showCategoryContextMenu(const cashbook::CategoriesModel &model, QTre
 
 void cashbook::MainWindow::showInCategoryMenu(const QPoint& point)
 {
-    showCategoryContextMenu(m_data.inCategoriesModel, ui->inCategoriesTree, ui->actionInStatement, point);
+    showCategoryContextMenu(m_models.inCategoriesModel, ui->inCategoriesTree, ui->actionInStatement, point);
 }
 
 void cashbook::MainWindow::showOutCategoryMenu(const QPoint& point)
 {
-    showCategoryContextMenu(m_data.outCategoriesModel, ui->outCategoriesTree, ui->actionOutStatement, point);
+    showCategoryContextMenu(m_models.outCategoriesModel, ui->outCategoriesTree, ui->actionOutStatement, point);
 }
 
 void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
@@ -818,7 +822,7 @@ void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
     bool in = type == Transaction::Type::In;
 
     QTreeView *categoryTree = in ? ui->inCategoriesTree : ui->outCategoriesTree;
-    CategoriesModel &categoryModel = in ? m_data.inCategoriesModel : m_data.outCategoriesModel;
+    CategoriesModel &categoryModel = in ? m_models.inCategoriesModel : m_models.outCategoriesModel;
 
     QModelIndex index = categoryTree->currentIndex();
     Node<Category> *node = categoryModel.getItem(index);
@@ -827,7 +831,7 @@ void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
     }
 
     FilteredLogModel *filterModel = new FilteredLogModel(ui->dateFrom->date(), ui->dateTo->date(), type, node, categoryTree);
-    filterModel->setSourceModel(&m_data.logModel);
+    filterModel->setSourceModel(&m_models.logModel);
     QTableView *table = new QTableView();
     table->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Tool);
     table->setAttribute(Qt::WA_DeleteOnClose);
@@ -845,7 +849,7 @@ void cashbook::MainWindow::showCategoryStatement(Transaction::Type::t type)
 
 void cashbook::MainWindow::updateUnanchoredSum()
 {
-    if(m_data.logModel.unanchored) {
+    if(m_models.logModel.m_data.unanchored) {
         showUnanchoredSum();
     } else {
         hideUnanchoredSum();
@@ -855,8 +859,8 @@ void cashbook::MainWindow::updateUnanchoredSum()
 void cashbook::MainWindow::showUnanchoredSum()
 {
     Money sum;
-    for(int i = 0; i<m_data.logModel.unanchored; ++i) {
-        sum += m_data.logModel.log[i].amount;
+    for(int i = 0; i<m_models.logModel.m_data.unanchored; ++i) {
+        sum += m_models.logModel.m_data.log[i].amount;
     }
     ui->unanchoredSumLabel->setText(formatMoney(sum));
 
@@ -991,7 +995,7 @@ void cashbook::MainWindow::showPlansContextMenu(const QPoint& point)
         return;
     }
 
-    PlansModel &model = m_data.plans[termFrom];
+    PlansModel &model = m_models.plansModels[termFrom];
     auto index = table->indexAt(table->mapFromGlobal(point));
 
     if(!index.isValid()) {
@@ -1021,8 +1025,8 @@ void cashbook::MainWindow::showPlansContextMenu(const QPoint& point)
                 if(connections[term]) QObject::disconnect(*connections[term]);
             }
 
-            const Plan &plan = model.plans[index.row()];
-            m_data.plans[term].insertPlan(plan);
+            const Plan &plan = model.m_data.plans[index.row()];
+            m_models.plansModels[term].insertPlan(plan);
             model.removeRow(index.row());
         });
     };
@@ -1052,11 +1056,11 @@ void cashbook::MainWindow::on_actionEditNote_triggered()
         return;
     }
 
-    const Transaction &t = m_data.logModel.log[m_noteContextIndex.row()];
+    const Transaction &t = m_models.logModel.m_data.log[m_noteContextIndex.row()];
 
     QString note = getTextDialog(tr("Примечание"), tr("Примечание"), t.note, this);
     if(!note.isNull()) {
-        m_data.logModel.updateNote(m_noteContextIndex.row(), note);
+        m_models.logModel.updateNote(m_noteContextIndex.row(), note);
     }
 
     m_noteContextIndex = QModelIndex();
@@ -1075,7 +1079,7 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
         return;
     }
 
-    cashbook::SelectWalletDialog d(m_data.walletsModel, this);
+    cashbook::SelectWalletDialog d(m_models.walletsModel, this);
     const Node<Wallet> *node = nullptr;
     if(d.exec()) {
         node = d.getWalletNode();

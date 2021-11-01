@@ -1,10 +1,109 @@
 #ifndef BOOKKEEPING_H
 #define BOOKKEEPING_H
 
-#include "models.h"
+#include "basic_types.h"
+#include <set>
+#include <deque>
 
 namespace cashbook
 {
+
+struct Wallet : public Idable
+{
+    class Type
+    {
+    public:
+        enum t {
+            Common = 0,
+            Cash,
+            Card,
+            Account,
+            Deposit,
+            EMoney,
+        };
+
+        static QString toString(Type::t type);
+        static QString toConfigString(Type::t type);
+        static Type::t fromConfigString(const QString &str);
+        static QVector<Type::t> enumerate();
+    };
+
+    Wallet();
+    Wallet(const QString &n);
+    Wallet(const QString &n, Money a);
+
+    bool operator==(const Wallet &other) const;
+
+    Type::t type {Type::Common};
+    QString name;
+    ArchPointer<Owner> owner;
+    bool canBeNegative {false};
+    Money amount;
+};
+
+struct Category : public IdableString
+{
+    bool regular {false};
+
+    Category() : IdableString() {}
+    Category(const char *str) : IdableString(str) {}
+    Category(const QString &str) : IdableString(str) {}
+
+    void setName(const QString &name) {
+        IdableString::setString(name);
+    }
+};
+
+struct Transaction
+{
+    class Type
+    {
+    public:
+        enum t {
+            In = 0,
+            Out,
+            Transfer,
+        };
+
+        static QString toString(Type::t type);
+        static QString toConfigString(Type::t type);
+        static Type::t fromConfigString(const QString &str);
+        static QVector<Type::t> enumerate();
+    };
+
+    QDate date;
+    QString note;
+    Type::t type {Type::Out};
+    ArchNode<Category> category;
+    Money amount;
+    ArchNode<Wallet> from;
+    ArchNode<Wallet> to;
+};
+
+struct Plan
+{
+    QString name;
+    Transaction::Type::t type {Transaction::Type::Out};
+    ArchNode<Category> category;
+    Money amount;
+};
+
+struct Task
+{
+    Transaction::Type::t type {Transaction::Type::Out};
+    ArchNode<Category> category;
+    QDate from;
+    QDate to;
+    Money amount;
+    Money spent;
+    Money rest;
+};
+
+template <>
+QString extractPathString<Category>(const Node<Category> *node);
+
+template <>
+QString extractPathString<Wallet>(const Node<Wallet> *node);
 
 struct SpentReceived
 {
@@ -49,37 +148,6 @@ struct PlanTerm {
     }
 };
 
-struct Plans : public ChangeObservable {
-    Plans() {
-        setChangableItems({&m_shortPlans, &m_middlePlans, &m_longPlans});
-    }
-
-    const PlansModel &operator[](PlanTerm::t term) const {
-        switch(term) {
-            default:
-            case PlanTerm::Short: return m_shortPlans;
-            case PlanTerm::Middle: return m_middlePlans;
-            case PlanTerm::Long: return m_longPlans;
-        }
-    }
-
-    PlansModel &operator[](PlanTerm::t term) {
-        const Plans *const_this = const_cast<const Plans *>(this);
-        return const_cast<PlansModel &>( const_this->operator [](term) );
-    }
-
-    void clear() {
-        m_shortPlans.clear();
-        m_middlePlans.clear();
-        m_longPlans.clear();
-    }
-
-private:
-    PlansModel m_shortPlans;
-    PlansModel m_middlePlans;
-    PlansModel m_longPlans;
-};
-
 struct TaskStatus {
     enum t {
         Active = 0,
@@ -89,51 +157,117 @@ struct TaskStatus {
     };
 };
 
-struct Tasks : public ChangeObservable {
-    Tasks(const LogModel &log)
-        : m_active(log), m_completed(log)
-    {
-        setChangableItems({&m_active, &m_completed});
+class OwnersData : public Changable
+{
+public:
+
+    QVector<Owner> owners;
+};
+
+class WalletsData : public Changable
+{
+public:
+
+    Tree<Wallet> *rootItem {nullptr};
+};
+
+class CategoriesData : public Changable
+{
+public:
+
+    CategoriesData(CategoryMoneyMap &statistics)
+        : statistics(statistics)
+    {}
+
+    Tree<Category> *rootItem {nullptr};
+    CategoryMoneyMap &statistics;
+};
+
+class LogData : public Changable
+{
+public:
+
+    LogData(Statistics &statistics)
+        : statistics(statistics)
+    {}
+
+    void insertRow(int position);
+    void insertRows(int position, size_t rows);
+    bool copyTop();
+
+    bool canAnchore() const;
+    bool anchoreTransactions();
+    void appendTransactions(const std::vector<Transaction> &transactions);
+
+    void updateNote(size_t row, const QString &note);
+    void updateTask(Task &task) const;
+    bool normalizeData();
+
+    std::deque<Transaction> log;
+    Statistics &statistics;
+    int unanchored {0};
+    std::set<Month> changedMonths;
+};
+
+class PlansTermData : public Changable
+{
+public:
+
+    QVector<Plan> plans;
+};
+
+class PlansData : public ChangeObservable
+{
+public:
+
+    PlansData() {
+        setChangableItems({
+            &shortTerm,
+            &middleTerm,
+            &longTerm
+        });
     }
 
-    const TasksModel &operator[](TaskStatus::t status) const {
-        switch(status) {
-            default:
-            case TaskStatus::Active: return m_active;
-            case TaskStatus::Completed: return m_completed;
-        }
+    PlansTermData shortTerm;
+    PlansTermData middleTerm;
+    PlansTermData longTerm;
+};
+
+class TasksListsData : public Changable
+{
+public:
+
+    QVector<Task> tasks;
+};
+
+class TasksData : public ChangeObservable
+{
+public:
+
+    TasksData() {
+        setChangableItems({
+            &active,
+            &completed
+        });
     }
 
-    TasksModel &operator[](TaskStatus::t status) {
-        const Tasks *const_this = const_cast<const Tasks *>(this);
-        return const_cast<TasksModel &>( const_this->operator [](status) );
-    }
-
-    void clear() {
-        m_active.clear();
-        m_completed.clear();
-    }
-
-private:
-    TasksModel m_active;
-    TasksModel m_completed;
+    TasksListsData active;
+    TasksListsData completed;
 };
 
 class Data : public QObject, public ChangeObservable
 {
     Q_OBJECT
-
 public:
     Data();
 
-    OwnersModel ownersModel;
-    WalletsModel walletsModel;
-    CategoriesModel inCategoriesModel;
-    CategoriesModel outCategoriesModel;
-    LogModel logModel;
-    Plans plans;
-    Tasks tasks;
-    BriefModel briefModel;
+    OwnersData owners;
+    WalletsData wallets;
+    CategoriesData inCategories;
+    CategoriesData outCategories;
+    LogData log;
+    PlansData plans;
+    TasksData tasks;
 
     Statistics statistics;
 
@@ -143,41 +277,52 @@ public:
 
     void loadCategoriesStatistics(const QDate &from, const QDate &to);
     void updateTasks();
-    void updateTasks(TasksModel &tasks);
+    void updateTasks(TasksListsData &tasks);
     bool anchoreTransactions();
     void clear();
     void importReceiptFile(const QString &json, const Node<Wallet> *wallet);
+
+    void onOwnersRemove(QStringList paths);
+    void onInCategoriesRemove(QStringList paths);
+    void onOutCategoriesRemove(QStringList paths);
+    void onWalletsRemove(QStringList paths);
 
 signals:
     void categoriesStatisticsUpdated();
 
 private:
     template<class T, class Model>
-    Node<T> *nodeFromPath(const Model &model, const QString &path) {
-        QStringList l = path.split(pathConcat, Qt::KeepEmptyParts);
-        Node<T> *node = model.rootItem;
-        for(const auto &s : l) {
-            bool found = false;
-            for(const auto &child : node->children) {
-                if(extractPathString(child) == s) {
-                    node = child;
-                    found = true;
-                    break;
-                }
-            }
-            if(!found) {
-                return nullptr;
-            }
-        }
-        return node;
-    }
-
-    void onOwnersRemove(QStringList paths);
-    void onInCategoriesRemove(QStringList paths);
-    void onOutCategoriesRemove(QStringList paths);
-    void onWalletsRemove(QStringList paths);
+    Node<T> *nodeFromPath(const Model &model, const QString &path);
 };
 
+template<class T, class Model>
+Node<T> *Data::nodeFromPath(const Model &model, const QString &path) {
+    QStringList l = path.split(pathConcat, Qt::KeepEmptyParts);
+    Node<T> *node = model.rootItem;
+    for(const auto &s : l) {
+        bool found = false;
+        for(const auto &child : node->children) {
+            if(extractPathString(child) == s) {
+                node = child;
+                found = true;
+                break;
+            }
+        }
+        if(!found) {
+            return nullptr;
+        }
+    }
+    return node;
+}
+
 } // namespace cashbook
+
+Q_DECLARE_METATYPE(Node<cashbook::Wallet> *)
+Q_DECLARE_METATYPE(const Node<cashbook::Wallet> *)
+Q_DECLARE_METATYPE(cashbook::Category *)
+Q_DECLARE_METATYPE(const cashbook::Category *)
+Q_DECLARE_METATYPE(Node<cashbook::Category> *)
+Q_DECLARE_METATYPE(const Node<cashbook::Category> *)
+Q_DECLARE_METATYPE(cashbook::Transaction::Type::t)
 
 #endif // BOOKKEEPING_H

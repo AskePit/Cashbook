@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QEvent>
-#include "bookkeeping/bookkeeping.h"
+#include "bookkeeping/models.h"
 
 namespace Ui {
 class MainWindow;
@@ -149,7 +149,9 @@ protected:
 
 private:
     Ui::MainWindow *ui;
+
     Data &m_data;
+    DataModels m_models;
     ViewModelMap vm;
     ModelsDelegate m_modelsDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
