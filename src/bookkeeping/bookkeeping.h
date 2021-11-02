@@ -20,7 +20,7 @@ struct Wallet : public Idable
             Account,
             Deposit,
             Investment,
-            EMoney,
+            CryptoCurrency, // as usual wallet, not investment
             Points,
 
             Count
@@ -29,18 +29,56 @@ struct Wallet : public Idable
         static QString toString(Type::t type);
         static QString toConfigString(Type::t type);
         static Type::t fromConfigString(const QString &str);
-        static constexpr std::array<Type::t, Type::Count> enumerate();
+        static constexpr std::array<Type::t, Type::Count> enumerate() {
+            return {Common, Cash, Card, Account, Deposit, Investment, CryptoCurrency, Points};
+        }
+    };
+
+    class Availability
+    {
+    public:
+        enum t {
+            Free = 0,
+            InAMonth,
+            InAQarter,
+            InAYear,
+            In3Years,
+            In5Years,
+            In10Years,
+            In20Years,
+            AfterRetirement,
+            ForFutureGenerations,
+
+            Count
+        };
+
+        static QString toString(Availability::t type);
+        static QString toConfigString(Availability::t type);
+        static Availability::t fromConfigString(const QString &str);
+        static constexpr std::array<Availability::t, Availability::Count> enumerate() {
+            return { Free,
+                     InAMonth,
+                     InAQarter,
+                     InAYear,
+                     In3Years,
+                     In5Years,
+                     In10Years,
+                     In20Years,
+                     AfterRetirement,
+                     ForFutureGenerations
+            };
+        }
     };
 
     struct Info
     {
         ArchPointer<Owner> owner;
         bool canBeNegative {false};
+        Availability::t availability {Availability::Free};
     };
 
     struct CashInfo : public Info
     {
-
     };
 
     struct AccountInfo : public Info
@@ -55,7 +93,6 @@ struct Wallet : public Idable
     struct DepositInfo : public AccountInfo
     {
         float incomePercent {0.0f};
-        QDate expirationDate;
     };
 
     struct InvestmentInfo : public Info
@@ -68,6 +105,7 @@ struct Wallet : public Idable
                 Currency,
                 Stocks,
                 Metals,
+                CryptoCurrency, // as investment, not usual wallet
                 RealEstate,
 
                 Count
@@ -76,21 +114,21 @@ struct Wallet : public Idable
             static QString toString(Type::t type);
             static QString toConfigString(Type::t type);
             static Type::t fromConfigString(const QString &str);
-            static constexpr std::array<Type::t, Type::Count> enumerate();
+            static constexpr std::array<Type::t, Type::Count> enumerate() {
+                return {Common, Currency, Stocks, Metals, CryptoCurrency, RealEstate};
+            }
         };
 
         Type::t type;
         std::optional<AccountInfo> account;
     };
 
-    struct EMoneyInfo : public Info
+    struct CryptoCurrencyInfo : public Info
     {
-        QString moneyName;
     };
 
     struct PointsInfo : public Info
     {
-        QString serviceName;
     };
 
     Wallet();
@@ -135,7 +173,9 @@ struct Transaction
         static QString toString(Type::t type);
         static QString toConfigString(Type::t type);
         static Type::t fromConfigString(const QString &str);
-        static constexpr std::array<Type::t, Type::Count> enumerate();
+        static constexpr std::array<Type::t, Type::Count> enumerate() {
+            return {In, Out, Transfer};
+        }
     };
 
     QDate date;

@@ -6,6 +6,7 @@
 #include "bookkeeping/bookkeeping.h"
 #include "bookkeeping/serialization.h"
 #include "selectwalletdialog.h"
+#include "walletpropertieswindow.h"
 
 #include <QFileDialog>
 #include <QFileInfo>
@@ -163,7 +164,7 @@ void MainWindow::preLoadSetup()
             /* .view =        */ ui->walletsTree,
             /* .model =       */ &m_models.walletsModel,
             /* .delegate =    */ nullptr,
-            /* .contextMenu = */ nullptr,
+            /* .contextMenu = */ bindToThis(&MainWindow::showWalletContextMenu),
         },
         {
             /* .view =        */ ui->logTable,
@@ -340,6 +341,25 @@ void MainWindow::saveData()
 {
     cashbook::save(m_data);
     m_data.resetChanged();
+}
+
+
+void MainWindow::on_actionWalletProperties_triggered()
+{
+    QModelIndex index = ui->walletsTree->currentIndex();
+    Node<Wallet> *node = m_models.walletsModel.getItem(index);
+    if(!node) {
+        return;
+    }
+
+    if(!node->isLeaf()) {
+        return;
+    }
+
+    cashbook::WalletPropertiesWindow d(node->data, m_data.owners, m_data.banks, this);
+    if(d.exec()) {
+        m_data.wallets.setChanged();
+    }
 }
 
 } // namespace cashbook
@@ -1041,6 +1061,25 @@ void cashbook::MainWindow::showPlansContextMenu(const QPoint& point)
         connectionAction(PlanTerm::Long);
     }
     menu.exec(point);
+}
+
+void cashbook::MainWindow::showWalletContextMenu(const QPoint& point)
+{
+    QPoint globalPos = ui->walletsTree->mapToGlobal(point);
+    auto index = ui->walletsTree->indexAt(point);
+
+    const Node<cashbook::Wallet> *node = m_models.walletsModel.getItem(index);
+    if(!node) {
+        return;
+    }
+
+    if(!node->isLeaf()) {
+        return;
+    }
+
+    QMenu menu(ui->walletsTree);
+    menu.addAction(ui->actionWalletProperties);
+    menu.exec(globalPos);
 }
 
 static QString getTextDialog(const QString &title, const QString &message, const QString &text, QWidget *parent)

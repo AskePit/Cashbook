@@ -470,7 +470,6 @@ QToolButton:hover:!checked {
                 <widget class="QLabel" name="label">
                  <property name="font">
                   <font>
-                   <family>Segoe UI</family>
                    <pointsize>10</pointsize>
                   </font>
                  </property>
@@ -714,7 +713,7 @@ QToolButton:hover:!checked {
                 <bool>false</bool>
                </attribute>
                <attribute name="verticalHeaderDefaultSectionSize">
-                <number>23</number>
+                <number>24</number>
                </attribute>
               </widget>
              </item>
@@ -734,7 +733,6 @@ QToolButton:hover:!checked {
                 <widget class="QLabel" name="label_8">
                  <property name="font">
                   <font>
-                   <family>Segoe UI</family>
                    <pointsize>10</pointsize>
                   </font>
                  </property>
@@ -851,7 +849,7 @@ QToolButton:hover:!checked {
                 <bool>false</bool>
                </attribute>
                <attribute name="verticalHeaderDefaultSectionSize">
-                <number>21</number>
+                <number>24</number>
                </attribute>
               </widget>
              </item>
@@ -882,7 +880,6 @@ QToolButton:hover:!checked {
                 <widget class="QLabel" name="label_2">
                  <property name="font">
                   <font>
-                   <family>Segoe UI</family>
                    <pointsize>10</pointsize>
                   </font>
                  </property>
@@ -1060,6 +1057,9 @@ QToolButton:hover:!checked {
              </item>
              <item>
               <widget class="QTreeView" name="walletsTree">
+               <property name="contextMenuPolicy">
+                <enum>Qt::CustomContextMenu</enum>
+               </property>
                <property name="styleSheet">
                 <string notr="true">QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
     background: white;
@@ -1280,7 +1280,6 @@ QTreeView::item { height: 18px;}</string>
                <widget class="QLabel" name="label_3">
                 <property name="font">
                  <font>
-                  <family>Segoe UI</family>
                   <pointsize>10</pointsize>
                  </font>
                 </property>
@@ -1437,7 +1436,6 @@ QTreeView::item { height: 18px;}</string>
                 </property>
                 <property name="font">
                  <font>
-                  <family>Segoe UI</family>
                   <pointsize>9</pointsize>
                  </font>
                 </property>
@@ -1523,7 +1521,6 @@ QTreeView::item { height: 18px;}</string>
                 </property>
                 <property name="font">
                  <font>
-                  <family>Segoe UI</family>
                   <pointsize>9</pointsize>
                  </font>
                 </property>
@@ -1566,7 +1563,6 @@ QTreeView::item { height: 18px;}</string>
                <widget class="QLabel" name="label_4">
                 <property name="font">
                  <font>
-                  <family>Segoe UI</family>
                   <pointsize>10</pointsize>
                  </font>
                 </property>
@@ -1871,7 +1867,6 @@ QTreeView::item { height: 18px;}</string>
                 </property>
                 <property name="font">
                  <font>
-                  <family>Segoe UI</family>
                   <pointsize>9</pointsize>
                  </font>
                 </property>
@@ -1957,7 +1952,6 @@ QTreeView::item { height: 18px;}</string>
                 </property>
                 <property name="font">
                  <font>
-                  <family>Segoe UI</family>
                   <pointsize>9</pointsize>
                  </font>
                 </property>
@@ -2333,9 +2327,7 @@ QTreeView::item { height: 18px;}</string>
                   </size>
                  </property>
                  <property name="font">
-                  <font>
-                   <family>Segoe UI</family>
-                  </font>
+                  <font/>
                  </property>
                  <property name="text">
                   <string>Текущие</string>
@@ -2710,7 +2702,7 @@ QTreeView::item { height: 18px;}</string>
                <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderDefaultSectionSize">
-               <number>23</number>
+               <number>24</number>
               </attribute>
              </widget>
             </item>
@@ -2747,9 +2739,7 @@ QTreeView::item { height: 18px;}</string>
                   </size>
                  </property>
                  <property name="font">
-                  <font>
-                   <family>Segoe UI</family>
-                  </font>
+                  <font/>
                  </property>
                  <property name="text">
                   <string>Завершенные</string>
@@ -2943,7 +2933,7 @@ QTreeView::item { height: 18px;}</string>
                <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderDefaultSectionSize">
-               <number>23</number>
+               <number>24</number>
               </attribute>
              </widget>
             </item>
@@ -3018,9 +3008,7 @@ QTreeView::item { height: 18px;}</string>
                   </size>
                  </property>
                  <property name="font">
-                  <font>
-                   <family>Segoe UI</family>
-                  </font>
+                  <font/>
                  </property>
                  <property name="text">
                   <string>Краткосрочные</string>
@@ -3398,7 +3386,7 @@ QTreeView::item { height: 18px;}</string>
                <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderDefaultSectionSize">
-               <number>23</number>
+               <number>24</number>
               </attribute>
              </widget>
             </item>
@@ -3435,9 +3423,7 @@ QTreeView::item { height: 18px;}</string>
                   </size>
                  </property>
                  <property name="font">
-                  <font>
-                   <family>Segoe UI</family>
-                  </font>
+                  <font/>
                  </property>
                  <property name="text">
                   <string>Среднесрочные</string>
@@ -3815,7 +3801,7 @@ QTreeView::item { height: 18px;}</string>
                <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderDefaultSectionSize">
-               <number>23</number>
+               <number>24</number>
               </attribute>
              </widget>
             </item>
@@ -3852,9 +3838,7 @@ QTreeView::item { height: 18px;}</string>
                   </size>
                  </property>
                  <property name="font">
-                  <font>
-                   <family>Segoe UI</family>
-                  </font>
+                  <font/>
                  </property>
                  <property name="text">
                   <string>Долгосрочные</string>
@@ -4232,7 +4216,7 @@ QTreeView::item { height: 18px;}</string>
                <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderDefaultSectionSize">
-               <number>23</number>
+               <number>24</number>
               </attribute>
              </widget>
             </item>
@@ -4265,7 +4249,7 @@ QTreeView::item { height: 18px;}</string>
      <x>0</x>
      <y>0</y>
      <width>1114</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -4294,7 +4278,7 @@ QTreeView::item { height: 18px;}</string>
     <string>Сохранить</string>
    </property>
    <property name="toolTip">
-    <string>Save</string>
+    <string>Сохранить</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -4305,7 +4289,7 @@ QTreeView::item { height: 18px;}</string>
     <string>Выписка</string>
    </property>
    <property name="toolTip">
-    <string>Statement</string>
+    <string>Выписка</string>
    </property>
   </action>
   <action name="actionInStatement">
@@ -4313,7 +4297,7 @@ QTreeView::item { height: 18px;}</string>
     <string>Выписка</string>
    </property>
    <property name="toolTip">
-    <string>Statement</string>
+    <string>Выписка</string>
    </property>
   </action>
   <action name="actionEditNote">
@@ -4355,6 +4339,14 @@ QTreeView::item { height: 18px;}</string>
    </property>
    <property name="text">
     <string>Импортировать чек</string>
+   </property>
+  </action>
+  <action name="actionWalletProperties">
+   <property name="text">
+    <string>Свойства</string>
+   </property>
+   <property name="toolTip">
+    <string>Свойства</string>
    </property>
   </action>
  </widget>

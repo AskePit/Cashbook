@@ -113,8 +113,8 @@ private slots:
     void on_actionInStatement_triggered();
     void on_actionOutStatement_triggered();
     void on_actionEditNote_triggered();
-
     void on_actionImportReceipt_triggered();
+    void on_actionWalletProperties_triggered();
 
 private:
     void preLoadSetup();
@@ -143,6 +143,7 @@ private:
     void showMiddlePlansMenu(const QPoint& point);
     void showLongPlansMenu(const QPoint& point);
     void showPlansContextMenu(const QPoint& point);
+    void showWalletContextMenu(const QPoint& point);
 
 protected:
     void closeEvent(QCloseEvent *event);

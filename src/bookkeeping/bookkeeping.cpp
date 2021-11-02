@@ -6,26 +6,34 @@ namespace cashbook
 
 QString Wallet::Type::toString(Type::t type) {
     switch(type) {
-        default:
+        case Count:
         case Common: return QObject::tr("Общий");
         case Cash: return QObject::tr("Наличные");
         case Card: return QObject::tr("Карта");
         case Account: return QObject::tr("Счет");
         case Deposit: return QObject::tr("Вклад");
-        case EMoney: return QObject::tr("Эл. деньги");
+        case Investment: return QObject::tr("Инвестиции");
+        case CryptoCurrency: return QObject::tr("Криптовалюта");
+        case Points: return QObject::tr("Баллы");
     }
+
+    return QString();
 }
 
 QString Wallet::Type::toConfigString(Type::t type) {
     switch(type) {
-        default:
+        case Count:
         case Common: return QStringLiteral("Common");
         case Cash: return QStringLiteral("Cash");
         case Card: return QStringLiteral("Card");
         case Account: return QStringLiteral("Account");
         case Deposit: return QStringLiteral("Deposit");
-        case EMoney: return QStringLiteral("EMoney");
+        case Investment: return QObject::tr("Investment");
+        case CryptoCurrency: return QStringLiteral("CryptoCurrency");
+        case Points: return QObject::tr("Points");
     }
+
+    return QString();
 }
 
 Wallet::Type::t Wallet::Type::fromConfigString(const QString &str) {
@@ -39,39 +47,110 @@ Wallet::Type::t Wallet::Type::fromConfigString(const QString &str) {
         return Account;
     } else if(str == "Deposit") {
         return Deposit;
-    } else if(str == "EMoney") {
-        return EMoney;
+    } else if(str == "Investment") {
+        return Investment;
+    } else if(str == "CryptoCurrency") {
+        return CryptoCurrency;
+    } else if(str == "Points") {
+        return Points;
     } else {
         return Common;
     }
 }
 
-constexpr std::array<Wallet::Type::t, Wallet::Type::Count> Wallet::Type::enumerate() {
-    return {Common, Cash, Card, Account, Deposit, EMoney};
+QString Wallet::Availability::toString(Availability::t type)
+{
+    switch(type) {
+        case Count:
+        case Free: return QObject::tr("Свободные");
+        case InAMonth: return QObject::tr("В течении месяца");
+        case InAQarter: return QObject::tr("В течении сезона");
+        case InAYear: return QObject::tr("Год");
+        case In3Years: return QObject::tr("3 года");
+        case In5Years: return QObject::tr("5 лет");
+        case In10Years: return QObject::tr("10 лет");
+        case In20Years: return QObject::tr("20 лет");
+        case AfterRetirement: return QObject::tr("После пенсии");
+        case ForFutureGenerations: return QObject::tr("Будущим поколениям");
+    }
+
+    return QString();
+}
+
+QString Wallet::Availability::toConfigString(Availability::t type)
+{
+    switch(type) {
+        case Count:
+        case Free: return QStringLiteral("Free");
+        case InAMonth: return QStringLiteral("InAMonth");
+        case InAQarter: return QStringLiteral("InAQarter");
+        case InAYear: return QStringLiteral("InAYear");
+        case In3Years: return QStringLiteral("In3Years");
+        case In5Years: return QStringLiteral("In5Years");
+        case In10Years: return QStringLiteral("In10Years");
+        case In20Years: return QStringLiteral("In20Years");
+        case AfterRetirement: return QStringLiteral("AfterRetirement");
+        case ForFutureGenerations: return QStringLiteral("ForFutureGenerations");
+    }
+
+    return QString();
+}
+
+Wallet::Availability::t Wallet::Availability::fromConfigString(const QString &str)
+{
+    if(str == "Free") {
+        return Free;
+    } else if(str == "InAMonth") {
+        return InAMonth;
+    } else if(str == "InAQarter") {
+        return InAQarter;
+    } else if(str == "InAYear") {
+        return InAYear;
+    } else if(str == "In3Years") {
+        return In3Years;
+    } else if(str == "In5Years") {
+        return In5Years;
+    } else if(str == "In10Years") {
+        return In10Years;
+    } else if(str == "In20Years") {
+        return In20Years;
+    } else if(str == "AfterRetirement") {
+        return AfterRetirement;
+    } else if(str == "ForFutureGenerations") {
+        return ForFutureGenerations;
+    } else {
+        return Free;
+    }
 }
 
 QString Wallet::InvestmentInfo::Type::toString(Type::t type)
 {
     switch(type) {
-        default:
+        case Count:
         case Common: return QObject::tr("Общий");
         case Currency: return QObject::tr("Валюта");
         case Stocks: return QObject::tr("Акции");
         case Metals: return QObject::tr("Металлы");
+        case CryptoCurrency: return QObject::tr("Криптовалюта");
         case RealEstate: return QObject::tr("Недвжимость");
     }
+
+    return QString();
 }
 
 QString Wallet::InvestmentInfo::Type::toConfigString(Type::t type)
 {
     switch(type) {
-        default:
+        case Count:
         case Common: return QStringLiteral("Common");
         case Currency: return QStringLiteral("Currency");
         case Stocks: return QStringLiteral("Stocks");
         case Metals: return QStringLiteral("Metals");
+        case CryptoCurrency: return QStringLiteral("CryptoCurrency");
         case RealEstate: return QStringLiteral("RealEstate");
     }
+
+    return QString();
 }
 
 Wallet::InvestmentInfo::Type::t Wallet::InvestmentInfo::Type::fromConfigString(const QString &str)
@@ -84,16 +163,13 @@ Wallet::InvestmentInfo::Type::t Wallet::InvestmentInfo::Type::fromConfigString(c
         return Stocks;
     } else if(str == "Metals") {
         return Metals;
+    } else if(str == "CryptoCurrency") {
+        return CryptoCurrency;
     } else if(str == "RealEstate") {
         return RealEstate;
     } else {
         return Common;
     }
-}
-
-constexpr std::array<Wallet::InvestmentInfo::Type::t, Wallet::InvestmentInfo::Type::Count> Wallet::InvestmentInfo::Type::enumerate()
-{
-    return {Common, Currency, Stocks, Metals, RealEstate};
 }
 
 Wallet::Wallet()
@@ -144,10 +220,6 @@ Transaction::Type::t Transaction::Type::fromConfigString(const QString &str) {
     } else {
         return Out;
     }
-}
-
-constexpr std::array<Transaction::Type::t, Transaction::Type::Count> Transaction::Type::enumerate() {
-    return {In, Out, Transfer};
 }
 
 template <>
@@ -683,7 +755,7 @@ void Data::onOwnersRemove(QStringList paths)
         if(owner.isValidPointer()) {
             QString name = *owner.toPointer();
             if(paths.contains(name)) {
-                owner = name; // invalidate ArchPointer by assigning QString to it.
+                owner = ArchiveString(name); // invalidate ArchPointer by assigning QString to it.
             }
         }
     }
@@ -695,7 +767,7 @@ static void invalidateArchNode(ArchNode<DataType> &archNode, const QStringList &
     if(archNode.isValidPointer()) {
         QString path = pathToString(archNode.toPointer());
         if(paths.contains(path)) {
-            archNode = path; // invalidate ArchPointer by assigning QString to it.
+            archNode = ArchiveString(path); // invalidate ArchPointer by assigning QString to it.
         }
     }
 }

@@ -55,6 +55,21 @@ public:
 using Owner = IdableString;
 using Bank = IdableString;
 
+class ArchiveString
+{
+public:
+    explicit ArchiveString(const QString& str)
+        : m_str(str)
+    {}
+
+    const QString& get() const {
+        return m_str;
+    }
+
+private:
+    QString m_str;
+};
+
 /**
  * @brief Archiveable pointer.
  * @details Wrapper around existing pointer OR archived nonexisting one.
@@ -79,8 +94,8 @@ public:
         : QVariant(QVariant::fromValue<const T*>(node))
     {}
 
-    ArchPointer(const QString &str)
-        : QVariant(QVariant::fromValue<QString>(str))
+    ArchPointer(const ArchiveString &str)
+        : QVariant(QVariant::fromValue<QString>(str.get()))
     {}
 
     ArchPointer &operator =(const T *node)
@@ -89,9 +104,9 @@ public:
         return *this;
     }
 
-    ArchPointer &operator =(const QString &str)
+    ArchPointer &operator =(const ArchiveString &str)
     {
-        this->QVariant::operator =(str);
+        this->QVariant::operator =(str.get());
         return *this;
     }
 
@@ -101,6 +116,10 @@ public:
 
     bool isValidPointer() const {
         return canConvert<const T*>();
+    }
+
+    bool isNullPointer() const {
+        return isValidPointer() && toPointer() == nullptr;
     }
 
     bool isArchived() const {
