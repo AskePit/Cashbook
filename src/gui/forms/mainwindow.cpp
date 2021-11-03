@@ -118,7 +118,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_data(data)
     , m_models(data)
     , m_modelsDelegate(m_models)
-    , m_walletAnalytics(data)
+    , m_walletAnalytics(data, this)
 {
     preLoadSetup();
     loadData();

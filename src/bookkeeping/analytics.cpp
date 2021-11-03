@@ -6,10 +6,10 @@
 namespace cashbook
 {
 
-WalletsAnalytics::WalletsAnalytics(const Data& data)
-    : m_chart()
-    , m_series(&m_chart)
-    , m_view(&m_chart)
+WalletsAnalytics::WalletsAnalytics(const Data& data, QWidget* parent)
+    : m_chart(new QChart())
+    , m_series(new QPieSeries(parent))
+    , m_view(new QChartView(m_chart, parent))
     , m_data(data)
 {
 }
@@ -59,16 +59,16 @@ void WalletsAnalytics::initUi(Ui::MainWindow* ui)
 
     /*m_m_series->setPieStartAngle(-90);
     m_m_series->setPieEndAngle(90);*/
-    m_series.setPieSize(0.7);
-    m_series.setHoleSize(0.3);
-    m_chart.addSeries(&m_series);
-    m_chart.legend()->hide();
-    m_chart.setTheme(QChart::ChartThemeBrownSand);
-    m_chart.setBackgroundBrush(QBrush(Qt::white));
+    m_series->setPieSize(0.7);
+    m_series->setHoleSize(0.3);
+    m_chart->addSeries(m_series);
+    m_chart->legend()->hide();
+    m_chart->setTheme(QChart::ChartThemeBrownSand);
+    m_chart->setBackgroundBrush(QBrush(Qt::white));
 
-    m_view.setRenderHint(QPainter::Antialiasing, true);
+    m_view->setRenderHint(QPainter::Antialiasing, true);
 
-    ui->walletsAnalysisTabLayout->addWidget(&m_view);
+    ui->walletsAnalysisTabLayout->addWidget(m_view);
 }
 
 void WalletsAnalytics::updateAnalytics()
@@ -97,7 +97,7 @@ void WalletsAnalytics::updateAnalytics()
         }
     }
 
-    m_series.clear();
+    m_series->clear();
 
     std::map<QString, Money> data;
 
@@ -203,18 +203,18 @@ void WalletsAnalytics::updateAnalytics()
         const double amount = static_cast<double>(money);
         const double percent = amount/static_cast<double>(sum)*100.0f;
 
-        QPieSlice* slice = m_series.append(
+        QPieSlice* slice = m_series->append(
             QString("%1 %2%<br>%3").arg(bank, formatPercent(percent), formatMoney(money)),
             amount
         );
         Q_UNUSED(slice);
     }
 
-    m_chart.setTitleFont(QFont("Segoe UI", 12));
-    m_chart.setTitle(QObject::tr("Общая сумма:<br>%1").arg(formatMoney(sum)));
+    m_chart->setTitleFont(QFont("Segoe UI", 12));
+    m_chart->setTitle(QObject::tr("Общая сумма:<br>%1").arg(formatMoney(sum)));
 
-    m_series.setLabelsVisible(true);
-    m_series.setLabelsPosition(QPieSlice::LabelOutside);
+    m_series->setLabelsVisible(true);
+    m_series->setLabelsPosition(QPieSlice::LabelOutside);
 }
 
 } // namespace cashbook

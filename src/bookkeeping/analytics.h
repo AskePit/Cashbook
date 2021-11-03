@@ -30,15 +30,15 @@ public:
         };
     };
 
-    WalletsAnalytics(const Data& data);
+    WalletsAnalytics(const Data& data, QWidget* parent = nullptr);
     void initUi(Ui::MainWindow* ui);
 
     void updateAnalytics();
 
-private:    
-    QChart m_chart;
-    QPieSeries m_series;
-    QChartView m_view;
+private:
+    QChart* m_chart;
+    QPieSeries* m_series;
+    QChartView* m_view;
 
     const Data& m_data;
 
