@@ -72,6 +72,8 @@ struct Wallet : public Idable
 
     struct Info
     {
+        virtual ~Info() {}
+
         ArchPointer<Owner> owner;
         bool canBeNegative {false};
         Availability::t availability {Availability::Free};

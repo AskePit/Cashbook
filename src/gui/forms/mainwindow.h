@@ -1,9 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "bookkeeping/models.h"
+
 #include <QMainWindow>
 #include <QEvent>
-#include "bookkeeping/models.h"
+#include <QtCharts/QChartView>
+#include <QtCharts/QPieSeries>
+#include <QtCharts/QPieSlice>
 
 namespace Ui {
 class MainWindow;
@@ -38,6 +42,16 @@ public:
 
 signals:
     void mouseClicked(QWidget *watched);
+};
+
+struct WalletsAnalytics
+{
+    WalletsAnalytics();
+    void initUi(Ui::MainWindow* ui, const Data& data);
+
+    QChart chart;
+    QPieSeries series;
+    QChartView view;
 };
 
 class MainWindow : public QMainWindow
@@ -104,6 +118,7 @@ private slots:
     void on_mainButton_clicked();
     void on_categoriesButton_clicked();
     void on_plansButton_clicked();
+    void on_statisticsButton_clicked();
 
     void on_thisMonthButton_clicked();
     void on_thisYearButton_clicked();
@@ -115,6 +130,12 @@ private slots:
     void on_actionEditNote_triggered();
     void on_actionImportReceipt_triggered();
     void on_actionWalletProperties_triggered();
+
+    void on_walletsAnalysisCriteriaCombo_currentIndexChanged(int index);
+    void on_walletsAnalysisOwnerCombo_currentIndexChanged(int index);
+    void on_walletsAnalysisAvailabilityFromCombo_currentIndexChanged(int index);
+    void on_walletsAnalysisAvailabilityToCombo_currentIndexChanged(int index);
+    void on_walletsAnalysisBankCombo_currentIndexChanged(int index);
 
 private:
     void preLoadSetup();
@@ -145,6 +166,8 @@ private:
     void showPlansContextMenu(const QPoint& point);
     void showWalletContextMenu(const QPoint& point);
 
+    void updateAnalytics();
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -153,12 +176,14 @@ private:
 
     Data &m_data;
     DataModels m_models;
-    ViewModelMap vm;
     ModelsDelegate m_modelsDelegate;
     CategoriesViewEventFilter m_categoriesEventFilter;
     ClickFilter m_clickFilter;
 
     QModelIndex m_noteContextIndex;
+
+    // analytics
+    WalletsAnalytics m_walletAnalytics;
 };
 
 } // namespace cashbook
