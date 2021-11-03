@@ -373,18 +373,18 @@ void MainWindow::on_walletsAnalysisCriteriaCombo_currentIndexChanged(int)
 {
     WalletsAnalytics::Type::t criteria = static_cast<WalletsAnalytics::Type::t>(ui->walletsAnalysisCriteriaCombo->currentIndex());
 
-    ui->walletsAnalysisOwnerLabel->setVisible(criteria != WalletsAnalytics::Type::Owners);
-    ui->walletsAnalysisOwnerCombo->setVisible(criteria != WalletsAnalytics::Type::Owners);
+    ui->walletsAnalysisOwnerLabel->setEnabled(criteria != WalletsAnalytics::Type::Owners);
+    ui->walletsAnalysisOwnerCombo->setEnabled(criteria != WalletsAnalytics::Type::Owners);
 
-    ui->walletsAnalysisBankLabel->setVisible(criteria != WalletsAnalytics::Type::Banks);
-    ui->walletsAnalysisBankCombo->setVisible(criteria != WalletsAnalytics::Type::Banks);
+    ui->walletsAnalysisBankLabel->setEnabled(criteria != WalletsAnalytics::Type::Banks);
+    ui->walletsAnalysisBankCombo->setEnabled(criteria != WalletsAnalytics::Type::Banks);
 
-    ui->walletsAnalysisAvailabilityLabel->setVisible(criteria != WalletsAnalytics::Type::Availability);
-    ui->walletsAnalysisAvailabilityFromCombo->setVisible(criteria != WalletsAnalytics::Type::Availability);
-    ui->walletsAnalysisAvailabilityToCombo->setVisible(criteria != WalletsAnalytics::Type::Availability);
+    ui->walletsAnalysisAvailabilityLabel->setEnabled(criteria != WalletsAnalytics::Type::Availability);
+    ui->walletsAnalysisAvailabilityFromCombo->setEnabled(criteria != WalletsAnalytics::Type::Availability);
+    ui->walletsAnalysisAvailabilityToCombo->setEnabled(criteria != WalletsAnalytics::Type::Availability);
 
-    ui->walletsAnalysisMoneyTypeLabel->setVisible(criteria != WalletsAnalytics::Type::MoneyType);
-    ui->walletsAnalysisMoneyTypeCombo->setVisible(criteria != WalletsAnalytics::Type::MoneyType);
+    ui->walletsAnalysisMoneyTypeLabel->setEnabled(criteria != WalletsAnalytics::Type::MoneyType);
+    ui->walletsAnalysisMoneyTypeCombo->setEnabled(criteria != WalletsAnalytics::Type::MoneyType);
 
     const bool wasAllowed = m_allowAnalyticsUpdate;
     m_allowAnalyticsUpdate = false;
@@ -396,7 +396,7 @@ void MainWindow::on_walletsAnalysisCriteriaCombo_currentIndexChanged(int)
         ui->walletsAnalysisAvailabilityToCombo,
         ui->walletsAnalysisMoneyTypeCombo
     }) {
-        if(!combo->isVisible()) {
+        if(!combo->isEnabled()) {
             combo->setCurrentIndex(combo->count() - 1);
         }
     }

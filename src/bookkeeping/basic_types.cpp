@@ -135,4 +135,25 @@ QString formatMoney(const Money &money, bool symbol /*= true*/)
     }
 }
 
+QString formatPercent(double percent)
+{
+    QString percentStr = QString::number(percent, 'f', 2);
+    while(percentStr.size()) {
+        const bool noDot = percentStr.indexOf('.') == -1;
+        const bool noComma = percentStr.indexOf(',') == -1;
+        if(noDot && noComma) {
+            break;
+        }
+
+        QChar ch = percentStr[percentStr.size() - 1];
+        if(ch == '0' || ch == '.' || ch == ',') {
+            percentStr.chop(1);
+        } else {
+            break;
+        }
+    }
+
+    return percentStr;
+}
+
 } // namespace cashbook

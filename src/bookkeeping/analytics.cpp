@@ -195,14 +195,23 @@ void WalletsAnalytics::updateAnalytics()
 
     Money sum;
 
-    for (auto&& [bank, money] : dataSorted) {
+    for (auto&& [_, money] : dataSorted) {
         sum += money;
+    }
+
+    for (auto&& [bank, money] : dataSorted) {
         const double amount = static_cast<double>(money);
-        QPieSlice* slice = m_series.append(QString("%1<br>%2").arg(bank, formatMoney(money)), amount);
+        const double percent = amount/static_cast<double>(sum)*100.0f;
+
+        QPieSlice* slice = m_series.append(
+            QString("%1 %2%<br>%3").arg(bank, formatPercent(percent), formatMoney(money)),
+            amount
+        );
         Q_UNUSED(slice);
     }
 
-    m_chart.setTitle(QObject::tr("Распределение денег: %1<br>%2").arg(m_criteriaCombo->currentText(), formatMoney(sum)));
+    m_chart.setTitleFont(QFont("Segoe UI", 12));
+    m_chart.setTitle(QObject::tr("Общая сумма:<br>%1").arg(formatMoney(sum)));
 
     m_series.setLabelsVisible(true);
     m_series.setLabelsPosition(QPieSlice::LabelOutside);

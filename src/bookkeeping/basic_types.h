@@ -207,6 +207,7 @@ QString archNodeToShortString(ArchNode<T> arch)
 }
 
 QString formatMoney(const Money &money, bool symbol = true);
+QString formatPercent(double percent);
 
 /**
  * @brief The AbstractChangable interface.
