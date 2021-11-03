@@ -24,6 +24,7 @@ void WalletsAnalytics::initUi(Ui::MainWindow* ui)
     m_bankCombo = ui->walletsAnalysisBankCombo;
     m_availabilityFromCombo = ui->walletsAnalysisAvailabilityFromCombo;
     m_availabilityToCombo = ui->walletsAnalysisAvailabilityToCombo;
+    m_moneyTypeCombo = ui->walletsAnalysisMoneyTypeCombo;
 
     for(const Owner& owner : m_data.owners.owners) {
         m_ownerCombo->addItem(owner);
@@ -34,13 +35,12 @@ void WalletsAnalytics::initUi(Ui::MainWindow* ui)
     for(const Bank& bank : m_data.banks.banks) {
         m_bankCombo->addItem(bank);
     }
-    m_bankCombo->addItem(AllOption);
     m_bankCombo->addItem(NoBankOption);
+    m_bankCombo->addItem(AllOption);
     m_bankCombo->setCurrentText(AllOption);
 
-
-    for(cashbook::Wallet::Availability::t t : cashbook::Wallet::Availability::enumerate()) {
-        QString name = cashbook::Wallet::Availability::toString(t);
+    for(Wallet::Availability::t t : Wallet::Availability::enumerate()) {
+        QString name = Wallet::Availability::toString(t);
 
         m_availabilityFromCombo->addItem(name, t);
         m_availabilityToCombo->addItem(name, t);
@@ -49,6 +49,13 @@ void WalletsAnalytics::initUi(Ui::MainWindow* ui)
     m_availabilityFromCombo->setCurrentText(AllOption);
     m_availabilityToCombo->addItem(AllOption);
     m_availabilityToCombo->setCurrentText(AllOption);
+
+    for(Wallet::Type::t t : Wallet::Type::enumerate()) {
+        QString name = Wallet::Type::toString(t);
+        m_moneyTypeCombo->addItem(name, t);
+    }
+    m_moneyTypeCombo->addItem(AllOption);
+    m_moneyTypeCombo->setCurrentText(AllOption);
 
     /*m_m_series->setPieStartAngle(-90);
     m_m_series->setPieEndAngle(90);*/
@@ -68,20 +75,21 @@ void WalletsAnalytics::updateAnalytics()
 {
     QString ownerFilter = m_ownerCombo->currentText();
     QString bankFilter = m_bankCombo->currentText();
-    auto availFromFilter = static_cast<cashbook::Wallet::Availability::t>(m_availabilityFromCombo->currentIndex());
-    auto availToFilter = static_cast<cashbook::Wallet::Availability::t>(m_availabilityToCombo->currentIndex());
+    auto availFromFilter = static_cast<Wallet::Availability::t>(m_availabilityFromCombo->currentIndex());
+    auto availToFilter = static_cast<Wallet::Availability::t>(m_availabilityToCombo->currentIndex());
+    auto moneyTypeFilter = static_cast<Wallet::Type::t>(m_moneyTypeCombo->currentIndex());
 
     const bool allOwners = (ownerFilter == AllOption);
     const bool allBanks = (bankFilter == AllOption);
-    const bool allAvail = (availFromFilter == cashbook::Wallet::Availability::Count && availToFilter == cashbook::Wallet::Availability::Count);
-    const bool noBank = (bankFilter == NoBankOption);
+    const bool allAvail = (availFromFilter == Wallet::Availability::Count && availToFilter == Wallet::Availability::Count);
+    const bool allMoneyTypes = (moneyTypeFilter == Wallet::Type::Count);
 
     if(!allAvail) {
-        if(availFromFilter == cashbook::Wallet::Availability::Count) {
-            availFromFilter = cashbook::Wallet::Availability::Free;
+        if(availFromFilter == Wallet::Availability::Count) {
+            availFromFilter = Wallet::Availability::Free;
         }
-        if(availToFilter == cashbook::Wallet::Availability::Count) {
-            availToFilter = static_cast<cashbook::Wallet::Availability::t>( static_cast<int>(cashbook::Wallet::Availability::Count) - 1 );
+        if(availToFilter == Wallet::Availability::Count) {
+            availToFilter = static_cast<Wallet::Availability::t>( static_cast<int>(Wallet::Availability::Count) - 1 );
         }
 
         if(availFromFilter > availToFilter) {
@@ -93,51 +101,87 @@ void WalletsAnalytics::updateAnalytics()
 
     std::map<QString, Money> data;
 
+    Type::t aim = static_cast<Type::t>(m_criteriaCombo->currentIndex());
+
     std::vector<Node<Wallet>*> l = m_data.wallets.rootItem->toList();
     for(const auto& wallet : l) {
+
+        // wallet filter
         if(!wallet) continue;
         if(!wallet->isLeaf()) continue;
         if(wallet->data.type == Wallet::Type::Points) continue;
 
+        Money money = wallet->data.amount;
+        if(money == Money(0.0f)) continue;
+
+        Wallet::Type::t walletType = wallet->data.type;
+        if(!allMoneyTypes) {
+            if(walletType != moneyTypeFilter) continue;
+        }
+
+        Wallet::Availability::t availability = wallet->data.info->availability;
         if(!allAvail) {
-            if(wallet->data.info->availability < availFromFilter) continue;
-            if(wallet->data.info->availability > availToFilter) continue;
+            if(availability < availFromFilter) continue;
+            if(availability > availToFilter) continue;
         }
 
-        if(!allOwners) {
+        Owner owner;
+        {
             const ArchPointer<Owner>& ownerPointer = wallet->data.info->owner;
-            if(!ownerPointer.isValidPointer()) continue;
-            if(ownerPointer.isNullPointer()) continue;
-            if(*ownerPointer.toPointer() != ownerFilter) continue;
+            if(ownerPointer.isValidPointer() && !ownerPointer.isNullPointer()) {
+                owner = *ownerPointer.toPointer();
+            } else {
+                owner = AllOption;
+            }
+            if(!allOwners) {
+                if(owner != ownerFilter) continue;
+            }
         }
 
-        const Bank* bank = nullptr;
-
-        if(const auto* info = dynamic_cast<Wallet::AccountInfo*>(wallet->data.info.get())) {
-            if(info->bank.isValidPointer() && !info->bank.isNullPointer()) {
-                //m_data[*info->bank.toPointer()] += wallet->m_data.amount;
-                bank = info->bank.toPointer();
-            }
-        } else if(const auto* investInfo = dynamic_cast<Wallet::InvestmentInfo*>(wallet->data.info.get())) {
-            if(investInfo->account) {
-                if(investInfo->account->bank.isValidPointer() && !investInfo->account->bank.isNullPointer()) {
-                    //m_data[*investInfo->account->bank.toPointer()] += wallet->m_data.amount;
-                    bank = investInfo->account->bank.toPointer();
+        Bank bank;
+        {
+            bool foundBank = false;
+            if(const auto* info = dynamic_cast<Wallet::AccountInfo*>(wallet->data.info.get())) {
+                if(info->bank.isValidPointer() && !info->bank.isNullPointer()) {
+                    bank = *info->bank.toPointer();
+                    foundBank = true;
+                }
+            } else if(const auto* investInfo = dynamic_cast<Wallet::InvestmentInfo*>(wallet->data.info.get())) {
+                if(investInfo->account) {
+                    if(investInfo->account->bank.isValidPointer() && !investInfo->account->bank.isNullPointer()) {
+                        bank = *investInfo->account->bank.toPointer();
+                        foundBank = true;
+                    }
                 }
             }
+
+            if(!foundBank) {
+                bank = NoBankOption;
+            }
+
+            if(!allBanks) {
+                if(bank != bankFilter) continue;
+            }
         }
 
-        if(bank) {
-            if(noBank) continue;
-            if(!allBanks) {
-                if(*bank != bankFilter) continue;
-            }
-            data[*bank] += wallet->data.amount;
-        } else {
-            if(allBanks || noBank) {
-                data[NoBankOption] += wallet->data.amount;
-            }
+        // wallet data collect
+        QString dataKey;
+        switch (aim)
+        {
+            case Type::Banks:
+                dataKey = bank;
+                break;
+            case Type::Availability:
+                dataKey = Wallet::Availability::toString(availability);
+                break;
+            case Type::Owners:
+                dataKey = owner;
+                break;
+            case Type::MoneyType:
+                dataKey = Wallet::Type::toString(walletType);
+                break;
         }
+        data[dataKey] += money;
     }
 
     std::vector<std::pair<QString, Money>> dataSorted;
@@ -158,7 +202,7 @@ void WalletsAnalytics::updateAnalytics()
         Q_UNUSED(slice);
     }
 
-    m_chart.setTitle(QObject::tr("Распределение денег по банкам<br>%1").arg(formatMoney(sum)));
+    m_chart.setTitle(QObject::tr("Распределение денег: %1<br>%2").arg(m_criteriaCombo->currentText(), formatMoney(sum)));
 
     m_series.setLabelsVisible(true);
     m_series.setLabelsPosition(QPieSlice::LabelOutside);

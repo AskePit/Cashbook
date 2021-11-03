@@ -19,12 +19,23 @@ namespace cashbook
 class WalletsAnalytics
 {
 public:
+    class Type
+    {
+    public:
+        enum t {
+            Banks = 0,
+            Availability,
+            Owners,
+            MoneyType
+        };
+    };
+
     WalletsAnalytics(const Data& data);
     void initUi(Ui::MainWindow* ui);
 
     void updateAnalytics();
 
-private:
+private:    
     QChart m_chart;
     QPieSeries m_series;
     QChartView m_view;
@@ -36,6 +47,7 @@ private:
     QComboBox *m_bankCombo {nullptr};
     QComboBox *m_availabilityFromCombo {nullptr};
     QComboBox *m_availabilityToCombo {nullptr};
+    QComboBox *m_moneyTypeCombo {nullptr};
 };
 
 } // namespace cashbook

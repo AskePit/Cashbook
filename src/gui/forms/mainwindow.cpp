@@ -338,6 +338,8 @@ void MainWindow::postLoadSetup()
     }
 
     m_walletAnalytics.initUi(ui);
+    on_walletsAnalysisCriteriaCombo_currentIndexChanged(0); // just to hide bank-related label/combo
+    m_allowAnalyticsUpdate = true;
     updateAnalytics();
 }
 
@@ -369,6 +371,40 @@ void MainWindow::on_actionWalletProperties_triggered()
 
 void MainWindow::on_walletsAnalysisCriteriaCombo_currentIndexChanged(int)
 {
+    WalletsAnalytics::Type::t criteria = static_cast<WalletsAnalytics::Type::t>(ui->walletsAnalysisCriteriaCombo->currentIndex());
+
+    ui->walletsAnalysisOwnerLabel->setVisible(criteria != WalletsAnalytics::Type::Owners);
+    ui->walletsAnalysisOwnerCombo->setVisible(criteria != WalletsAnalytics::Type::Owners);
+
+    ui->walletsAnalysisBankLabel->setVisible(criteria != WalletsAnalytics::Type::Banks);
+    ui->walletsAnalysisBankCombo->setVisible(criteria != WalletsAnalytics::Type::Banks);
+
+    ui->walletsAnalysisAvailabilityLabel->setVisible(criteria != WalletsAnalytics::Type::Availability);
+    ui->walletsAnalysisAvailabilityFromCombo->setVisible(criteria != WalletsAnalytics::Type::Availability);
+    ui->walletsAnalysisAvailabilityToCombo->setVisible(criteria != WalletsAnalytics::Type::Availability);
+
+    ui->walletsAnalysisMoneyTypeLabel->setVisible(criteria != WalletsAnalytics::Type::MoneyType);
+    ui->walletsAnalysisMoneyTypeCombo->setVisible(criteria != WalletsAnalytics::Type::MoneyType);
+
+    const bool wasAllowed = m_allowAnalyticsUpdate;
+    m_allowAnalyticsUpdate = false;
+
+    for(QComboBox* combo : {
+        ui->walletsAnalysisOwnerCombo,
+        ui->walletsAnalysisBankCombo,
+        ui->walletsAnalysisAvailabilityFromCombo,
+        ui->walletsAnalysisAvailabilityToCombo,
+        ui->walletsAnalysisMoneyTypeCombo
+    }) {
+        if(!combo->isVisible()) {
+            combo->setCurrentIndex(combo->count() - 1);
+        }
+    }
+
+    if(wasAllowed) {
+        m_allowAnalyticsUpdate = true;
+    }
+
     updateAnalytics();
 }
 
@@ -388,6 +424,11 @@ void MainWindow::on_walletsAnalysisAvailabilityToCombo_currentIndexChanged(int)
 }
 
 void MainWindow::on_walletsAnalysisBankCombo_currentIndexChanged(int)
+{
+    updateAnalytics();
+}
+
+void MainWindow::on_walletsAnalysisMoneyTypeCombo_currentIndexChanged(int)
 {
     updateAnalytics();
 }
@@ -1120,7 +1161,9 @@ void cashbook::MainWindow::showWalletContextMenu(const QPoint& point)
 
 void cashbook::MainWindow::updateAnalytics()
 {
-    m_walletAnalytics.updateAnalytics();
+    if(m_allowAnalyticsUpdate) {
+        m_walletAnalytics.updateAnalytics();
+    }
 }
 
 static QString getTextDialog(const QString &title, const QString &message, const QString &text, QWidget *parent)

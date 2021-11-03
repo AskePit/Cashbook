@@ -124,6 +124,7 @@ private slots:
     void on_walletsAnalysisAvailabilityFromCombo_currentIndexChanged(int index);
     void on_walletsAnalysisAvailabilityToCombo_currentIndexChanged(int index);
     void on_walletsAnalysisBankCombo_currentIndexChanged(int index);
+    void on_walletsAnalysisMoneyTypeCombo_currentIndexChanged(int index);
 
 private:
     void preLoadSetup();
@@ -172,6 +173,7 @@ private:
 
     // analytics
     WalletsAnalytics m_walletAnalytics;
+    bool m_allowAnalyticsUpdate {false};
 };
 
 } // namespace cashbook
