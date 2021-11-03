@@ -29,6 +29,7 @@ FORMS += \
     gui/forms/walletpropertieswindow.ui
 
 HEADERS += \
+    bookkeeping/analytics.h \
     bookkeeping/basic_types.h \
     bookkeeping/models.h \
     bookkeeping/bookkeeping.h \
@@ -42,6 +43,7 @@ HEADERS += \
     $$PWD/../third-party/qtyaml.h
 
 SOURCES += \
+    bookkeeping/analytics.cpp \
     bookkeeping/basic_types.cpp \
     bookkeeping/models.cpp \
     bookkeeping/bookkeeping.cpp \

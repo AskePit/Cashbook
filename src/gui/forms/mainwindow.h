@@ -2,12 +2,10 @@
 #define MAINWINDOW_H
 
 #include "bookkeeping/models.h"
+#include "bookkeeping/analytics.h"
 
 #include <QMainWindow>
 #include <QEvent>
-#include <QtCharts/QChartView>
-#include <QtCharts/QPieSeries>
-#include <QtCharts/QPieSlice>
 
 namespace Ui {
 class MainWindow;
@@ -42,16 +40,6 @@ public:
 
 signals:
     void mouseClicked(QWidget *watched);
-};
-
-struct WalletsAnalytics
-{
-    WalletsAnalytics();
-    void initUi(Ui::MainWindow* ui, const Data& data);
-
-    QChart chart;
-    QPieSeries series;
-    QChartView view;
 };
 
 class MainWindow : public QMainWindow

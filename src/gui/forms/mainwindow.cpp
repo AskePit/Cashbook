@@ -118,6 +118,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_data(data)
     , m_models(data)
     , m_modelsDelegate(m_models)
+    , m_walletAnalytics(data)
 {
     preLoadSetup();
     loadData();
@@ -336,7 +337,7 @@ void MainWindow::postLoadSetup()
         saveData();
     }
 
-    m_walletAnalytics.initUi(ui, m_data);
+    m_walletAnalytics.initUi(ui);
     updateAnalytics();
 }
 
@@ -1117,158 +1118,9 @@ void cashbook::MainWindow::showWalletContextMenu(const QPoint& point)
     menu.exec(globalPos);
 }
 
-cashbook::WalletsAnalytics::WalletsAnalytics()
-    : chart()
-    , series(&chart)
-    , view(&chart)
-{
-}
-
-static const QString AllOption = QObject::tr("Все");
-static const QString NoBankOption = QObject::tr("Вне банка");
-
-void cashbook::WalletsAnalytics::initUi(Ui::MainWindow* ui, const Data& data)
-{
-    for(const Owner& owner : data.owners.owners) {
-        ui->walletsAnalysisOwnerCombo->addItem(owner);
-    }
-    ui->walletsAnalysisOwnerCombo->addItem(AllOption);
-    ui->walletsAnalysisOwnerCombo->setCurrentText(AllOption);
-
-    for(const Bank& bank : data.banks.banks) {
-        ui->walletsAnalysisBankCombo->addItem(bank);
-    }
-    ui->walletsAnalysisBankCombo->addItem(AllOption);
-    ui->walletsAnalysisBankCombo->addItem(NoBankOption);
-    ui->walletsAnalysisBankCombo->setCurrentText(AllOption);
-
-
-    for(cashbook::Wallet::Availability::t t : cashbook::Wallet::Availability::enumerate()) {
-        QString name = cashbook::Wallet::Availability::toString(t);
-
-        ui->walletsAnalysisAvailabilityFromCombo->addItem(name, t);
-        ui->walletsAnalysisAvailabilityToCombo->addItem(name, t);
-    }
-    ui->walletsAnalysisAvailabilityFromCombo->addItem(AllOption);
-    ui->walletsAnalysisAvailabilityFromCombo->setCurrentText(AllOption);
-    ui->walletsAnalysisAvailabilityToCombo->addItem(AllOption);
-    ui->walletsAnalysisAvailabilityToCombo->setCurrentText(AllOption);
-
-    /*series->setPieStartAngle(-90);
-    series->setPieEndAngle(90);*/
-    series.setPieSize(0.7);
-    series.setHoleSize(0.3);
-    chart.addSeries(&series);
-    chart.legend()->hide();
-    chart.setTheme(QChart::ChartThemeBrownSand);
-    chart.setBackgroundBrush(QBrush(Qt::white));
-
-    view.setRenderHint(QPainter::Antialiasing, true);
-
-    ui->walletsAnalysisTabLayout->addWidget(&view);
-}
-
 void cashbook::MainWindow::updateAnalytics()
 {
-    QString ownerFilter = ui->walletsAnalysisOwnerCombo->currentText();
-    QString bankFilter = ui->walletsAnalysisBankCombo->currentText();
-    auto availFromFilter = static_cast<cashbook::Wallet::Availability::t>(ui->walletsAnalysisAvailabilityFromCombo->currentIndex());
-    auto availToFilter = static_cast<cashbook::Wallet::Availability::t>(ui->walletsAnalysisAvailabilityToCombo->currentIndex());
-
-    const bool allOwners = (ownerFilter == AllOption);
-    const bool allBanks = (bankFilter == AllOption);
-    const bool allAvail = (availFromFilter == cashbook::Wallet::Availability::Count && availToFilter == cashbook::Wallet::Availability::Count);
-    const bool noBank = (bankFilter == NoBankOption);
-
-    if(!allAvail) {
-        if(availFromFilter == cashbook::Wallet::Availability::Count) {
-            availFromFilter = cashbook::Wallet::Availability::Free;
-        }
-        if(availToFilter == cashbook::Wallet::Availability::Count) {
-            availToFilter = static_cast<cashbook::Wallet::Availability::t>( static_cast<int>(cashbook::Wallet::Availability::Count) - 1 );
-        }
-
-        if(availFromFilter > availToFilter) {
-            std::swap(availFromFilter, availToFilter);
-        }
-    }
-
-    QChart& chart = m_walletAnalytics.chart;
-    QPieSeries& series = m_walletAnalytics.series;
-
-    series.clear();
-
-    std::map<QString, Money> data;
-
-    std::vector<Node<Wallet>*> l = m_data.wallets.rootItem->toList();
-    for(const auto& wallet : l) {
-        if(!wallet) continue;
-        if(!wallet->isLeaf()) continue;
-        if(wallet->data.type == Wallet::Type::Points) continue;
-
-        if(!allAvail) {
-            if(wallet->data.info->availability < availFromFilter) continue;
-            if(wallet->data.info->availability > availToFilter) continue;
-        }
-
-        if(!allOwners) {
-            const ArchPointer<Owner>& ownerPointer = wallet->data.info->owner;
-            if(!ownerPointer.isValidPointer()) continue;
-            if(ownerPointer.isNullPointer()) continue;
-            if(*ownerPointer.toPointer() != ownerFilter) continue;
-        }
-
-        const Bank* bank = nullptr;
-
-        if(const auto* info = dynamic_cast<Wallet::AccountInfo*>(wallet->data.info.get())) {
-            if(info->bank.isValidPointer() && !info->bank.isNullPointer()) {
-                //data[*info->bank.toPointer()] += wallet->data.amount;
-                bank = info->bank.toPointer();
-            }
-        } else if(const auto* investInfo = dynamic_cast<Wallet::InvestmentInfo*>(wallet->data.info.get())) {
-            if(investInfo->account) {
-                if(investInfo->account->bank.isValidPointer() && !investInfo->account->bank.isNullPointer()) {
-                    //data[*investInfo->account->bank.toPointer()] += wallet->data.amount;
-                    bank = investInfo->account->bank.toPointer();
-                }
-            }
-        }
-
-        if(bank) {
-            if(noBank) continue;
-            if(!allBanks) {
-                if(*bank != bankFilter) continue;
-            }
-            data[*bank] += wallet->data.amount;
-        } else {
-            if(allBanks || noBank) {
-                data[NoBankOption] += wallet->data.amount;
-            }
-        }
-    }
-
-    std::vector<std::pair<QString, Money>> dataSorted;
-    dataSorted.resize(data.size());
-
-    std::move(data.begin(), data.end(), dataSorted.begin());
-    std::sort(dataSorted.begin(), dataSorted.end(), [](const std::pair<QString, Money>& a, const std::pair<QString, Money>& b)
-    {
-        return a.second > b.second;
-    });
-
-    Money sum;
-
-    for (auto&& [bank, money] : dataSorted) {
-        sum += money;
-        const double amount = static_cast<double>(money);
-        QPieSlice* slice = series.append(QString("%1<br>%2").arg(bank, formatMoney(money)), amount);
-        Q_UNUSED(slice);
-    }
-
-    chart.setTitle(tr("Распределение денег по банкам<br>%1").arg(formatMoney(sum)));
-
-    series.setLabelsVisible(true);
-    series.setLabelsPosition(QPieSlice::LabelOutside);
+    m_walletAnalytics.updateAnalytics();
 }
 
 static QString getTextDialog(const QString &title, const QString &message, const QString &text, QWidget *parent)
