@@ -636,31 +636,28 @@ static void load(Transaction &t, const YAML::Node& node,
 }
 
 static void load(LogData &log, const YAML::Node& node, Data &data){
-    size_t n = node.size();
-    for (size_t i = 0; i<n; ++i) {
-        const YAML::Node& tObj = node[i];
+    for (const YAML::Node& tObj : node) {
         Transaction t;
         load(t, tObj, data.wallets, data.inCategories, data.outCategories);
-        log.log.push_back(t);
 
-        // update brief statistics
-        if(t.type == Transaction::Type::In) {
+        if(t.type == Transaction::Type::In || t.type == Transaction::Type::Out) {
+            // update brief statistics
+
             Month month(t.date);
-            log.statistics.brief[month].common.received += t.amount;
             const auto &archNode = t.category;
-            if(archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular) {
-                log.statistics.brief[month].regular.received += t.amount;
+            const bool isRegular = archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular;
+
+            BriefStatisticsRecord& monthBrief = log.statistics.brief[month];
+
+            Money& common = t.type == Transaction::Type::In ? monthBrief.common.received : monthBrief.common.spent;
+            common += t.amount;
+            if(isRegular) {
+                Money& regular = t.type == Transaction::Type::In ? monthBrief.regular.received : monthBrief.regular.spent;
+                regular += t.amount;
             }
         }
 
-        if(t.type == Transaction::Type::Out) {
-            Month month(t.date);
-            log.statistics.brief[month].common.spent += t.amount;
-            const auto &archNode = t.category;
-            if(archNode.isValidPointer() && archNode.toPointer() && archNode.toPointer()->data.regular) {
-                log.statistics.brief[month].regular.spent += t.amount;
-            }
-        }
+        log.log.emplace_back(std::move(t));
     }
 }
 
@@ -764,7 +761,7 @@ static void loadMonth(Data &data, const YAML::Node& node)
 }
 
 static void loadLog(Data &data, int recentMonths = -1) /* (recentMonths == -1) means load all */
-{
+{    
     QDir dir(storage::rootDir, {QStringLiteral("*")+storage::ext});
     dir.setFilter(QDir::Files);
     dir.setSorting(QDir::Name | QDir::Reversed);

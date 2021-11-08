@@ -62,7 +62,7 @@ win32-msvc* {
     QMAKE_CXXFLAGS += /std:c++17
 }
 win32-g++ {
-    QMAKE_CXXFLAGS_RELEASE += -O3
+    QMAKE_CXXFLAGS_RELEASE += -Ofast
     QMAKE_CXXFLAGS += -std=c++17
 }
 

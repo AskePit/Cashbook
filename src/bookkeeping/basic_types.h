@@ -62,6 +62,10 @@ public:
         : m_str(str)
     {}
 
+    explicit ArchiveString(QString&& str)
+        : m_str(std::move(str))
+    {}
+
     const QString& get() const {
         return m_str;
     }
@@ -107,6 +111,12 @@ public:
     ArchPointer &operator =(const ArchiveString &str)
     {
         this->QVariant::operator =(str.get());
+        return *this;
+    }
+
+    ArchPointer &operator =(ArchiveString &&str)
+    {
+        this->QVariant::operator =(std::move(str.get()));
         return *this;
     }
 
