@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT += core gui charts
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT += core widgets gui charts
 
 TARGET = cashbook
 TEMPLATE = app
@@ -23,6 +21,7 @@ LIBS += -L$${ASKELIBQT_LIB_PATH} -laskelib_qt_std$${ASKELIBQT_LIB_SUFFIX}
 LIBS += -L$${ASKELIB_LIB_PATH} -laskelib_std$${ASKELIB_LIB_SUFFIX}
 
 FORMS += \
+    gui/forms/analytics/categoriesstaticchart.ui \
     gui/forms/mainwindow.ui \
     gui/forms/innodedialog.ui \
     gui/forms/selectwalletdialog.ui \
@@ -34,6 +33,7 @@ HEADERS += \
     bookkeeping/models.h \
     bookkeeping/bookkeeping.h \
     bookkeeping/serialization.h \
+    gui/forms/analytics/categoriesstaticchart.h \
     gui/forms/mainwindow.h \
     gui/forms/innodedialog.h \
     gui/forms/selectwalletdialog.h \
@@ -48,6 +48,7 @@ SOURCES += \
     bookkeeping/models.cpp \
     bookkeeping/bookkeeping.cpp \
     bookkeeping/serialization.cpp \
+    gui/forms/analytics/categoriesstaticchart.cpp \
     gui/forms/mainwindow.cpp \
     gui/forms/innodedialog.cpp \
     gui/forms/selectwalletdialog.cpp \

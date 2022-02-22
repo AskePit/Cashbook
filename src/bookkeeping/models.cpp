@@ -1398,8 +1398,8 @@ bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
     Q_UNUSED(parent);
     beginInsertRows(parent, position, position + rows - 1);
     Task item;
-    item.from = today;
-    item.to = today;
+    item.from = Today;
+    item.to = Today;
     m_data.tasks.insert(position, item);
     endInsertRows();
     m_data.setChanged();
@@ -1637,7 +1637,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         bool log = !!qobject_cast<const LogModel*>(index.model());
         if(log) {
             QDate min;
-            QDate max {today};
+            QDate max {Today};
             if(static_cast<int>(m_data.logModel.m_data.log.size()) > index.row()+1) {
                 min = m_data.logModel.m_data.log[static_cast<size_t>(index.row()+1)].date;
             }

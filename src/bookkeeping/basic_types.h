@@ -326,7 +326,8 @@ namespace std
     };
 }
 
-static const QDate today {QDate::currentDate()};
+static const QDate Today {QDate::currentDate()};
+static const QDate MonthBegin(Today.year(), Today.month(), 1);
 
 Q_DECLARE_METATYPE(cashbook::IdableString *)
 Q_DECLARE_METATYPE(const cashbook::IdableString *)

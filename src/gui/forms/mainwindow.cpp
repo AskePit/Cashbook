@@ -218,9 +218,9 @@ void MainWindow::preLoadSetup()
     ui->logTable->setColumnWidth(LogColumn::From, 145);
     ui->logTable->setColumnWidth(LogColumn::To, 145);
 
-    ui->dateTo->setMaximumDate(today); // should be today day
-    ui->thisMonthButton->setText(months[today.month()-1]);
-    ui->thisYearButton->setText(QString::number(today.year()));
+    ui->dateTo->setMaximumDate(Today); // should be today day
+    ui->thisMonthButton->setText(months[Today.month()-1]);
+    ui->thisYearButton->setText(QString::number(Today.year()));
 
     m_categoriesEventFilter.setViews(ui->inCategoriesTree, ui->outCategoriesTree);
     ui->inCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
@@ -341,6 +341,7 @@ void MainWindow::postLoadSetup()
     on_walletsAnalysisCriteriaCombo_currentIndexChanged(0); // just to hide bank-related label/combo
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
+    ui->categoriesStaticChart->init(m_data);
 }
 
 void MainWindow::saveData()
@@ -854,34 +855,34 @@ void cashbook::MainWindow::on_statisticsButton_clicked()
 
 void cashbook::MainWindow::on_thisMonthButton_clicked()
 {
-    QDate start(today.year(), today.month(), 1);
+    QDate start(Today.year(), Today.month(), 1);
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 void cashbook::MainWindow::on_thisYearButton_clicked()
 {
-    QDate start(today.year(), 1, 1);
+    QDate start(Today.year(), 1, 1);
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 void cashbook::MainWindow::on_monthButton_clicked()
 {
-    QDate start {today.addDays(-30)};
+    QDate start {Today.addDays(-30)};
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 void cashbook::MainWindow::on_yearButton_clicked()
 {
-    QDate start {today.addYears(-1)};
+    QDate start {Today.addYears(-1)};
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 static void showCategoryContextMenu(const cashbook::CategoriesModel &model, QTreeView *view, QAction *action, const QPoint &point)

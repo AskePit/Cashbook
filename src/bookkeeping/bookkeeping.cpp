@@ -242,7 +242,7 @@ void CategoryMoneyMap::propagateMoney(const Node<Category> *node, const Money &a
 void LogData::insertRow(int position)
 {
     Transaction t;
-    t.date = today;
+    t.date = Today;
     log.insert(std::next(log.begin(), position), 1, t);
     ++unanchored;
     changedMonths.insert(Month(t.date));
@@ -251,7 +251,7 @@ void LogData::insertRow(int position)
 void LogData::insertRows(int position, size_t rows)
 {
     Transaction t;
-    t.date = today;
+    t.date = Today;
     log.insert(std::next(log.begin(), position), static_cast<size_t>(rows), t);
     unanchored += static_cast<int>(rows);
     changedMonths.insert(Month(t.date));
@@ -824,11 +824,11 @@ void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
     size_t i = 0;
     while(i < log.log.size()) {
         const Transaction &t = log.log[i++];
-        if(t.date > statistics.categoriesTo) {
+        if(t.date > to) {
             continue;
         }
 
-        if(t.date < statistics.categoriesFrom) {
+        if(t.date < from) {
             break;
         }
 
