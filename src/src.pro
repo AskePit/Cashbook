@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT += core widgets gui charts
+QT += core widgets gui charts qml quick quickwidgets
 
 TARGET = cashbook
 TEMPLATE = app
@@ -57,15 +57,16 @@ SOURCES += \
     main.cpp \
     $$files($$PWD/../third-party/yaml-cpp/src/*.cpp)
 
-
 win32-msvc* {
     QMAKE_CXXFLAGS_RELEASE += /O2
-    QMAKE_CXXFLAGS += /std:c++17
+#    QMAKE_CXXFLAGS += /std:c++20
 }
 win32-g++ {
     QMAKE_CXXFLAGS_RELEASE += -Ofast
-    QMAKE_CXXFLAGS += -std=c++17
+#    QMAKE_CXXFLAGS += -std=c++2a
 }
 
 RESOURCES += \
     resources/resources.qrc
+
+CONFIG += c++latest

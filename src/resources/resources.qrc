@@ -12,5 +12,7 @@
         <file>statistics.png</file>
         <file>statistics_active.png</file>
         <file>importReceipt.png</file>
+        <file>qml/categoriesTreeMapChart.qml</file>
+        <file>qml/treeMapRect.qml</file>
     </qresource>
 </RCC>

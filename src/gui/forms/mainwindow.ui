@@ -488,7 +488,7 @@ QToolButton:hover:!checked {
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="mainPage">
        <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -4888,7 +4888,7 @@ QTreeView::item { height: 18px;}</string>
            </palette>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="walletsAnalysisTab">
            <property name="palette">
@@ -9072,7 +9072,16 @@ QTreeView::item { height: 18px;}</string>
            </attribute>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
-             <widget class="cashbook::CategoriesStaticChart" name="categoriesStaticChart" native="true"/>
+             <widget class="QQuickWidget" name="quickWidget">
+              <property name="resizeMode">
+               <enum>QQuickWidget::SizeRootObjectToView</enum>
+              </property>
+              <property name="source">
+               <url>
+                <string>qrc:/qml/categoriesTreeMapChart.qml</string>
+               </url>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -9193,10 +9202,9 @@ QTreeView::item { height: 18px;}</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>cashbook::CategoriesStaticChart</class>
+   <class>QQuickWidget</class>
    <extends>QWidget</extends>
-   <header>gui/forms/analytics/categoriesstaticchart.h</header>
-   <container>1</container>
+   <header location="global">QtQuickWidgets/QQuickWidget</header>
   </customwidget>
  </customwidgets>
  <resources>

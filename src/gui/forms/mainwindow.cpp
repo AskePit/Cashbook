@@ -7,6 +7,7 @@
 #include "bookkeeping/serialization.h"
 #include "selectwalletdialog.h"
 #include "walletpropertieswindow.h"
+#include "gui/forms/analytics/categoriesstaticchart.h"
 
 #include <QFileDialog>
 #include <QFileInfo>
@@ -14,6 +15,7 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QStandardPaths>
+#include <QQmlContext>
 
 namespace cashbook
 {
@@ -341,7 +343,11 @@ void MainWindow::postLoadSetup()
     on_walletsAnalysisCriteriaCombo_currentIndexChanged(0); // just to hide bank-related label/combo
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
-    ui->categoriesStaticChart->init(m_data);
+    //ui->categoriesStaticChart->init(m_data);
+
+    TreemapModel* p = new TreemapModel;
+
+    ui->quickWidget->rootContext()->setContextProperty("sModel", p);
 }
 
 void MainWindow::saveData()
