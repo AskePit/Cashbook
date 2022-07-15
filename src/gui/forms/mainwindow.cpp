@@ -14,6 +14,7 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QStandardPaths>
+#include <QWebEnginePage>
 
 namespace cashbook
 {
@@ -1191,22 +1192,86 @@ void cashbook::MainWindow::on_actionEditNote_triggered()
 
 void cashbook::MainWindow::on_actionImportReceipt_triggered()
 {
-    const auto& downloadFolders = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation);
-    QString downloadFolder(".");
-    if(!downloadFolders.empty()) {
-        downloadFolder = downloadFolders.front();
-    }
-    QString jsonFile = QFileDialog::getOpenFileName(this, tr("Открыть файл для импорта..."), downloadFolder, tr("JSON-файл (*.json)"));
+    // Country choice
+    QDialog langChoiceDialog;
+    {
+        langChoiceDialog.setWindowTitle(tr("Выберите страну чека..."));
 
-    if(jsonFile.isNull()) {
+        QPushButton* rusButton = new QPushButton(tr("Rus"), &langChoiceDialog);
+        QPushButton* serbButton = new QPushButton(tr("Serb"), &langChoiceDialog);
+
+        langChoiceDialog.setLayout(new QHBoxLayout());
+
+        langChoiceDialog.layout()->addWidget(rusButton);
+        langChoiceDialog.layout()->addWidget(serbButton);
+
+        connect(rusButton, &QPushButton::clicked, &langChoiceDialog, [&langChoiceDialog]() {
+            qDebug() << "RUS";
+            langChoiceDialog.done(1);
+        });
+        connect(serbButton, &QPushButton::clicked, &langChoiceDialog, [&langChoiceDialog]() {
+            qDebug() << "SERB";
+            langChoiceDialog.done(2);
+        });
+    }
+    int langRet = langChoiceDialog.exec();
+
+    if (!langRet) {
         return;
     }
 
-    cashbook::SelectWalletDialog d(m_models.walletsModel, this);
-    const Node<Wallet> *node = nullptr;
-    if(d.exec()) {
-        node = d.getWalletNode();
-    }
+    const auto getWalletNode = [this]() -> const Node<Wallet> *
+    {
+        cashbook::SelectWalletDialog d(m_models.walletsModel, this);
+        if(d.exec()) {
+            return d.getWalletNode();
+        }
 
-    m_data.importReceiptFile(jsonFile, node);
+        return nullptr;
+    };
+
+    if (langRet == 1) {
+        // Rus recipe
+        const auto& downloadFolders = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation);
+        QString downloadFolder(".");
+        if(!downloadFolders.empty()) {
+            downloadFolder = downloadFolders.front();
+        }
+        QString jsonFile = QFileDialog::getOpenFileName(this, tr("Открыть файл для импорта..."), downloadFolder, tr("JSON-файл (*.json)"));
+
+        if(jsonFile.isNull()) {
+            return;
+        }
+
+        m_data.importRusReceiptFile(jsonFile, getWalletNode());
+    } else {
+        // Serb recipe
+        QString recipeUrl = QInputDialog::getText(this, tr("Укажите ссылку на чек..."), tr("Url"));
+
+        const auto onHtmlLoaded = [this, getWalletNode](QString content)
+        {
+            QStringView c(content);
+
+            auto firstIdx = c.indexOf(QLatin1String("<pre style="));
+            auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
+            c = c.mid(firstIdx, lastIdx-firstIdx);
+
+            firstIdx = c.indexOf(QLatin1String("==="));
+            lastIdx = c.lastIndexOf(QLatin1String("<br"));
+            c = c.mid(firstIdx, lastIdx-firstIdx);
+
+            firstIdx = c.indexOf(QStringLiteral("Назив"));
+            c = c.mid(firstIdx);
+
+            m_data.importSerbReceiptFile(c, getWalletNode());
+        };
+
+        QWebEnginePage* page = new QWebEnginePage();
+        connect(page, &QWebEnginePage::loadFinished, this, [page, onHtmlLoaded](bool ok){
+            page->toHtml([&onHtmlLoaded](const QString& c){
+                onHtmlLoaded(c);
+            });
+        });
+        page->setUrl(QUrl(recipeUrl));
+    }
 }

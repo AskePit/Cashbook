@@ -397,7 +397,8 @@ public:
     void updateTasks(TasksListsData &tasks);
     bool anchoreTransactions();
     void clear();
-    void importReceiptFile(const QString &json, const Node<Wallet> *wallet);
+    void importRusReceiptFile(const QString &json, const Node<Wallet> *wallet);
+    void importSerbReceiptFile(QStringView receipt, const Node<Wallet> *wallet);
 
     void onOwnersRemove(QStringList paths);
     void onInCategoriesRemove(QStringList paths);
