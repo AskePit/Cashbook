@@ -1630,6 +1630,10 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
         return new QCheckBox(parent);
     }
 
+    if(type == QMetaType::Type::Double) {
+        return new RelaxedDoubleSpinBox(parent);
+    }
+
     if(type == QMetaType::Type::QDate) {
         QDateEdit *edit = new QDateEdit(parent);
         edit->setCalendarPopup(true);
@@ -1721,6 +1725,12 @@ void ModelsDelegate::setEditorData(QWidget* editor, const QModelIndex& index) co
     // bool case
     if (QCheckBox *box = qobject_cast<QCheckBox*>(editor)) {
         box->setChecked(index.data(Qt::EditRole).toBool());
+        return;
+    }
+
+    // double case
+    if (RelaxedDoubleSpinBox *box = qobject_cast<RelaxedDoubleSpinBox*>(editor)) {
+        box->setValue(index.data(Qt::EditRole).toDouble());
         return;
     }
 

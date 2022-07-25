@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QHeaderView>
 #include <QScrollBar>
+#include <QDoubleSpinBox>
 
 namespace cashbook
 {
@@ -185,6 +186,29 @@ void PopupTree<Wallet>::mouseDoubleClickEvent(QMouseEvent *event);
 
 template <>
 void PopupTree<Wallet>::focusOutEvent(QFocusEvent *event);
+
+class RelaxedDoubleSpinBox : public QDoubleSpinBox {
+    Q_OBJECT
+
+public:
+    explicit RelaxedDoubleSpinBox(QWidget* parent =0) : QDoubleSpinBox(parent)
+    {
+        setMinimum(-1000000000);
+        setMaximum(1000000000);
+    }
+
+    QValidator::State validate(QString & text, int & pos) const override
+    {
+        QString s = QString(text).replace(".", ",");
+        return QDoubleSpinBox::validate(s,pos);
+    }
+
+    double valueFromText(const QString& text) const override
+    {
+        QString s = QString(text).replace(",", ".");
+        return s.toDouble();
+    }
+};
 
 } // namespace cashbook
 
