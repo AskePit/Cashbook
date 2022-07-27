@@ -1,6 +1,8 @@
 #include "bookkeeping/bookkeeping.h"
 #include <askelib_qt/std/fs.h>
 
+#include <QRegularExpression>
+
 namespace cashbook
 {
 
@@ -916,7 +918,7 @@ void Data::clear()
     resetChanged();
 }
 
-void Data::importReceiptFile(const QString &json, const Node<Wallet> *wallet)
+void Data::importRusReceiptFile(const QString &json, const Node<Wallet> *wallet)
 {
     QString data = aske::readFile(json);
 
@@ -958,6 +960,55 @@ void Data::importReceiptFile(const QString &json, const Node<Wallet> *wallet)
         t.date = date;
         t.from = wallet;
         transactions.emplace_back(std::move(t));
+    }
+
+    log.appendTransactions(transactions);
+}
+
+void Data::importSerbReceiptFile(QStringView receipt, const Node<Wallet> *wallet)
+{
+    QList<QStringView> lines = receipt.split('\n', Qt::SkipEmptyParts);
+
+    lines.pop_front();
+
+    Transaction t;
+    t.from = wallet;
+
+    std::vector<Transaction> transactions;
+
+    while(!lines.front().startsWith(QLatin1String("===="))) {
+        if(lines.front().startsWith(QLatin1String("   "))) {
+            // price + end
+
+            QStringView priceStr = lines.front();
+            priceStr = priceStr.mid(priceStr.lastIndexOf(' ') + 1);
+            t.amount = Money( priceStr.toString().replace(',', '.').toDouble() );
+
+            t.note = "*" + t.note.trimmed();
+            transactions.push_back(t);
+            t.note = "";
+        } else {
+            t.note += lines.front().toString();
+        }
+
+        lines.pop_front();
+    }
+
+    auto idx = receipt.lastIndexOf(QStringLiteral("ПФР време:"));
+    QStringView timeView = receipt.mid(idx);
+    idx = timeView.indexOf(QRegularExpression("\\d"));
+    timeView = timeView.mid(idx);
+    idx = timeView.indexOf(' ');
+    timeView = timeView.left(idx);
+
+    if(timeView.endsWith('.')) {
+        timeView.chop(1);
+    }
+
+    QDate date = QDate::fromString(timeView, QStringLiteral("dd.MM.yyyy"));
+
+    for(auto& t : transactions) {
+        t.date = date;
     }
 
     log.appendTransactions(transactions);
