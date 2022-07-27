@@ -1,6 +1,7 @@
 import QtQuick 2.0
 
 Rectangle {
+    id: root
     width: 10
     height: 10
     color: "gray"
@@ -27,5 +28,22 @@ Rectangle {
         id: percentage
         text: ""
         color: "white"
+    }
+
+    signal onLeftClicked(rect: Rectangle)
+    signal onRightClicked()
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: {
+            if (mouse.button === Qt.LeftButton) { // 'mouse' is a MouseEvent argument passed into the onClicked signal handler
+                root.onLeftClicked(root)
+            } else if (mouse.button === Qt.RightButton) {
+                root.onRightClicked()
+            }
+        }
     }
 }

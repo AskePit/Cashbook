@@ -7,11 +7,25 @@ Item {
     id: window
 
     onWidthChanged: {
-        root.kek()
+        root.updateView()
     }
 
     onHeightChanged: {
-        root.kek()
+        root.updateView()
+    }
+
+    function onModelSet() {
+        root.updateView()
+    }
+
+    function onRectInside(rect) {
+        sModel.gotoNode(rect.name)
+        root.updateView()
+    }
+
+    function onUp() {
+        sModel.goUp()
+        root.updateView()
     }
 
     Rectangle {
@@ -20,7 +34,12 @@ Item {
 
         property var rects: []
 
-        function kek() {
+        function updateView() {
+
+            if(!sModel) {
+                return
+            }
+
             var i = 0
             for(; i < rects.length; ++i) {
                 rects[i].destroy()
@@ -28,7 +47,6 @@ Item {
             rects = []
 
             var spacing = 10
-
             var modelRects = sModel.getCurrenRects(width - spacing, height - spacing) // `spacing` is for top-left margin. other margins are handled below
 
             i = 0
@@ -44,13 +62,10 @@ Item {
                 rect.height = modelRect.h - spacing
                 rect.name = modelRect.name
                 rect.percentage = /*Math.round(modelRect.percentage, 2)*/ Number((modelRect.percentage*100).toFixed(2)) + '%'
+                rect.onLeftClicked.connect(onRectInside)
+                rect.onRightClicked.connect(onUp)
                 rects.push(rect)
             }
-        }
-
-        Component.onCompleted: {
-            sModel.gotoNode("products")
-            root.kek()
         }
     }
 }

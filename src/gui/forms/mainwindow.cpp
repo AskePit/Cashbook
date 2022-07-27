@@ -16,6 +16,7 @@
 #include <QInputDialog>
 #include <QStandardPaths>
 #include <QQmlContext>
+#include <QQuickItem>
 #include <QWebEnginePage>
 
 namespace cashbook
@@ -344,11 +345,11 @@ void MainWindow::postLoadSetup()
     on_walletsAnalysisCriteriaCombo_currentIndexChanged(0); // just to hide bank-related label/combo
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
-    //ui->categoriesStaticChart->init(m_data);
 
     TreemapModel* p = new TreemapModel;
 
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
+    QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
 }
 
 void MainWindow::saveData()
@@ -1274,7 +1275,7 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
         };
 
         QWebEnginePage* page = new QWebEnginePage();
-        connect(page, &QWebEnginePage::loadFinished, this, [page, onHtmlLoaded](bool ok){
+        connect(page, &QWebEnginePage::loadFinished, this, [page, onHtmlLoaded](bool){
             page->toHtml([&onHtmlLoaded](const QString& c){
                 onHtmlLoaded(c);
             });
