@@ -15,6 +15,11 @@ Item {
     }
 
     function onModelSet() {
+        sModel.onUpdated.connect(onModelUpdated)
+        root.updateView()
+    }
+
+    function onModelUpdated() {
         root.updateView()
     }
 

@@ -47,6 +47,9 @@ public:
 
 Q_DECLARE_METATYPE(NodeX)
 
+namespace cashbook
+{
+
 NodeX GetSampleTree();
 
 using RectData = std::pair<QString, qreal>;
@@ -88,25 +91,32 @@ class TreemapModel : public QObject
 public:
     explicit TreemapModel(QObject *parent = 0);
 
-    std::vector<RectData> getCurrentValues();
-    Q_INVOKABLE std::vector<Rect> getCurrenRects(float windowWidth, float windowHeight);
+    void init(const Data& data);
+    Q_INVOKABLE void updatePeriod();
 
     Q_INVOKABLE void gotoNode(const QString& nodeName);
     Q_INVOKABLE void goUp();
 
+    std::vector<RectData> getCurrentValues();
+    Q_INVOKABLE std::vector<Rect> getCurrenRects(float windowWidth, float windowHeight);
+
+signals:
+    void onUpdated();
+
 private:
     void _getCurrenRects(std::span<Rect> res, QRectF space, qreal wholeSquare);
+
+    const Data* m_data {nullptr};
+
+    QDate m_from;
+    QDate m_to;
+
+    CategoryMoneyMap m_inCategoriesMap;
+    CategoryMoneyMap m_outCategoriesMap;
 
     NodeX m_tree;
     NodeX* m_currNode {nullptr};
 };
-
-namespace Ui {
-class CategoriesStaticChart;
-}
-
-namespace cashbook
-{
 
 } // namespace cashbook
 

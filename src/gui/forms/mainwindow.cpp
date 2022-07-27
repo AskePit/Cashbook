@@ -347,6 +347,7 @@ void MainWindow::postLoadSetup()
     updateAnalytics();
 
     TreemapModel* p = new TreemapModel;
+    p->init(m_data);
 
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
     QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");

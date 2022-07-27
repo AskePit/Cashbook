@@ -3,6 +3,9 @@
 
 #include <QRectF>
 
+namespace cashbook
+{
+
 NodeX GetSampleTree()
 {
     // products
@@ -50,6 +53,73 @@ TreemapModel::TreemapModel(QObject *parent)
     , m_tree(GetSampleTree())
     , m_currNode(&m_tree)
 {}
+
+void TreemapModel::init(const Data& data)
+{
+    m_data = &data;
+    m_from = MonthBegin.addDays(-60);
+    m_to = Today;
+
+    updatePeriod();
+}
+
+void TreemapModel::updatePeriod()
+{
+    m_inCategoriesMap.clear();
+    m_outCategoriesMap.clear();
+
+    if(m_data->log.log.empty()) {
+        return;
+    }
+
+    const std::deque<Transaction>& log = m_data->log.log;
+
+    const QDate &logBegin = log.at(log.size()-1).date;
+    const QDate &logEnd = log.at(0).date;
+
+    if(m_from.isNull()) {
+        m_from = logBegin;
+    }
+
+    if(m_to.isNull()) {
+        m_to = logEnd;
+    }
+
+    if(m_to < logBegin || m_from > logEnd) {
+        return;
+    }
+
+    size_t i = 0;
+    while(i < log.size()) {
+        const Transaction &t = log[i++];
+        if(t.date > m_to) {
+            continue;
+        }
+
+        if(t.date < m_from) {
+            break;
+        }
+
+        if(t.type == Transaction::Type::Out) {
+            const ArchNode<Category> &archNode = t.category;
+            if(archNode.isValidPointer()) {
+                const Node<Category> *node = archNode.toPointer();
+                m_outCategoriesMap.propagateMoney(node, t.amount);
+            }
+        }
+
+        if(t.type == Transaction::Type::In) {
+            const ArchNode<Category> &archNode = t.category;
+            if(archNode.isValidPointer()) {
+                const Node<Category> *node = archNode.toPointer();
+                m_inCategoriesMap.propagateMoney(node, t.amount);
+            }
+        }
+    }
+
+    //m_leftChart.setCategoryData(m_data->outCategories.rootItem, m_outCategoriesMap);
+    emit onUpdated();
+}
 
 std::vector<RectData> TreemapModel::getCurrentValues()
 {
@@ -224,9 +294,6 @@ void TreemapModel::goUp()
         m_currNode = m_currNode->parent;
     }
 }
-
-namespace cashbook
-{
 
 #if 0
 static inline Money getSum(const std::vector<std::pair<Category, Money>>& data, size_t startIndex = 0, size_t endIndex = std::numeric_limits<size_t>::max())
