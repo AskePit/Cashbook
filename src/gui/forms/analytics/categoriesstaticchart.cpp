@@ -6,52 +6,8 @@
 namespace cashbook
 {
 
-NodeX GetSampleTree()
-{
-    // products
-    // --milk 12
-    // --eggs 28
-    // --sweets
-    // ----chocolate 5
-    // ----cookies 408
-    // ----cakes
-    // ------napoleon 71
-    // --meat
-    // ----chicken 9
-    // ----beef 40
-    // clothes 50
-    // electronics
-    // --PC
-    // ----motherboard 800
-    // ----cpu 500
-    // ----gpu 1000
-
-    NodeX root;
-    NodeX& products = root.addChild(NodeX("products"));
-    products.addChild(NodeX("milk", 12));
-    products.addChild(NodeX("eggs", 28));
-    NodeX& sweets = products.addChild(NodeX("sweets"));
-    sweets.addChild(NodeX("chocolate", 5));
-    sweets.addChild(NodeX("cookies", 408));
-    NodeX& cakes = sweets.addChild(NodeX("cakes"));
-    cakes.addChild(NodeX("napoleon", 71));
-    NodeX& meat = products.addChild(NodeX("meat"));
-    meat.addChild(NodeX("chicken", 9));
-    meat.addChild(NodeX("beef", 40));
-    root.addChild(NodeX("clothes", 50));
-    NodeX& electronics = root.addChild(NodeX("electronics"));
-    NodeX& PC = electronics.addChild(NodeX("PC"));
-    PC.addChild(NodeX("motherboard", 800));
-    PC.addChild(NodeX("cpu", 500));
-    PC.addChild(NodeX("gpu", 1000));
-
-    return root;
-}
-
 TreemapModel::TreemapModel(QObject *parent)
     : QObject(parent)
-    , m_tree(GetSampleTree())
-    , m_currNode(&m_tree)
 {}
 
 void TreemapModel::init(const Data& data)
@@ -121,25 +77,46 @@ void TreemapModel::updatePeriod()
     emit onUpdated();
 }
 
+void TreemapModel::gotoNode(const QString& nodeName)
+{
+    if(!m_parentCategory) {
+        return;
+    }
+
+    for(const Node<Category>* child : m_parentCategory->children) {
+        if(child->data == nodeName) {
+            m_parentCategory = child;
+            return;
+        }
+    }
+}
+
+void TreemapModel::goUp()
+{
+    if(m_parentCategory) {
+        m_parentCategory = m_parentCategory->parent;
+    }
+}
+
 std::vector<RectData> TreemapModel::getCurrentValues()
 {
     std::vector<RectData> res;
 
-    if(!m_currNode) {
+    if(!m_parentCategory) {
         return res;
     }
 
-    res.reserve(m_currNode->children.size());
+    res.reserve(m_parentCategory->children.size());
 
-    const int sum = m_currNode->getSum();
+    const double sum = static_cast<double>(m_outCategoriesMap[m_parentCategory]);
 
     if(sum <= 0) {
         return res;
     }
 
-    for(NodeX& child : m_currNode->children) {
-        const qreal percent = static_cast<qreal>(child.getSum()) / static_cast<qreal>(sum);
-        res.emplace_back(child.name, percent);
+    for(const Node<Category>* child : m_parentCategory->children) {
+        const qreal percent = static_cast<double>(static_cast<double>(m_outCategoriesMap[child])) / static_cast<qreal>(sum);
+        res.emplace_back(child->data, percent);
     }
 
     std::sort(res.begin(), res.end(), [](const RectData& a, const RectData& b) {
@@ -274,77 +251,30 @@ void TreemapModel::_getCurrenRects(std::span<Rect> res, QRectF space, qreal whol
     }
 }
 
-void TreemapModel::gotoNode(const QString& nodeName)
+void TreemapModel::_setCategoryData(const Node<Category>* category, const CategoryMoneyMap& categoriesMap)
 {
-    if(!m_currNode) {
+    m_parentCategory = category;
+    m_currData.clear();
+
+    if(!m_parentCategory) {
         return;
     }
 
-    for(auto& child : m_currNode->children) {
-        if(child.name == nodeName) {
-            m_currNode = &child;
-            return;
-        }
-    }
-}
+    m_currData.reserve(m_parentCategory->children.size());
 
-void TreemapModel::goUp()
-{
-    if(m_currNode) {
-        m_currNode = m_currNode->parent;
-    }
-}
-
-#if 0
-static inline Money getSum(const std::vector<std::pair<Category, Money>>& data, size_t startIndex = 0, size_t endIndex = std::numeric_limits<size_t>::max())
-{
-    auto begIt = std::next(data.begin(), startIndex);
-    auto endIt = (endIndex == std::numeric_limits<size_t>::max())
-        ? data.end()
-        : (endIndex < data.size()) ? std::next(data.begin(), endIndex + 1) : data.end();
-
-    return std::accumulate(begIt, endIt, Nothing, [](Money sum, const std::pair<Category, Money>& el){
-        return sum + el.second;
-    });
-}
-
-void CategoriesStaticChart::PieChart::setCategoryData(const Node<Category>* category, const CategoryMoneyMap& categoriesMap)
-{
-    parentCategory = category;
-    data.clear();
-
-    if(!parentCategory) {
-        series->clear();
-        return;
-    }
-
-    data.reserve(parentCategory->children.size());
-
-    for(Node<Category>* childCategory : parentCategory->children) {
+    for(Node<Category>* childCategory : m_parentCategory->children) {
         if(categoriesMap.count(childCategory) == 0) {
             continue;
         }
 
         const Money& money = categoriesMap.at(childCategory);
-        data.emplace_back(childCategory->data, money);
+        m_currData.emplace_back(childCategory->data, money);
     }
 
-    std::sort(data.begin(), data.end(), [](const std::pair<Category, Money>& a, const std::pair<Category, Money>& b)
+    std::sort(m_currData.begin(), m_currData.end(), [](const std::pair<Category, Money>& a, const std::pair<Category, Money>& b)
     {
         return a.second > b.second;
     });
-
-    frame = 0;
-    framesCount = ((data.size() - 1) / PiePiecesCount) + 1;
-
-    sums.resize(framesCount);
-
-    for(size_t f = 0; f < framesCount; ++f) {
-        sums[f] = getSum(data, getOffset(f), getOffset(f+1)-1);
-    }
-
-    //fillChart();
 }
-#endif // 0
 
 } // namespace cashbook

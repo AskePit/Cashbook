@@ -14,43 +14,8 @@
 
 #include <span>
 
-class NodeX
-{
-public:
-    NodeX() = default;
-    NodeX(QString name, int value = 0)
-        : name(name)
-        , value(value)
-    {}
-
-    bool isLeaf() const {
-        return children.empty();
-    }
-
-    int getSum() const {
-        return std::accumulate(children.begin(), children.end(), value, [](int sum, const NodeX& child) {
-            return sum + (child.isLeaf() ? child.value : child.getSum());
-        });
-    }
-
-    NodeX& addChild(NodeX&& node) {
-        NodeX& moved = children.emplace_back(std::move(node));
-        moved.parent = this;
-        return moved;
-    }
-
-    QString name;
-    int value {0};
-    std::vector<NodeX> children;
-    NodeX* parent {nullptr};
-};
-
-Q_DECLARE_METATYPE(NodeX)
-
 namespace cashbook
 {
-
-NodeX GetSampleTree();
 
 using RectData = std::pair<QString, qreal>;
 
@@ -105,6 +70,7 @@ signals:
 
 private:
     void _getCurrenRects(std::span<Rect> res, QRectF space, qreal wholeSquare);
+    void _setCategoryData(const Node<Category>* category, const CategoryMoneyMap& categoriesMap);
 
     const Data* m_data {nullptr};
 
@@ -114,8 +80,8 @@ private:
     CategoryMoneyMap m_inCategoriesMap;
     CategoryMoneyMap m_outCategoriesMap;
 
-    NodeX m_tree;
-    NodeX* m_currNode {nullptr};
+    const Node<Category>* m_parentCategory {nullptr};
+    std::vector<std::pair<Category, Money>> m_currData;
 };
 
 } // namespace cashbook

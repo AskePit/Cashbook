@@ -38,7 +38,7 @@ Rectangle {
         anchors.fill: parent
 
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: {
+        onClicked: (mouse) => {
             if (mouse.button === Qt.LeftButton) { // 'mouse' is a MouseEvent argument passed into the onClicked signal handler
                 root.onLeftClicked(root)
             } else if (mouse.button === Qt.RightButton) {
