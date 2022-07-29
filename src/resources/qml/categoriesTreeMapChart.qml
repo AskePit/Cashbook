@@ -25,12 +25,10 @@ Item {
 
     function onRectInside(rect) {
         sModel.gotoNode(rect.name)
-        root.updateView()
     }
 
     function onUp() {
         sModel.goUp()
-        root.updateView()
     }
 
     Rectangle {
@@ -51,7 +49,28 @@ Item {
             }
             rects = []
 
-            var spacing = 10
+            var pallette = [
+                "#C45A5C",
+                "#ffad98",
+                "#ffd89c",
+                "#415d85",
+                "#7EB056",
+            ]
+
+            //Fisher-Yates shuffle algorithm.
+            function shuffleArray(array) {
+                for (var i = array.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var temp = array[i];
+                    array[i] = array[j];
+                    array[j] = temp;
+                }
+                return array;
+            }
+            shuffleArray(pallette)
+            var colorIdx = 0
+
+            var spacing = 0
             var modelRects = sModel.getCurrenRects(width - spacing, height - spacing) // `spacing` is for top-left margin. other margins are handled below
 
             i = 0
@@ -61,15 +80,35 @@ Item {
                 var component = Qt.createComponent("treeMapRect.qml")
                 var rect = component.createObject(root)
 
+                rect.color = pallette[colorIdx]
+                ++colorIdx
+                if(colorIdx >= pallette.length) {
+                    colorIdx = 0
+                }
+                rect.setForegroudColor()
+
                 rect.x = modelRect.x + spacing
                 rect.y = modelRect.y + spacing
                 rect.width = modelRect.w - spacing
                 rect.height = modelRect.h - spacing
                 rect.name = modelRect.name
+                rect.sum = modelRect.sum
                 rect.percentage = /*Math.round(modelRect.percentage, 2)*/ Number((modelRect.percentage*100).toFixed(2)) + '%'
+
                 rect.onLeftClicked.connect(onRectInside)
-                rect.onRightClicked.connect(onUp)
                 rects.push(rect)
+            }
+        }
+
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+
+            acceptedButtons: Qt.RightButton
+            onClicked: (mouse) => {
+                 if (mouse.button === Qt.RightButton) {
+                    onUp()
+                }
             }
         }
     }

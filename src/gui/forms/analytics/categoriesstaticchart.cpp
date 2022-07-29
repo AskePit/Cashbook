@@ -13,8 +13,10 @@ TreemapModel::TreemapModel(QObject *parent)
 void TreemapModel::init(const Data& data)
 {
     m_data = &data;
-    m_from = MonthBegin.addDays(-60);
+    m_from = Today.addDays(-30);
     m_to = Today;
+
+    m_parentCategory = m_data->outCategories.rootItem;
 
     updatePeriod();
 }
@@ -73,34 +75,43 @@ void TreemapModel::updatePeriod()
         }
     }
 
-    //m_leftChart.setCategoryData(m_data->outCategories.rootItem, m_outCategoriesMap);
     emit onUpdated();
 }
 
-void TreemapModel::gotoNode(const QString& nodeName)
+bool TreemapModel::gotoNode(const QString& nodeName)
 {
     if(!m_parentCategory) {
-        return;
+        return false;
     }
 
     for(const Node<Category>* child : m_parentCategory->children) {
         if(child->data == nodeName) {
-            m_parentCategory = child;
-            return;
+            if(!child->isLeaf()) {
+                m_parentCategory = child;
+                emit onUpdated();
+                return true;
+            }
+            return false;
         }
     }
+
+    return false;
 }
 
-void TreemapModel::goUp()
+bool TreemapModel::goUp()
 {
-    if(m_parentCategory) {
+    if(m_parentCategory && m_parentCategory->parent) {
         m_parentCategory = m_parentCategory->parent;
+        emit onUpdated();
+        return true;
     }
+
+    return false;
 }
 
-std::vector<RectData> TreemapModel::getCurrentValues()
+std::vector<Rect> TreemapModel::_getCurrentValues()
 {
-    std::vector<RectData> res;
+    std::vector<Rect> res;
 
     if(!m_parentCategory) {
         return res;
@@ -108,19 +119,29 @@ std::vector<RectData> TreemapModel::getCurrentValues()
 
     res.reserve(m_parentCategory->children.size());
 
-    const double sum = static_cast<double>(m_outCategoriesMap[m_parentCategory]);
-
-    if(sum <= 0) {
+    const Money parentSum = m_outCategoriesMap[m_parentCategory];
+    if(parentSum.isZero()) {
         return res;
     }
 
-    for(const Node<Category>* child : m_parentCategory->children) {
-        const qreal percent = static_cast<double>(static_cast<double>(m_outCategoriesMap[child])) / static_cast<qreal>(sum);
-        res.emplace_back(child->data, percent);
-    }
+    Money restSum = parentSum;
 
-    std::sort(res.begin(), res.end(), [](const RectData& a, const RectData& b) {
-        return a.second > b.second;
+    const auto processCategory = [&res, parentSum, &restSum](const QString& name, Money childSum) {
+        if (childSum.isZero()) {
+            return;
+        }
+        restSum -= childSum;
+        const qreal percent = childSum.as_cents() / static_cast<qreal>(parentSum.as_cents());
+        res.emplace_back(Rect{name, formatMoney(childSum), percent});
+    };
+
+    for(const Node<Category>* child : m_parentCategory->children) {
+        processCategory(child->data, m_outCategoriesMap[child]);
+    }
+    processCategory(tr("Остальное"), restSum);
+
+    std::sort(res.begin(), res.end(), [](const Rect& a, const Rect& b) {
+        return a.percentage > b.percentage;
     });
 
     return res;
@@ -128,15 +149,9 @@ std::vector<RectData> TreemapModel::getCurrentValues()
 
 std::vector<Rect> TreemapModel::getCurrenRects(float windowWidth, float windowHeight)
 {
-    std::vector<RectData> values = getCurrentValues();
-    std::vector<Rect> res(values.size());
-
-    std::transform(values.begin(), values.end(), res.begin(), [](const RectData& data){
-        return Rect(data, 0, 0);
-    });
+    std::vector<Rect> res = _getCurrentValues();
 
     QRectF wholeSpace(0, 0, windowWidth, windowHeight);
-
     _getCurrenRects(res, wholeSpace, windowWidth*windowHeight);
 
     return res;
@@ -249,32 +264,6 @@ void TreemapModel::_getCurrenRects(std::span<Rect> res, QRectF space, qreal whol
         }
         ++spanTailIndex;
     }
-}
-
-void TreemapModel::_setCategoryData(const Node<Category>* category, const CategoryMoneyMap& categoriesMap)
-{
-    m_parentCategory = category;
-    m_currData.clear();
-
-    if(!m_parentCategory) {
-        return;
-    }
-
-    m_currData.reserve(m_parentCategory->children.size());
-
-    for(Node<Category>* childCategory : m_parentCategory->children) {
-        if(categoriesMap.count(childCategory) == 0) {
-            continue;
-        }
-
-        const Money& money = categoriesMap.at(childCategory);
-        m_currData.emplace_back(childCategory->data, money);
-    }
-
-    std::sort(m_currData.begin(), m_currData.end(), [](const std::pair<Category, Money>& a, const std::pair<Category, Money>& b)
-    {
-        return a.second > b.second;
-    });
 }
 
 } // namespace cashbook

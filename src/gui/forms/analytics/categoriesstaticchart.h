@@ -17,12 +17,11 @@
 namespace cashbook
 {
 
-using RectData = std::pair<QString, qreal>;
-
 class Rect {
     Q_GADGET
 
     Q_PROPERTY(QString name MEMBER name CONSTANT FINAL)
+    Q_PROPERTY(QString sum MEMBER sum CONSTANT FINAL)
     Q_PROPERTY(qreal percentage MEMBER percentage CONSTANT FINAL)
     Q_PROPERTY(qreal x MEMBER x CONSTANT FINAL)
     Q_PROPERTY(qreal y MEMBER y CONSTANT FINAL)
@@ -30,20 +29,9 @@ class Rect {
     Q_PROPERTY(qreal h MEMBER h CONSTANT FINAL)
 
 public:
-
-    Rect() = default;
-
-    Rect(const RectData& data, qreal x, qreal y, qreal w = 0, qreal h = 0)
-        : name(data.first)
-        , percentage(data.second)
-        , x(x)
-        , y(y)
-        , w(w)
-        , h(h)
-    {}
-
     QString name;
-    qreal percentage;
+    QString sum;
+    qreal percentage {0.0f};
     qreal x {0.0f};
     qreal y {0.0f};
     qreal w {0.0f};
@@ -59,18 +47,17 @@ public:
     void init(const Data& data);
     Q_INVOKABLE void updatePeriod();
 
-    Q_INVOKABLE void gotoNode(const QString& nodeName);
-    Q_INVOKABLE void goUp();
+    Q_INVOKABLE bool gotoNode(const QString& nodeName);
+    Q_INVOKABLE bool goUp();
 
-    std::vector<RectData> getCurrentValues();
     Q_INVOKABLE std::vector<Rect> getCurrenRects(float windowWidth, float windowHeight);
 
 signals:
     void onUpdated();
 
 private:
+    std::vector<Rect> _getCurrentValues();
     void _getCurrenRects(std::span<Rect> res, QRectF space, qreal wholeSquare);
-    void _setCategoryData(const Node<Category>* category, const CategoryMoneyMap& categoriesMap);
 
     const Data* m_data {nullptr};
 
@@ -81,7 +68,6 @@ private:
     CategoryMoneyMap m_outCategoriesMap;
 
     const Node<Category>* m_parentCategory {nullptr};
-    std::vector<std::pair<Category, Money>> m_currData;
 };
 
 } // namespace cashbook
