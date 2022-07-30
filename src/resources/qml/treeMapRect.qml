@@ -1,4 +1,6 @@
-import QtQuick 2.0
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls
 
 Rectangle {
     id: root
@@ -8,6 +10,7 @@ Rectangle {
 
     radius: 0
 
+    property bool isLeaf: false
     property alias name: name.text
     property alias sum: sum.text
     property alias percentage: percentage.text
@@ -17,7 +20,7 @@ Rectangle {
         var luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
         var foreground
 
-        if (luminance > 0.5)
+        if (luminance > 0.6)
            foreground = "black"; // bright colors - black font
         else
            foreground = "white"; // dark colors - white font
@@ -27,48 +30,141 @@ Rectangle {
         percentage.color = foreground
     }
 
-    Component.onCompleted: {
+    ToolTip {
+        id: toolTip
+        text: name.text + '<br>' + sum.text + '<br>' + percentage.text
+        delay: 200
+        visible: mouseArea.containsMouse && (!name.visible || !sum.visible || !percentage.visible)
+        x: mouseArea.mouseX - width
+        y: mouseArea.mouseY - height
     }
 
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: sum.top
-        id: name
-        text: ""
-        color: "white"
-        fontSizeMode: Text.Fit
-        minimumPixelSize: 8
-        font.pixelSize: 30
-    }
+    ColumnLayout {
+        id: rootLayout
+        anchors.fill: parent
 
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        id: sum
-        text: ""
-        color: "white"
-        fontSizeMode: Text.Fit
-        minimumPixelSize: 8
-        font.pixelSize: 62
-    }
+        property bool debugDraw: false
 
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: sum.bottom
-        id: percentage
-        text: ""
-        color: "white"
-        fontSizeMode: Text.Fit
-        minimumPixelSize: 8
-        font.pixelSize: 30
+        // spacer
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+
+        Text {
+            id: name
+
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignCenter
+            Layout.leftMargin: 15
+            Layout.rightMargin: 15
+            Layout.topMargin: 10
+
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+
+            fontSizeMode: Text.Fit
+            minimumPixelSize: 8
+            font.pixelSize: 22
+
+            visible: contentWidth < rootLayout.width && contentHeight < rootLayout.height/2
+
+            // debug borders drawer
+            Rectangle {
+                visible: rootLayout.debugDraw
+
+                property var toFill: parent          // instantiation site "can" (optionally) override
+                property color customColor: 'yellow' // instantiation site "can" (optionally) override
+                property int customThickness: 1      // instantiation site "can" (optionally) override
+
+                anchors.fill: toFill
+                z: 200
+                color: 'transparent'
+                border.color: customColor
+                border.width: customThickness
+            }
+        }
+
+        Text {
+            id: sum
+
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignCenter
+            Layout.leftMargin: 15
+            Layout.rightMargin: 15
+
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+
+            fontSizeMode: Text.Fit
+            minimumPixelSize: 8
+            font.pixelSize: 44
+
+            visible: name.visible && contentWidth < rootLayout.width && contentHeight < rootLayout.height/3
+
+            // debug borders drawer
+            Rectangle {
+                visible: rootLayout.debugDraw
+
+                property var toFill: parent          // instantiation site "can" (optionally) override
+                property color customColor: 'yellow' // instantiation site "can" (optionally) override
+                property int customThickness: 1      // instantiation site "can" (optionally) override
+
+                anchors.fill: toFill
+                z: 200
+                color: 'transparent'
+                border.color: customColor
+                border.width: customThickness
+            }
+        }
+
+        Text {
+            id: percentage
+
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignCenter
+            Layout.leftMargin: 15
+            Layout.rightMargin: 15
+            Layout.bottomMargin: 10
+
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+
+            fontSizeMode: Text.Fit
+            minimumPixelSize: 8
+            font.pixelSize: 18
+
+            visible: sum.visible && contentWidth < rootLayout.width && contentHeight < rootLayout.height/3
+
+            // debug borders drawer
+            Rectangle {
+                visible: rootLayout.debugDraw
+
+                property var toFill: parent          // instantiation site "can" (optionally) override
+                property color customColor: 'yellow' // instantiation site "can" (optionally) override
+                property int customThickness: 1      // instantiation site "can" (optionally) override
+
+                anchors.fill: toFill
+                z: 200
+                color: 'transparent'
+                border.color: customColor
+                border.width: customThickness
+            }
+        }
+
+        // spacer
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
     }
 
     signal onLeftClicked(rect: Rectangle)
-    signal onRightClicked()
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
+        hoverEnabled: true
 
         acceptedButtons: Qt.LeftButton
         onClicked: (mouse) => {

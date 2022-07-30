@@ -126,19 +126,19 @@ std::vector<Rect> TreemapModel::_getCurrentValues()
 
     Money restSum = parentSum;
 
-    const auto processCategory = [&res, parentSum, &restSum](const QString& name, Money childSum) {
+    const auto processCategory = [&res, parentSum, &restSum](const QString& name, Money childSum, bool isLeaf) {
         if (childSum.isZero()) {
             return;
         }
         restSum -= childSum;
         const qreal percent = childSum.as_cents() / static_cast<qreal>(parentSum.as_cents());
-        res.emplace_back(Rect{name, formatMoney(childSum), percent});
+        res.emplace_back(Rect{name, formatMoney(childSum), percent, isLeaf});
     };
 
     for(const Node<Category>* child : m_parentCategory->children) {
-        processCategory(child->data, m_outCategoriesMap[child]);
+        processCategory(child->data, m_outCategoriesMap[child], child->isLeaf());
     }
-    processCategory(tr("Остальное"), restSum);
+    processCategory(tr("Остальное"), restSum, true);
 
     std::sort(res.begin(), res.end(), [](const Rect& a, const Rect& b) {
         return a.percentage > b.percentage;

@@ -27,11 +27,13 @@ class Rect {
     Q_PROPERTY(qreal y MEMBER y CONSTANT FINAL)
     Q_PROPERTY(qreal w MEMBER w CONSTANT FINAL)
     Q_PROPERTY(qreal h MEMBER h CONSTANT FINAL)
+    Q_PROPERTY(bool isLeaf MEMBER isLeaf CONSTANT FINAL)
 
 public:
     QString name;
     QString sum;
     qreal percentage {0.0f};
+    bool isLeaf {false};
     qreal x {0.0f};
     qreal y {0.0f};
     qreal w {0.0f};

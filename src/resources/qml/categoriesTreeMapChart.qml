@@ -50,11 +50,16 @@ Item {
             rects = []
 
             var pallette = [
-                "#C45A5C",
-                "#ffad98",
-                "#ffd89c",
-                "#415d85",
-                "#7EB056",
+                '#264653',
+                '#d9b45A',
+                "#b1876b",
+                "#733136",
+                "#efe8ba",
+                "#92574b",
+                '#442F5F',
+                "#d0b990",
+                '#E76F51',
+                '#202020'
             ]
 
             //Fisher-Yates shuffle algorithm.
@@ -67,10 +72,10 @@ Item {
                 }
                 return array;
             }
-            shuffleArray(pallette)
+            //shuffleArray(pallette)
             var colorIdx = 0
 
-            var spacing = 0
+            var spacing = 3
             var modelRects = sModel.getCurrenRects(width - spacing, height - spacing) // `spacing` is for top-left margin. other margins are handled below
 
             i = 0
@@ -80,11 +85,15 @@ Item {
                 var component = Qt.createComponent("treeMapRect.qml")
                 var rect = component.createObject(root)
 
-                rect.color = pallette[colorIdx]
-                ++colorIdx
-                if(colorIdx >= pallette.length) {
-                    colorIdx = 0
-                }
+                /*if (modelRect.isLeaf) {
+                    rect.color = "#606060"
+                } else {*/
+                    rect.color = pallette[colorIdx]
+                    ++colorIdx
+                    if(colorIdx >= pallette.length) {
+                        colorIdx = 0
+                    }
+                //}
                 rect.setForegroudColor()
 
                 rect.x = modelRect.x + spacing
@@ -94,6 +103,7 @@ Item {
                 rect.name = modelRect.name
                 rect.sum = modelRect.sum
                 rect.percentage = /*Math.round(modelRect.percentage, 2)*/ Number((modelRect.percentage*100).toFixed(2)) + '%'
+                rect.isLeaf = modelRect.isLeaf
 
                 rect.onLeftClicked.connect(onRectInside)
                 rects.push(rect)
