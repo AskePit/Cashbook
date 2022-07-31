@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtQuick.Layouts 1.2
 
 Item {
     width: 500
@@ -31,93 +32,167 @@ Item {
         sModel.goUp()
     }
 
-    Rectangle {
-        id: root
+    ColumnLayout {
+        id: treemapLayout
         anchors.fill: parent
 
-        property var rects: []
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: false
+            Layout.alignment: Qt.AlignTop
+            Layout.bottomMargin: 10
 
-        function updateView() {
-
-            if(!sModel) {
-                return
+            // spacer
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
             }
 
-            var i = 0
-            for(; i < rects.length; ++i) {
-                rects[i].destroy()
+            Text {
+                id: pathText
+                color: "white"
+
+                font.pixelSize: 18
+
+                Layout.fillWidth: false
+                Layout.fillHeight: false
+                Layout.alignment: Qt.AlignTop
+
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
             }
-            rects = []
 
-            var pallette = [
-                '#264653',
-                '#d9b45A',
-                "#b1876b",
-                "#733136",
-                "#efe8ba",
-                "#92574b",
-                '#442F5F',
-                "#d0b990",
-                '#E76F51',
-                '#202020'
-            ]
+            Text {
+                text: ": "
+                color: "white"
 
-            //Fisher-Yates shuffle algorithm.
-            function shuffleArray(array) {
-                for (var i = array.length - 1; i > 0; i--) {
-                    var j = Math.floor(Math.random() * (i + 1));
-                    var temp = array[i];
-                    array[i] = array[j];
-                    array[j] = temp;
-                }
-                return array;
+                font.pixelSize: 18
+
+                Layout.fillWidth: false
+                Layout.fillHeight: false
+                Layout.alignment: Qt.AlignTop
+
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
             }
-            //shuffleArray(pallette)
-            var colorIdx = 0
 
-            var spacing = 3
-            var modelRects = sModel.getCurrenRects(width - spacing, height - spacing) // `spacing` is for top-left margin. other margins are handled below
+            Text {
+                id: totalSumText
+                color: "white"
 
-            i = 0
-            for (; i < modelRects.length; ++i) {
-                var modelRect = modelRects[i]
+                font.pixelSize: 18
 
-                var component = Qt.createComponent("treeMapRect.qml")
-                var rect = component.createObject(root)
+                Layout.fillWidth: false
+                Layout.fillHeight: false
+                Layout.alignment: Qt.AlignTop
 
-                /*if (modelRect.isLeaf) {
-                    rect.color = "#606060"
-                } else {*/
-                    rect.color = pallette[colorIdx]
-                    ++colorIdx
-                    if(colorIdx >= pallette.length) {
-                        colorIdx = 0
-                    }
-                //}
-                rect.setForegroudColor()
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
+            }
 
-                rect.x = modelRect.x + spacing
-                rect.y = modelRect.y + spacing
-                rect.width = modelRect.w - spacing
-                rect.height = modelRect.h - spacing
-                rect.name = modelRect.name
-                rect.sum = modelRect.sum
-                rect.percentage = /*Math.round(modelRect.percentage, 2)*/ Number((modelRect.percentage*100).toFixed(2)) + '%'
-                rect.isLeaf = modelRect.isLeaf
-
-                rect.onLeftClicked.connect(onRectInside)
-                rects.push(rect)
+            // spacer
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
             }
         }
 
-        MouseArea {
-            id: mouseArea
-            anchors.fill: parent
+        Rectangle {
+            id: root
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
 
-            acceptedButtons: Qt.RightButton
-            onClicked: (mouse) => {
-                 if (mouse.button === Qt.RightButton) {
-                    onUp()
+            property var rects: []
+
+            function updateView() {
+
+                if(!sModel) {
+                    return
+                }
+
+                var i = 0
+                for(; i < rects.length; ++i) {
+                    rects[i].destroy()
+                }
+                rects = []
+
+                var pallette = [
+                    '#264653',
+                    '#d9b45A',
+                    "#b1876b",
+                    "#733136",
+                    "#efe8ba",
+                    "#92574b",
+                    '#442F5F',
+                    "#d0b990",
+                    '#E76F51',
+                    '#202020'
+                ]
+
+                //Fisher-Yates shuffle algorithm.
+                function shuffleArray(array) {
+                    for (var i = array.length - 1; i > 0; i--) {
+                        var j = Math.floor(Math.random() * (i + 1));
+                        var temp = array[i];
+                        array[i] = array[j];
+                        array[j] = temp;
+                    }
+                    return array;
+                }
+                //shuffleArray(pallette)
+                var colorIdx = 0
+
+                var spacing = 3
+                var modelRects = sModel.getCurrenRects(width - spacing, height - spacing) // `spacing` is for top-left margin. other margins are handled below
+
+                i = 0
+                for (; i < modelRects.length; ++i) {
+                    var modelRect = modelRects[i]
+
+                    var component = Qt.createComponent("treeMapRect.qml")
+                    var rect = component.createObject(root)
+
+                    /*if (modelRect.isLeaf) {
+                        rect.color = "#606060"
+                    } else {*/
+                        rect.color = pallette[colorIdx]
+                        ++colorIdx
+                        if(colorIdx >= pallette.length) {
+                            colorIdx = 0
+                        }
+                    //}
+                    rect.setForegroudColor()
+
+                    rect.x = modelRect.x + spacing
+                    rect.y = modelRect.y + spacing
+                    rect.width = modelRect.w - spacing
+                    rect.height = modelRect.h - spacing
+                    rect.name = modelRect.name
+                    rect.sum = modelRect.sum
+                    rect.percentage = /*Math.round(modelRect.percentage, 2)*/ Number((modelRect.percentage*100).toFixed(2)) + '%'
+                    rect.isLeaf = modelRect.isLeaf
+
+                    rect.onLeftClicked.connect(onRectInside)
+                    rects.push(rect)
+                }
+
+                totalSumText.text = sModel.getTotalSum()
+                pathText.text = sModel.getCategoryPath()
+                if(pathText.text === "") {
+                    pathText.text = "/"
+                }
+            }
+
+            MouseArea {
+                id: mouseArea
+                anchors.fill: parent
+
+                acceptedButtons: Qt.RightButton
+                onClicked: (mouse) => {
+                     if (mouse.button === Qt.RightButton) {
+                        onUp()
+                    }
                 }
             }
         }

@@ -62,6 +62,8 @@ public:
     Q_INVOKABLE bool goUp();
 
     Q_INVOKABLE std::vector<Rect> getCurrenRects(float windowWidth, float windowHeight);
+    Q_INVOKABLE QString getTotalSum() const;
+    Q_INVOKABLE QString getCategoryPath() const;
 
 signals:
     void onUpdated();

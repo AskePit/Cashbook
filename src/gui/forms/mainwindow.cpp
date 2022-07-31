@@ -383,6 +383,10 @@ void MainWindow::postLoadSetup()
         p->updatePeriod();
     });
 
+    ui->quickWidget->setAttribute(Qt::WA_AlwaysStackOnTop);
+    ui->quickWidget->setAttribute(Qt::WA_TranslucentBackground);
+    ui->quickWidget->setClearColor(Qt::transparent);
+
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
     QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
 }

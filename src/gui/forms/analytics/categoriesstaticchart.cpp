@@ -266,4 +266,20 @@ void TreemapModel::_getCurrenRects(std::span<Rect> res, QRectF space, qreal whol
     }
 }
 
+QString TreemapModel::getTotalSum() const
+{
+    if(!m_parentCategory) {
+        return "";
+    }
+    return formatMoney(m_outCategoriesMap.at(m_parentCategory));
+}
+
+QString TreemapModel::getCategoryPath() const
+{
+    if(!m_parentCategory) {
+        return "";
+    }
+    return pathToString(m_parentCategory).replace("/", " / ").toLower();
+}
+
 } // namespace cashbook
