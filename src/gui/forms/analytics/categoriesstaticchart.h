@@ -47,6 +47,15 @@ public:
     explicit TreemapModel(QObject *parent = 0);
 
     void init(const Data& data);
+
+    void setDateFrom(QDate from) {
+        m_from = from;
+    }
+
+    void setDateTo(QDate to) {
+        m_to = to;
+    }
+
     Q_INVOKABLE void updatePeriod();
 
     Q_INVOKABLE bool gotoNode(const QString& nodeName);

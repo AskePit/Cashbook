@@ -281,19 +281,19 @@ void MainWindow::postLoadSetup()
 
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
 
-    connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
+    connect(ui->dateFrom, &QDateEdit::dateChanged, this, [this](const QDate &from) {
         m_data.loadCategoriesStatistics(from, m_data.statistics.categoriesTo);
         m_models.inCategoriesModel.update();
         m_models.outCategoriesModel.update();
     });
 
-    connect(ui->dateTo, &QDateEdit::dateChanged, [this](const QDate &to) {
+    connect(ui->dateTo, &QDateEdit::dateChanged, this, [this](const QDate &to) {
         m_data.loadCategoriesStatistics(m_data.statistics.categoriesFrom, to);
         m_models.inCategoriesModel.update();
         m_models.outCategoriesModel.update();
     });
 
-    connect(&m_data, &Data::categoriesStatisticsUpdated, [this]() {
+    connect(&m_data, &Data::categoriesStatisticsUpdated, this, [this]() {
         const auto *inRoot = m_data.inCategories.rootItem;
         const auto *outRoot = m_data.outCategories.rootItem;
 
@@ -348,6 +348,40 @@ void MainWindow::postLoadSetup()
 
     TreemapModel* p = new TreemapModel;
     p->init(m_data);
+
+    connect(ui->spentsDateFrom, &QDateEdit::dateChanged, this, [p](const QDate &from) {
+        p->setDateFrom(from);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsDateTo, &QDateEdit::dateChanged, this, [p](const QDate &to) {
+        p->setDateTo(to);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsMonthButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(Today.addDays(-30));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsYearButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(Today.addYears(-1));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsThisMonthButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(QDate(Today.year(), Today.month(), 1));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsThisYearButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(QDate(Today.year(), 1, 1));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
 
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
     QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
