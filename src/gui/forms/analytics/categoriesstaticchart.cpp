@@ -279,7 +279,16 @@ QString TreemapModel::getCategoryPath() const
     if(!m_parentCategory) {
         return "";
     }
-    return pathToString(m_parentCategory).replace("/", " / ").toLower();
+
+    QString origin = pathToString(m_parentCategory);
+    QChar originFirst = !origin.isEmpty() ? origin[0] : QChar();
+
+    origin = origin.replace("/", " / ").toLower();
+    if(!originFirst.isNull() && !origin.isEmpty()) {
+        origin[0] = originFirst;
+    }
+
+    return origin;
 }
 
 } // namespace cashbook
