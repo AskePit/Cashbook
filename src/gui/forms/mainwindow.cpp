@@ -347,6 +347,13 @@ void MainWindow::postLoadSetup()
     updateAnalytics();
 
     TreemapModel* p = new TreemapModel;
+
+    ui->spentsDateFrom->setDate(QDate(Today.year(), Today.month(), 1));
+    p->setDateFrom(ui->spentsDateFrom->date());
+    ui->spentsDateTo->setDate(Today);
+    ui->spentsDateTo->setMaximumDate(Today);
+    p->setDateTo(ui->spentsDateTo->date());
+
     p->init(m_data);
 
     connect(ui->spentsDateFrom, &QDateEdit::dateChanged, this, [p](const QDate &from) {
@@ -381,6 +388,10 @@ void MainWindow::postLoadSetup()
         ui->spentsDateFrom->setDate(QDate(Today.year(), 1, 1));
         ui->spentsDateTo->setDate(Today);
         p->updatePeriod();
+    });
+
+    connect(ui->spentsTypeBox, &QComboBox::currentIndexChanged, this, [p](int index) {
+        p->setCategoriesType(index);
     });
 
     ui->quickWidget->setAttribute(Qt::WA_AlwaysStackOnTop);

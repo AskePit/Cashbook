@@ -13,12 +13,15 @@ TreemapModel::TreemapModel(QObject *parent)
 void TreemapModel::init(const Data& data)
 {
     m_data = &data;
-    m_from = Today.addDays(-30);
-    m_to = Today;
-
     m_parentCategory = m_data->outCategories.rootItem;
 
     updatePeriod();
+}
+
+void TreemapModel::setCategoriesType(int index) {
+    m_categoriesType = index;
+    m_parentCategory = (index ? m_data->inCategories : m_data->outCategories).rootItem;
+    emit onUpdated();
 }
 
 void TreemapModel::updatePeriod()
@@ -119,7 +122,7 @@ std::vector<Rect> TreemapModel::_getCurrentValues()
 
     res.reserve(m_parentCategory->children.size());
 
-    const Money parentSum = m_outCategoriesMap[m_parentCategory];
+    const Money parentSum = _getCategories()[m_parentCategory];
     if(parentSum.isZero()) {
         return res;
     }
@@ -136,7 +139,7 @@ std::vector<Rect> TreemapModel::_getCurrentValues()
     };
 
     for(const Node<Category>* child : m_parentCategory->children) {
-        processCategory(child->data, m_outCategoriesMap[child], child->isLeaf());
+        processCategory(child->data, _getCategories()[child], child->isLeaf());
     }
     processCategory(tr("Остальное"), restSum, true);
 
@@ -271,7 +274,7 @@ QString TreemapModel::getTotalSum() const
     if(!m_parentCategory) {
         return "";
     }
-    return formatMoney(m_outCategoriesMap.at(m_parentCategory));
+    return formatMoney(_getCategories().at(m_parentCategory));
 }
 
 QString TreemapModel::getCategoryPath() const

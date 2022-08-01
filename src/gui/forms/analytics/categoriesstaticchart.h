@@ -56,6 +56,8 @@ public:
         m_to = to;
     }
 
+    void setCategoriesType(int index);
+
     Q_INVOKABLE void updatePeriod();
 
     Q_INVOKABLE bool gotoNode(const QString& nodeName);
@@ -71,12 +73,19 @@ signals:
 private:
     std::vector<Rect> _getCurrentValues();
     void _getCurrenRects(std::span<Rect> res, QRectF space, qreal wholeSquare);
+    CategoryMoneyMap& _getCategories() {
+        return m_categoriesType ? m_inCategoriesMap : m_outCategoriesMap;
+    }
+    const CategoryMoneyMap& _getCategories() const {
+        return m_categoriesType ? m_inCategoriesMap : m_outCategoriesMap;
+    }
 
     const Data* m_data {nullptr};
 
     QDate m_from;
     QDate m_to;
 
+    int m_categoriesType {0};
     CategoryMoneyMap m_inCategoriesMap;
     CategoryMoneyMap m_outCategoriesMap;
 
