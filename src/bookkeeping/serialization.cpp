@@ -735,7 +735,7 @@ static void load(TasksData &data, const YAML::Node& arr,
     for(const YAML::Node& v : arr) {
         Task item;
         load(item, v, inCategories, outCategories);
-        if(item.to >= today) {
+        if(item.to >= Today) {
             data.active.tasks.push_back(item);
         } else {
             data.completed.tasks.push_back(item);
@@ -792,8 +792,7 @@ static void loadLog(Data &data, int recentMonths = -1) /* (recentMonths == -1) m
         loadMonth(data, monthDoc);
     }
 
-    QDate monthBegin(today.year(), today.month(), 1);
-    data.loadCategoriesStatistics(monthBegin, today);
+    data.loadCategoriesStatistics(MonthBegin, Today);
     data.updateTasks();
 }
 

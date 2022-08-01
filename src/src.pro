@@ -4,8 +4,7 @@
 #
 #-------------------------------------------------
 
-QT += core gui charts
-
+QT += core widgets gui charts qml quick quickwidgets
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webenginewidgets
 
 TARGET = cashbook
@@ -23,6 +22,7 @@ LIBS += -L$${ASKELIBQT_LIB_PATH} -laskelib_qt_std$${ASKELIBQT_LIB_SUFFIX}
 LIBS += -L$${ASKELIB_LIB_PATH} -laskelib_std$${ASKELIB_LIB_SUFFIX}
 
 FORMS += \
+    gui/forms/analytics/categoriesstaticchart.ui \
     gui/forms/mainwindow.ui \
     gui/forms/innodedialog.ui \
     gui/forms/selectwalletdialog.ui \
@@ -34,6 +34,7 @@ HEADERS += \
     bookkeeping/models.h \
     bookkeeping/bookkeeping.h \
     bookkeeping/serialization.h \
+    gui/forms/analytics/categoriesstaticchart.h \
     gui/forms/mainwindow.h \
     gui/forms/innodedialog.h \
     gui/forms/selectwalletdialog.h \
@@ -48,6 +49,7 @@ SOURCES += \
     bookkeeping/models.cpp \
     bookkeeping/bookkeeping.cpp \
     bookkeeping/serialization.cpp \
+    gui/forms/analytics/categoriesstaticchart.cpp \
     gui/forms/mainwindow.cpp \
     gui/forms/innodedialog.cpp \
     gui/forms/selectwalletdialog.cpp \
@@ -56,15 +58,16 @@ SOURCES += \
     main.cpp \
     $$files($$PWD/../third-party/yaml-cpp/src/*.cpp)
 
-
 win32-msvc* {
     QMAKE_CXXFLAGS_RELEASE += /O2
-    QMAKE_CXXFLAGS += /std:c++17
+#    QMAKE_CXXFLAGS += /std:c++20
 }
 win32-g++ {
     QMAKE_CXXFLAGS_RELEASE += -Ofast
-    QMAKE_CXXFLAGS += -std=c++17
+#    QMAKE_CXXFLAGS += -std=c++2a
 }
 
 RESOURCES += \
     resources/resources.qrc
+
+CONFIG += c++latest

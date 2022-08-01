@@ -103,12 +103,11 @@ void WalletsAnalytics::updateAnalytics()
 
     Type::t aim = static_cast<Type::t>(m_criteriaCombo->currentIndex());
 
-    std::vector<Node<Wallet>*> l = m_data.wallets.rootItem->toList();
+    std::vector<Node<Wallet>*> l = m_data.wallets.rootItem->getLeafs();
     for(const auto& wallet : l) {
 
         // wallet filter
         if(!wallet) continue;
-        if(!wallet->isLeaf()) continue;
         if(wallet->data.type == Wallet::Type::Points) continue;
 
         Money money = wallet->data.amount;

@@ -36,9 +36,9 @@ public:
     void updateAnalytics();
 
 private:
-    QChart* m_chart;
-    QPieSeries* m_series;
-    QChartView* m_view;
+    QChart* m_chart {nullptr};
+    QPieSeries* m_series {nullptr};
+    QChartView* m_view {nullptr};
 
     const Data& m_data;
 

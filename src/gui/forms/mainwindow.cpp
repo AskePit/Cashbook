@@ -7,6 +7,7 @@
 #include "bookkeeping/serialization.h"
 #include "selectwalletdialog.h"
 #include "walletpropertieswindow.h"
+#include "gui/forms/analytics/categoriesstaticchart.h"
 
 #include <QFileDialog>
 #include <QFileInfo>
@@ -14,6 +15,8 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QStandardPaths>
+#include <QQmlContext>
+#include <QQuickItem>
 #include <QWebEnginePage>
 
 namespace cashbook
@@ -219,9 +222,9 @@ void MainWindow::preLoadSetup()
     ui->logTable->setColumnWidth(LogColumn::From, 145);
     ui->logTable->setColumnWidth(LogColumn::To, 145);
 
-    ui->dateTo->setMaximumDate(today); // should be today day
-    ui->thisMonthButton->setText(months[today.month()-1]);
-    ui->thisYearButton->setText(QString::number(today.year()));
+    ui->dateTo->setMaximumDate(Today); // should be today day
+    ui->thisMonthButton->setText(months[Today.month()-1]);
+    ui->thisYearButton->setText(QString::number(Today.year()));
 
     m_categoriesEventFilter.setViews(ui->inCategoriesTree, ui->outCategoriesTree);
     ui->inCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
@@ -278,19 +281,19 @@ void MainWindow::postLoadSetup()
 
     ui->dateFrom->setDate(m_data.statistics.categoriesFrom);
 
-    connect(ui->dateFrom, &QDateEdit::dateChanged, [this](const QDate &from) {
+    connect(ui->dateFrom, &QDateEdit::dateChanged, this, [this](const QDate &from) {
         m_data.loadCategoriesStatistics(from, m_data.statistics.categoriesTo);
         m_models.inCategoriesModel.update();
         m_models.outCategoriesModel.update();
     });
 
-    connect(ui->dateTo, &QDateEdit::dateChanged, [this](const QDate &to) {
+    connect(ui->dateTo, &QDateEdit::dateChanged, this, [this](const QDate &to) {
         m_data.loadCategoriesStatistics(m_data.statistics.categoriesFrom, to);
         m_models.inCategoriesModel.update();
         m_models.outCategoriesModel.update();
     });
 
-    connect(&m_data, &Data::categoriesStatisticsUpdated, [this]() {
+    connect(&m_data, &Data::categoriesStatisticsUpdated, this, [this]() {
         const auto *inRoot = m_data.inCategories.rootItem;
         const auto *outRoot = m_data.outCategories.rootItem;
 
@@ -342,6 +345,61 @@ void MainWindow::postLoadSetup()
     on_walletsAnalysisCriteriaCombo_currentIndexChanged(0); // just to hide bank-related label/combo
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
+
+    TreemapModel* p = new TreemapModel;
+
+    ui->spentsDateFrom->setDate(QDate(Today.year(), Today.month(), 1));
+    p->setDateFrom(ui->spentsDateFrom->date());
+    ui->spentsDateTo->setDate(Today);
+    ui->spentsDateTo->setMaximumDate(Today);
+    p->setDateTo(ui->spentsDateTo->date());
+
+    p->init(m_data);
+
+    connect(ui->spentsDateFrom, &QDateEdit::dateChanged, this, [p](const QDate &from) {
+        p->setDateFrom(from);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsDateTo, &QDateEdit::dateChanged, this, [p](const QDate &to) {
+        p->setDateTo(to);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsMonthButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(Today.addDays(-30));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsYearButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(Today.addYears(-1));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsThisMonthButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(QDate(Today.year(), Today.month(), 1));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsThisYearButton, &QPushButton::pressed, this, [this, p]() {
+        ui->spentsDateFrom->setDate(QDate(Today.year(), 1, 1));
+        ui->spentsDateTo->setDate(Today);
+        p->updatePeriod();
+    });
+
+    connect(ui->spentsTypeBox, &QComboBox::currentIndexChanged, this, [p](int index) {
+        p->setCategoriesType(index);
+    });
+
+    ui->quickWidget->setAttribute(Qt::WA_AlwaysStackOnTop);
+    ui->quickWidget->setAttribute(Qt::WA_TranslucentBackground);
+    ui->quickWidget->setClearColor(Qt::transparent);
+
+    ui->quickWidget->rootContext()->setContextProperty("sModel", p);
+    QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
 }
 
 void MainWindow::saveData()
@@ -855,34 +913,34 @@ void cashbook::MainWindow::on_statisticsButton_clicked()
 
 void cashbook::MainWindow::on_thisMonthButton_clicked()
 {
-    QDate start(today.year(), today.month(), 1);
+    QDate start(Today.year(), Today.month(), 1);
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 void cashbook::MainWindow::on_thisYearButton_clicked()
 {
-    QDate start(today.year(), 1, 1);
+    QDate start(Today.year(), 1, 1);
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 void cashbook::MainWindow::on_monthButton_clicked()
 {
-    QDate start {today.addDays(-30)};
+    QDate start {Today.addDays(-30)};
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 void cashbook::MainWindow::on_yearButton_clicked()
 {
-    QDate start {today.addYears(-1)};
+    QDate start {Today.addYears(-1)};
 
     ui->dateFrom->setDate(start);
-    ui->dateTo->setDate(today);
+    ui->dateTo->setDate(Today);
 }
 
 static void showCategoryContextMenu(const cashbook::CategoriesModel &model, QTreeView *view, QAction *action, const QPoint &point)
@@ -1267,7 +1325,7 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
         };
 
         QWebEnginePage* page = new QWebEnginePage();
-        connect(page, &QWebEnginePage::loadFinished, this, [page, onHtmlLoaded](bool ok){
+        connect(page, &QWebEnginePage::loadFinished, this, [page, onHtmlLoaded](bool){
             page->toHtml([&onHtmlLoaded](const QString& c){
                 onHtmlLoaded(c);
             });
