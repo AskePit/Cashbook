@@ -2,6 +2,8 @@
 #include "ui_categoriesstaticchart.h"
 
 #include <QRectF>
+#include <QTableView>
+#include <QHeaderView>
 
 namespace cashbook
 {
@@ -10,17 +12,19 @@ TreemapModel::TreemapModel(QObject *parent)
     : QObject(parent)
 {}
 
-void TreemapModel::init(const Data& data)
+void TreemapModel::init(const DataModels& data)
 {
     m_data = &data;
-    m_parentCategory = m_data->outCategories.rootItem;
+    m_parentCategory = m_data->m_data.outCategories.rootItem;
 
     updatePeriod();
 }
 
 void TreemapModel::setCategoriesType(int index) {
-    m_categoriesType = index;
-    m_parentCategory = (index ? m_data->inCategories : m_data->outCategories).rootItem;
+
+    m_categoriesType = index ? Transaction::Type::In : Transaction::Type::Out;
+    m_parentCategory = (m_categoriesType == Transaction::Type::In ? m_data->m_data.inCategories : m_data->m_data.outCategories).rootItem;
+
     emit onUpdated();
 }
 
@@ -29,11 +33,11 @@ void TreemapModel::updatePeriod()
     m_inCategoriesMap.clear();
     m_outCategoriesMap.clear();
 
-    if(m_data->log.log.empty()) {
+    if(m_data->m_data.log.log.empty()) {
         return;
     }
 
-    const std::deque<Transaction>& log = m_data->log.log;
+    const std::deque<Transaction>& log = m_data->m_data.log.log;
 
     const QDate &logBegin = log.at(log.size()-1).date;
     const QDate &logEnd = log.at(0).date;
@@ -83,19 +87,15 @@ void TreemapModel::updatePeriod()
 
 bool TreemapModel::gotoNode(const QString& nodeName)
 {
-    if(!m_parentCategory) {
-        return false;
-    }
+    const Node<Category>* childCategory = _getCategoryByName(nodeName);
 
-    for(const Node<Category>* child : m_parentCategory->children) {
-        if(child->data == nodeName) {
-            if(!child->isLeaf()) {
-                m_parentCategory = child;
-                emit onUpdated();
-                return true;
-            }
-            return false;
+    if(childCategory && childCategory->data == nodeName) {
+        if(!childCategory->isLeaf()) {
+            m_parentCategory = childCategory;
+            emit onUpdated();
+            return true;
         }
+        return false;
     }
 
     return false;
@@ -269,6 +269,21 @@ void TreemapModel::_getCurrenRects(std::span<Rect> res, QRectF space, qreal whol
     }
 }
 
+const Node<Category>* TreemapModel::_getCategoryByName(const QString& nodeName) const
+{
+    if(!m_parentCategory) {
+        return nullptr;
+    }
+
+    for(const Node<Category>* child : m_parentCategory->children) {
+        if(child->data == nodeName) {
+            return child;
+        }
+    }
+
+    return nullptr;
+}
+
 QString TreemapModel::getTotalSum() const
 {
     if(!m_parentCategory) {
@@ -292,6 +307,28 @@ QString TreemapModel::getCategoryPath() const
     }
 
     return origin;
+}
+
+void TreemapModel::showCategoryStatement(const QString& nodeName)
+{
+    const Node<Category>* category = _getCategoryByName(nodeName);
+
+    FilteredLogModel* filterModel = new FilteredLogModel(m_from, m_to, m_categoriesType, category, this);
+    filterModel->setSourceModel(const_cast<LogModel*>(&m_data->logModel));
+    QTableView* table = new QTableView();
+    table->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Tool);
+    table->setAttribute(Qt::WA_DeleteOnClose);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->verticalHeader()->hide();
+    table->verticalHeader()->setDefaultSectionSize(23);
+    table->setModel(filterModel);
+    table->showFullScreen();
+    //table->setGeometry(QRect(categoryTree->mapToGlobal(categoryTree->pos()), categoryTree->size()));
+    table->resizeColumnsToContents();
+    table->hideColumn(LogColumn::Type);
+    table->hideColumn(m_categoriesType == Transaction::Type::In ? LogColumn::From : LogColumn::To);
+    table->show();
+    table->activateWindow();
 }
 
 } // namespace cashbook

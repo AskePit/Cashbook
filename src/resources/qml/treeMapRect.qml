@@ -159,17 +159,35 @@ Rectangle {
         }
     }
 
-    signal onLeftClicked(rect: Rectangle)
+    signal onGoInside(rect: Rectangle)
+    signal onStatement(rect: Rectangle)
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
 
-        acceptedButtons: Qt.LeftButton
-        onClicked: (mouse) => {
-            if (mouse.button === Qt.LeftButton) { // 'mouse' is a MouseEvent argument passed into the onClicked signal handler
-                root.onLeftClicked(root)
+        acceptedButtons: Qt.RightButton
+
+        onWheel: (event) => {
+            if(event.angleDelta.y > 0) {
+                root.onGoInside(root)
+            }
+
+            event.accepted = false
+        }
+
+        onClicked: {
+            if (mouse.button === Qt.RightButton) {
+                contextMenu.popup()
+            }
+        }
+
+        Menu {
+            id: contextMenu
+            MenuItem {
+                text: qsTr("Выписка")
+                onTriggered: onStatement(root)
             }
         }
     }

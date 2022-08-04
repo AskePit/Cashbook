@@ -6,7 +6,7 @@
 #include <QtCharts/QPieSeries>
 #include <QtCharts/QPieSlice>
 
-#include "bookkeeping/bookkeeping.h"
+#include "bookkeeping/models.h"
 
 #include <QPoint>
 #include <QRectF>
@@ -46,7 +46,7 @@ class TreemapModel : public QObject
 public:
     explicit TreemapModel(QObject *parent = 0);
 
-    void init(const Data& data);
+    void init(const DataModels& data);
 
     void setDateFrom(QDate from) {
         m_from = from;
@@ -67,25 +67,30 @@ public:
     Q_INVOKABLE QString getTotalSum() const;
     Q_INVOKABLE QString getCategoryPath() const;
 
+    Q_INVOKABLE void showCategoryStatement(const QString& nodeName);
+
 signals:
     void onUpdated();
 
 private:
     std::vector<Rect> _getCurrentValues();
     void _getCurrenRects(std::span<Rect> res, QRectF space, qreal wholeSquare);
+
     CategoryMoneyMap& _getCategories() {
-        return m_categoriesType ? m_inCategoriesMap : m_outCategoriesMap;
+        return m_categoriesType == Transaction::Type::In ? m_inCategoriesMap : m_outCategoriesMap;
     }
     const CategoryMoneyMap& _getCategories() const {
-        return m_categoriesType ? m_inCategoriesMap : m_outCategoriesMap;
+        return m_categoriesType == Transaction::Type::In ? m_inCategoriesMap : m_outCategoriesMap;
     }
 
-    const Data* m_data {nullptr};
+    const Node<Category>* _getCategoryByName(const QString& nodeName) const;
+
+    const DataModels* m_data {nullptr};
 
     QDate m_from;
     QDate m_to;
 
-    int m_categoriesType {0};
+    Transaction::Type::t m_categoriesType {Transaction::Type::Out};
     CategoryMoneyMap m_inCategoriesMap;
     CategoryMoneyMap m_outCategoriesMap;
 

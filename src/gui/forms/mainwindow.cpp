@@ -354,7 +354,7 @@ void MainWindow::postLoadSetup()
     ui->spentsDateTo->setMaximumDate(Today);
     p->setDateTo(ui->spentsDateTo->date());
 
-    p->init(m_data);
+    p->init(m_models);
 
     connect(ui->spentsDateFrom, &QDateEdit::dateChanged, this, [p](const QDate &from) {
         p->setDateFrom(from);

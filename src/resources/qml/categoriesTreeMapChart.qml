@@ -32,6 +32,10 @@ Item {
         sModel.goUp()
     }
 
+    function onStatement(rect) {
+        sModel.showCategoryStatement(rect.name)
+    }
+
     ColumnLayout {
         id: treemapLayout
         anchors.fill: parent
@@ -173,7 +177,8 @@ Item {
                     rect.percentage = /*Math.round(modelRect.percentage, 2)*/ Number((modelRect.percentage*100).toFixed(2)) + '%'
                     rect.isLeaf = modelRect.isLeaf
 
-                    rect.onLeftClicked.connect(onRectInside)
+                    rect.onGoInside.connect(onRectInside)
+                    rect.onStatement.connect(onStatement)
                     rects.push(rect)
                 }
 
@@ -189,8 +194,9 @@ Item {
                 anchors.fill: parent
 
                 acceptedButtons: Qt.RightButton
-                onClicked: (mouse) => {
-                     if (mouse.button === Qt.RightButton) {
+
+                onWheel: (event) => {
+                    if(event.angleDelta.y < 0) {
                         onUp()
                     }
                 }
