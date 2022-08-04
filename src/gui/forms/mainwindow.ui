@@ -1230,160 +1230,6 @@ QTreeView::item { height: 18px;}</string>
               </property>
              </widget>
             </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_8">
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <property name="sizeConstraint">
-               <enum>QLayout::SetDefaultConstraint</enum>
-              </property>
-              <item>
-               <spacer name="horizontalSpacer_6">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Fixed</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>5</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_9">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>60</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="palette">
-                 <palette>
-                  <active>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </active>
-                  <inactive>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </inactive>
-                  <disabled>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </disabled>
-                 </palette>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>9</pointsize>
-                 </font>
-                </property>
-                <property name="lineWidth">
-                 <number>0</number>
-                </property>
-                <property name="text">
-                 <string>Итого: </string>
-                </property>
-                <property name="margin">
-                 <number>2</number>
-                </property>
-                <property name="indent">
-                 <number>0</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="inTotalLabel">
-                <property name="palette">
-                 <palette>
-                  <active>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </active>
-                  <inactive>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </inactive>
-                  <disabled>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </disabled>
-                 </palette>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>9</pointsize>
-                 </font>
-                </property>
-                <property name="lineWidth">
-                 <number>0</number>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="margin">
-                 <number>2</number>
-                </property>
-                <property name="indent">
-                 <number>0</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
            </layout>
           </widget>
           <widget class="QWidget" name="layoutWidget6">
@@ -1607,160 +1453,6 @@ QTreeView::item { height: 18px;}</string>
               </property>
              </widget>
             </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <property name="sizeConstraint">
-               <enum>QLayout::SetDefaultConstraint</enum>
-              </property>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Fixed</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>5</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_10">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>60</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="palette">
-                 <palette>
-                  <active>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </active>
-                  <inactive>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </inactive>
-                  <disabled>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </disabled>
-                 </palette>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>9</pointsize>
-                 </font>
-                </property>
-                <property name="lineWidth">
-                 <number>0</number>
-                </property>
-                <property name="text">
-                 <string>Итого: </string>
-                </property>
-                <property name="margin">
-                 <number>2</number>
-                </property>
-                <property name="indent">
-                 <number>0</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="outTotalLabel">
-                <property name="palette">
-                 <palette>
-                  <active>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </active>
-                  <inactive>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </inactive>
-                  <disabled>
-                   <colorrole role="Window">
-                    <brush brushstyle="SolidPattern">
-                     <color alpha="255">
-                      <red>255</red>
-                      <green>255</green>
-                      <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                  </disabled>
-                 </palette>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>9</pointsize>
-                 </font>
-                </property>
-                <property name="lineWidth">
-                 <number>0</number>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="margin">
-                 <number>2</number>
-                </property>
-                <property name="indent">
-                 <number>0</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
            </layout>
           </widget>
          </widget>
@@ -1770,195 +1462,6 @@ QTreeView::item { height: 18px;}</string>
           <property name="sizeConstraint">
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
-          <item>
-           <spacer name="horizontalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_5">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Оборот с</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDateEdit" name="dateFrom">
-            <property name="palette">
-             <palette>
-              <active>
-               <colorrole role="Window">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>146</red>
-                  <green>150</green>
-                  <blue>154</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </active>
-              <inactive>
-               <colorrole role="Window">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>146</red>
-                  <green>150</green>
-                  <blue>154</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </inactive>
-              <disabled>
-               <colorrole role="Window">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>146</red>
-                  <green>150</green>
-                  <blue>154</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </disabled>
-             </palette>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCalendarWidget QWidget#qt_calendar_navigationbar
-{ 
-    background-color: rgb(64, 66, 68); 
-}</string>
-            </property>
-            <property name="frame">
-             <bool>true</bool>
-            </property>
-            <property name="readOnly">
-             <bool>false</bool>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
-            </property>
-            <property name="calendarPopup">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>по</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDateEdit" name="dateTo">
-            <property name="palette">
-             <palette>
-              <active>
-               <colorrole role="Window">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>146</red>
-                  <green>150</green>
-                  <blue>154</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </active>
-              <inactive>
-               <colorrole role="Window">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>146</red>
-                  <green>150</green>
-                  <blue>154</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </inactive>
-              <disabled>
-               <colorrole role="Window">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>146</red>
-                  <green>150</green>
-                  <blue>154</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </disabled>
-             </palette>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCalendarWidget QWidget#qt_calendar_navigationbar
-{ 
-    background-color: rgb(64, 66, 68); 
-}</string>
-            </property>
-            <property name="calendarPopup">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QPushButton" name="thisMonthButton">
-            <property name="text">
-             <string>Этот месяц</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="thisYearButton">
-            <property name="text">
-             <string>Этот год</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="monthButton">
-            <property name="text">
-             <string>30 дней</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="yearButton">
-            <property name="text">
-             <string>365 дней</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
        </layout>
@@ -2014,9 +1517,9 @@ QTreeView::item { height: 18px;}</string>
              <colorrole role="WindowText">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
-                <green>0</green>
-                <blue>0</blue>
+                <red>227</red>
+                <green>229</green>
+                <blue>230</blue>
                </color>
               </brush>
              </colorrole>
@@ -2041,9 +1544,9 @@ QTreeView::item { height: 18px;}</string>
              <colorrole role="Window">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>240</red>
-                <green>240</green>
-                <blue>240</blue>
+                <red>64</red>
+                <green>66</green>
+                <blue>68</blue>
                </color>
               </brush>
              </colorrole>
@@ -2052,9 +1555,9 @@ QTreeView::item { height: 18px;}</string>
              <colorrole role="WindowText">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>120</red>
-                <green>120</green>
-                <blue>120</blue>
+                <red>227</red>
+                <green>229</green>
+                <blue>230</blue>
                </color>
               </brush>
              </colorrole>
@@ -3459,9 +2962,9 @@ QTreeView::item { height: 18px;}</string>
              <colorrole role="WindowText">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
-                <green>0</green>
-                <blue>0</blue>
+                <red>227</red>
+                <green>229</green>
+                <blue>230</blue>
                </color>
               </brush>
              </colorrole>
@@ -3486,9 +2989,9 @@ QTreeView::item { height: 18px;}</string>
              <colorrole role="Window">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>240</red>
-                <green>240</green>
-                <blue>240</blue>
+                <red>64</red>
+                <green>66</green>
+                <blue>68</blue>
                </color>
               </brush>
              </colorrole>
@@ -3497,9 +3000,9 @@ QTreeView::item { height: 18px;}</string>
              <colorrole role="WindowText">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>120</red>
-                <green>120</green>
-                <blue>120</blue>
+                <red>227</red>
+                <green>229</green>
+                <blue>230</blue>
                </color>
               </brush>
              </colorrole>
@@ -3696,9 +3199,9 @@ QTreeView::item { height: 18px;}</string>
                      <colorrole role="WindowText">
                       <brush brushstyle="SolidPattern">
                        <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
+                        <red>227</red>
+                        <green>229</green>
+                        <blue>230</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -3930,9 +3433,9 @@ QTreeView::item { height: 18px;}</string>
                      <colorrole role="WindowText">
                       <brush brushstyle="SolidPattern">
                        <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
+                        <red>227</red>
+                        <green>229</green>
+                        <blue>230</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -4133,9 +3636,9 @@ QTreeView::item { height: 18px;}</string>
                      <colorrole role="WindowText">
                       <brush brushstyle="SolidPattern">
                        <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
+                        <red>227</red>
+                        <green>229</green>
+                        <blue>230</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -4336,9 +3839,9 @@ QTreeView::item { height: 18px;}</string>
                      <colorrole role="WindowText">
                       <brush brushstyle="SolidPattern">
                        <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
+                        <red>227</red>
+                        <green>229</green>
+                        <blue>230</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -4546,9 +4049,9 @@ QTreeView::item { height: 18px;}</string>
                      <colorrole role="WindowText">
                       <brush brushstyle="SolidPattern">
                        <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
+                        <red>227</red>
+                        <green>229</green>
+                        <blue>230</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -4776,9 +4279,9 @@ QTreeView::item { height: 18px;}</string>
                      <colorrole role="WindowText">
                       <brush brushstyle="SolidPattern">
                        <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
+                        <red>227</red>
+                        <green>229</green>
+                        <blue>230</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -5144,22 +4647,6 @@ QTreeView::item { height: 18px;}</string>
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionOutStatement">
-   <property name="text">
-    <string>Выписка</string>
-   </property>
-   <property name="toolTip">
-    <string>Выписка</string>
-   </property>
-  </action>
-  <action name="actionInStatement">
-   <property name="text">
-    <string>Выписка</string>
-   </property>
-   <property name="toolTip">
-    <string>Выписка</string>
-   </property>
-  </action>
   <action name="actionEditNote">
    <property name="text">
     <string>Редактировать примечание...</string>
@@ -5202,6 +4689,14 @@ QTreeView::item { height: 18px;}</string>
    </property>
   </action>
   <action name="actionWalletProperties">
+   <property name="text">
+    <string>Свойства</string>
+   </property>
+   <property name="toolTip">
+    <string>Свойства</string>
+   </property>
+  </action>
+  <action name="actionCategoryProperties">
    <property name="text">
     <string>Свойства</string>
    </property>

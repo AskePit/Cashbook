@@ -108,16 +108,10 @@ private slots:
     void on_plansButton_clicked();
     void on_statisticsButton_clicked();
 
-    void on_thisMonthButton_clicked();
-    void on_thisYearButton_clicked();
-    void on_monthButton_clicked();
-    void on_yearButton_clicked();
-
-    void on_actionInStatement_triggered();
-    void on_actionOutStatement_triggered();
     void on_actionEditNote_triggered();
     void on_actionImportReceipt_triggered();
     void on_actionWalletProperties_triggered();
+    void on_actionCategoryProperties_triggered();
 
     void on_walletsAnalysisCriteriaCombo_currentIndexChanged(int index);
     void on_walletsAnalysisOwnerCombo_currentIndexChanged(int index);
@@ -133,8 +127,6 @@ private:
     void loadData();
     void saveData();
 
-    void showCategoryStatement(Transaction::Type::t type);
-
     void updateUnanchoredSum();
     void showUnanchoredSum();
     void hideUnanchoredSum();
@@ -146,14 +138,13 @@ private:
     void showActiveTasks(bool show);
     void showCompletedTasks(bool show);
 
-    void showInCategoryMenu(const QPoint& point);
-    void showOutCategoryMenu(const QPoint& point);
     void showLogMenu(const QPoint& point);
     void showShortPlansMenu(const QPoint& point);
     void showMiddlePlansMenu(const QPoint& point);
     void showLongPlansMenu(const QPoint& point);
     void showPlansContextMenu(const QPoint& point);
     void showWalletContextMenu(const QPoint& point);
+    void showCategoryContextMenu(const QPoint& point);
 
     void updateAnalytics();
 
