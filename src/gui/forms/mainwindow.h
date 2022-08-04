@@ -157,7 +157,6 @@ private:
     Data &m_data;
     DataModels m_models;
     ModelsDelegate m_modelsDelegate;
-    CategoriesViewEventFilter m_categoriesEventFilter;
     ClickFilter m_clickFilter;
 
     QModelIndex m_noteContextIndex;

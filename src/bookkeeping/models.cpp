@@ -245,11 +245,6 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    if(index.column() == CategoriesColumn::Statistics && role == Qt::ForegroundRole) {
-        return colors::readonly;
-    }
-
-
     if (role != Qt::DisplayRole && role != Qt::EditRole) {
         return QVariant();
     }
@@ -259,16 +254,6 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
     switch(index.column())
     {
         case CategoriesColumn::Name: return item->data;
-        case CategoriesColumn::Regular:
-            if(item->isLeaf()) {
-                return item->data.regular;
-            } else {
-                return QVariant();
-            }
-        case CategoriesColumn::Statistics: {
-            const Money &money = m_data.statistics[item];
-            return money == 0 ? QVariant() : formatMoney(m_data.statistics[item]);
-        }
     }
 
     return QVariant();
@@ -276,10 +261,6 @@ QVariant CategoriesModel::data(const QModelIndex &index, int role) const
 
 Qt::ItemFlags CategoriesModel::flags(const QModelIndex &index) const
 {
-    if(index.column() == CategoriesColumn::Statistics) {
-        return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-    }
-
     return common::flags(this, index);
 }
 
@@ -299,8 +280,6 @@ QVariant CategoriesModel::headerData(int section, Qt::Orientation orientation, i
         switch(section)
         {
             case CategoriesColumn::Name: return tr("Категория");
-            case CategoriesColumn::Regular: return tr("Регулярная");
-            case CategoriesColumn::Statistics: return tr("Оборот");
         }
     }
 
@@ -350,7 +329,6 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
     switch(index.column())
     {
         case CategoriesColumn::Name: item->data.setName(value.toString()); break;
-        case CategoriesColumn::Regular: item->data.regular = value.toBool(); break;
     }
     emit dataChanged(index, index);
     m_data.setChanged();
@@ -1835,38 +1813,6 @@ bool ModelsDelegate::eventFilter(QObject *object, QEvent *event)
     }
 
     return QItemDelegate::eventFilter(object, event);
-}
-
-void CategoriesViewEventFilter::setViews(QTreeView *in, QTreeView *out)
-{
-    m_in = in;
-    m_out = out;
-}
-
-bool CategoriesViewEventFilter::eventFilter(QObject *watched, QEvent *event)
-{
-    if(event->type() != QEvent::MouseButtonPress) {
-        return QObject::eventFilter(watched, event);
-    }
-
-    QMouseEvent *e { dynamic_cast<QMouseEvent *>(event) };
-    if(!e) {
-        return QObject::eventFilter(watched, event);
-    }
-
-    QWidget *w = qobject_cast<QWidget *>(watched);
-
-    if(w && (w == m_in->viewport() || w == m_out->viewport())) {
-        QTreeView *view = w == m_in->viewport() ? m_in : m_out;
-
-        QPoint pos = e->pos();
-        QModelIndex index = view->indexAt(pos);
-        if(index.column() == CategoriesColumn::Regular) {
-            view->edit(index);
-        }
-    }
-
-    return QObject::eventFilter(watched, event);
 }
 
 DataModels::DataModels(Data& data)

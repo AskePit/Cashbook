@@ -222,10 +222,6 @@ void MainWindow::preLoadSetup()
     ui->logTable->setColumnWidth(LogColumn::From, 145);
     ui->logTable->setColumnWidth(LogColumn::To, 145);
 
-    m_categoriesEventFilter.setViews(ui->inCategoriesTree, ui->outCategoriesTree);
-    ui->inCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
-    ui->outCategoriesTree->viewport()->installEventFilter(&m_categoriesEventFilter);
-
     vm.connectModels();
 
     connect(&m_models.walletsModel, &WalletsModel::recalculated, ui->walletsTree, &QTreeView::expandAll);
@@ -1106,6 +1102,10 @@ void cashbook::MainWindow::showWalletContextMenu(const QPoint& point)
 void cashbook::MainWindow::showCategoryContextMenu(const QPoint& point)
 {
     Q_UNUSED(point);
+
+    //    if(w && (w == m_in->viewport() || w == m_out->viewport())) {
+    //QTreeView *view = w == m_in->viewport() ? m_in : m_out;
+
     // TODO
     /*
     QPoint globalPos = ui->walletsTree->mapToGlobal(point);

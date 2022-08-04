@@ -330,8 +330,6 @@ bool LogData::anchoreTransactions()
                     if(category && category->data.regular) {
                         statistics.brief[month].regular.spent += t.amount;
                     }
-
-                    statistics.outCategories.propagateMoney(category, t.amount);
                 }
             }
         }
@@ -351,8 +349,6 @@ bool LogData::anchoreTransactions()
                     if(category && category->data.regular) {
                         statistics.brief[month].regular.received += t.amount;
                     }
-
-                    statistics.inCategories.propagateMoney(category, t.amount);
                 }
             }
         }
@@ -730,9 +726,7 @@ bool LogData::normalizeData()
 }
 
 Data::Data()
-    : inCategories(statistics.inCategories)
-    , outCategories(statistics.outCategories)
-    , log(statistics)
+    : log(statistics)
 {
     setChangableItems({
         &owners,
@@ -802,56 +796,6 @@ void Data::onWalletsRemove(QStringList paths)
         invalidateArchNode(t.from, paths);
         invalidateArchNode(t.to, paths);
     }
-}
-
-void Data::loadCategoriesStatistics(const QDate &from, const QDate &to)
-{
-    statistics.outCategories.clear();
-    statistics.inCategories.clear();
-
-    statistics.categoriesFrom = from;
-    statistics.categoriesTo = to;
-
-    if(log.log.empty()) {
-        return;
-    }
-
-    const QDate &logBegin = log.log.at(log.log.size()-1).date;
-    const QDate &logEnd = log.log.at(0).date;
-
-    if(to < logBegin || from > logEnd) {
-        return;
-    }
-
-    size_t i = 0;
-    while(i < log.log.size()) {
-        const Transaction &t = log.log[i++];
-        if(t.date > to) {
-            continue;
-        }
-
-        if(t.date < from) {
-            break;
-        }
-
-        if(t.type == Transaction::Type::Out) {
-            const ArchNode<Category> &archNode = t.category;
-            if(archNode.isValidPointer()) {
-                const Node<Category> *node = archNode.toPointer();
-                statistics.outCategories.propagateMoney(node, t.amount);
-            }
-        }
-
-        if(t.type == Transaction::Type::In) {
-            const ArchNode<Category> &archNode = t.category;
-            if(archNode.isValidPointer()) {
-                const Node<Category> *node = archNode.toPointer();
-                statistics.inCategories.propagateMoney(node, t.amount);
-            }
-        }
-    }
-
-    emit categoriesStatisticsUpdated();
 }
 
 void Data::updateTasks()

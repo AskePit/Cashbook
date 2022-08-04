@@ -792,7 +792,6 @@ static void loadLog(Data &data, int recentMonths = -1) /* (recentMonths == -1) m
         loadMonth(data, monthDoc);
     }
 
-    data.loadCategoriesStatistics(MonthBegin, Today);
     data.updateTasks();
 }
 

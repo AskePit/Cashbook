@@ -237,10 +237,6 @@ public:
 
 struct Statistics {
     BriefStatistics brief;
-    CategoryMoneyMap inCategories;
-    CategoryMoneyMap outCategories;
-    QDate categoriesFrom;
-    QDate categoriesTo;
 };
 
 struct PlanTerm {
@@ -291,12 +287,7 @@ class CategoriesData : public Changable
 {
 public:
 
-    CategoriesData(CategoryMoneyMap &statistics)
-        : statistics(statistics)
-    {}
-
     Tree<Category> *rootItem {nullptr};
-    CategoryMoneyMap &statistics;
 };
 
 class LogData : public Changable
@@ -392,7 +383,6 @@ public:
     Node<Category> *inCategoryFromPath(const QString &path);
     Node<Category> *outCategoryFromPath(const QString &path);
 
-    void loadCategoriesStatistics(const QDate &from, const QDate &to);
     void updateTasks();
     void updateTasks(TasksListsData &tasks);
     bool anchoreTransactions();

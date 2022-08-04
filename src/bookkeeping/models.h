@@ -87,8 +87,6 @@ class CategoriesColumn
 public:
     enum t {
         Name = 0,
-        Statistics,
-        Regular,
 
         Count
     };
@@ -424,17 +422,6 @@ public:
 
 private:
     DataModels &m_data;
-};
-
-class CategoriesViewEventFilter : public QObject {
-    Q_OBJECT
-
-public:
-    void setViews(QTreeView *in, QTreeView *out);
-    virtual bool eventFilter(QObject *watched, QEvent *event);
-
-private:
-    QTreeView *m_in, *m_out;
 };
 
 class DataModels
