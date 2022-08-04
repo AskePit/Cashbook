@@ -177,7 +177,7 @@ Rectangle {
             event.accepted = false
         }
 
-        onClicked: {
+        onClicked: (mouse) => {
             if (mouse.button === Qt.RightButton) {
                 contextMenu.popup()
             }

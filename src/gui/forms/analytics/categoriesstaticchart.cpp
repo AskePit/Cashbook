@@ -317,17 +317,17 @@ void TreemapModel::showCategoryStatement(const QString& nodeName)
     filterModel->setSourceModel(const_cast<LogModel*>(&m_data->logModel));
     QTableView* table = new QTableView();
     table->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Tool);
+    table->setWindowState(Qt::WindowMaximized);
     table->setAttribute(Qt::WA_DeleteOnClose);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->verticalHeader()->hide();
     table->verticalHeader()->setDefaultSectionSize(23);
     table->setModel(filterModel);
-    table->showFullScreen();
-    //table->setGeometry(QRect(categoryTree->mapToGlobal(categoryTree->pos()), categoryTree->size()));
     table->resizeColumnsToContents();
     table->hideColumn(LogColumn::Type);
     table->hideColumn(m_categoriesType == Transaction::Type::In ? LogColumn::From : LogColumn::To);
-    table->show();
+    table->showFullScreen(); // full screen works
+    table->showMaximized(); // maximize doesn't work but it restores window from fullscreen well - hackity hack!
     table->activateWindow();
 }
 
