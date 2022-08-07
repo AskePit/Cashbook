@@ -161,6 +161,8 @@ Item {
                         rect.color = "#606060"
                     } else {*/
                         rect.color = pallette[colorIdx]
+                        rect.color = Qt.hsva(rect.color.hsvHue, rect.color.hsvSaturation-0.2, rect.color.hsvValue, 1)
+
                         ++colorIdx
                         if(colorIdx >= pallette.length) {
                             colorIdx = 0
