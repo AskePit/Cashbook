@@ -120,7 +120,7 @@ public:
         setStyleSheet("QTreeView::item { height: 18px;}");
         setAlternatingRowColors(true);
         header()->hide();
-        for(int i = CategoriesColumn::Name+1; i<CategoriesColumn::Count; ++i) {
+        for(int i = WalletColumn::Name+1; i<WalletColumn::Count; ++i) {
             hideColumn(i);
         }
         button->setTree(this);
