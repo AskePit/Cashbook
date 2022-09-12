@@ -14,5 +14,8 @@
         <file>importReceipt.png</file>
         <file>qml/categoriesTreeMapChart.qml</file>
         <file>qml/treeMapRect.qml</file>
+        <file>logo_transparent.png</file>
+        <file>logo_white.png</file>
+        <file>logo_white.ico</file>
     </qresource>
 </RCC>

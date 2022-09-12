@@ -7,11 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>176</width>
-    <height>92</height>
+    <height>95</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../resources/resources.qrc">
+    <normaloff>:/logo_white.png</normaloff>:/logo_white.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
@@ -66,7 +70,9 @@
    <header>gui/widgets/widgets.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../../resources/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

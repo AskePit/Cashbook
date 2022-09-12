@@ -77,6 +77,10 @@
   <property name="windowTitle">
    <string>Cashbook</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../../resources/resources.qrc">
+    <normaloff>:/logo_white.png</normaloff>:/logo_white.png</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true"/>
   </property>

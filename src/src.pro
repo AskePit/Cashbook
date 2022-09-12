@@ -71,3 +71,5 @@ RESOURCES += \
     resources/resources.qrc
 
 CONFIG += c++latest
+
+RC_ICONS = resources/logo_white.ico
