@@ -21,10 +21,10 @@ enum class NodeButtonState {
     Expanded // button is under PopupTree
 };
 
-template <class T>
+template <class T, class Model>
 class PopupTree;
 
-template <class T>
+template <class T, class Model>
 class NodeButton : public QPushButton
 {
 public:
@@ -50,7 +50,7 @@ public:
     void setModel(QAbstractItemModel &model, bool setParent = false) {
         connect(this, &QPushButton::clicked, [this, &model, setParent]() {
             this->setState(NodeButtonState::Expanded);
-            QTreeView *view = new PopupTree<T>(model, this, setParent ? this : nullptr);
+            QTreeView *view = new PopupTree<T, Model>(model, this, setParent ? this : nullptr);
             Q_UNUSED(view);
         });
     }
@@ -89,27 +89,30 @@ private:
     const Node<T> *m_node {nullptr};
     QTreeView *m_tree {nullptr};
 
-    const Node<T> *treeNode() const;
-    QModelIndex nodeIndex();
+    const Node<T>* treeNode() const {
+        if(!m_tree) {
+            return nullptr;
+        }
+
+        Model* model = dynamic_cast<Model*>(m_tree->model());
+        return model->getItem(m_tree->currentIndex());
+    }
+
+    QModelIndex nodeIndex() {
+        if(m_node) {
+            Model* model = dynamic_cast<Model*>(m_tree->model());
+            return model->itemIndex(m_node);
+        } else {
+            return QModelIndex();
+        }
+    }
 };
 
-template<>
-const Node<Category> *NodeButton<Category>::treeNode() const;
-
-template<>
-const Node<Wallet> *NodeButton<Wallet>::treeNode() const;
-
-template<>
-QModelIndex NodeButton<Category>::nodeIndex();
-
-template<>
-QModelIndex NodeButton<Wallet>::nodeIndex();
-
-template <class T>
+template <class T, class Model>
 class PopupTree : public QTreeView
 {
 public:
-    PopupTree(QAbstractItemModel &model, NodeButton<T> *button, QWidget *parent = nullptr)
+    PopupTree(QAbstractItemModel &model, NodeButton<T, Model> *button, QWidget *parent = nullptr)
         : QTreeView(parent)
         , m_button(button)
     {
@@ -127,6 +130,7 @@ public:
         move(button->mapToGlobal(QPoint(0, 0)));
         show();
         activateWindow();
+        setFocus();
     }
 
 protected:
@@ -153,7 +157,7 @@ protected:
     }
 
 private:
-    NodeButton<T> *m_button;
+    NodeButton<T, Model> *m_button;
     bool m_gonnaDestroy {false};
 
     void chooseValue(QEvent *event){
@@ -176,16 +180,19 @@ private:
 };
 
 template <>
-void PopupTree<Category>::mouseDoubleClickEvent(QMouseEvent *event);
+void PopupTree<Category, CategoriesModel>::mouseDoubleClickEvent(QMouseEvent *event);
 
 template <>
-void PopupTree<Category>::focusOutEvent(QFocusEvent *event);
+void PopupTree<Category, CategoriesModel>::focusOutEvent(QFocusEvent *event);
 
 template <>
-void PopupTree<Wallet>::mouseDoubleClickEvent(QMouseEvent *event);
+void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event);
 
 template <>
-void PopupTree<Wallet>::focusOutEvent(QFocusEvent *event);
+void PopupTree<Wallet, WalletsModel>::focusOutEvent(QFocusEvent *event);
+
+using CategoryNodeButton = NodeButton<Category, CategoriesModel>;
+using WalletNodeButton = NodeButton<Wallet, WalletsModel>;
 
 class RelaxedDoubleSpinBox : public QDoubleSpinBox {
     Q_OBJECT

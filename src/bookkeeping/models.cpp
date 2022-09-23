@@ -1673,7 +1673,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
                     m_data.inCategoriesModel :
                     m_data.outCategoriesModel;
 
-        NodeButton<Category> *button = new NodeButton<Category>(categories, parent);
+        CategoryNodeButton *button = new CategoryNodeButton(categories, parent);
         return button;
     }
 
@@ -1690,7 +1690,7 @@ QWidget* ModelsDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
             return nullptr;
         }
 
-        NodeButton<Wallet> *button = new NodeButton<Wallet>(m_data.walletsModel, parent);
+        WalletNodeButton *button = new WalletNodeButton(m_data.walletsModel, parent);
         return button;
     }
 
@@ -1730,8 +1730,8 @@ void ModelsDelegate::setEditorData(QWidget* editor, const QModelIndex& index) co
     }
 
     // trees case
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
-    NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(editor);
+    CategoryNodeButton *cat = dynamic_cast<CategoryNodeButton *>(editor);
+    WalletNodeButton *wal = dynamic_cast<WalletNodeButton *>(editor);
 
     QVariant value = index.data(Qt::EditRole);
 
@@ -1784,8 +1784,8 @@ void ModelsDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, co
     }
 
     // trees case
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(editor);
-    NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(editor);
+    CategoryNodeButton *cat = dynamic_cast<CategoryNodeButton *>(editor);
+    WalletNodeButton *wal = dynamic_cast<WalletNodeButton *>(editor);
 
     // Categories tree
     if(cat) {
@@ -1803,8 +1803,8 @@ void ModelsDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, co
 
 bool ModelsDelegate::eventFilter(QObject *object, QEvent *event)
 {
-    NodeButton<Category> *cat = dynamic_cast<NodeButton<Category> *>(object);
-    NodeButton<Wallet> *wal = dynamic_cast<NodeButton<Wallet> *>(object);
+    CategoryNodeButton *cat = dynamic_cast<CategoryNodeButton *>(object);
+    WalletNodeButton *wal = dynamic_cast<WalletNodeButton *>(object);
 
     NodeButtonState state {cat ? cat->state() : wal ? wal->state() : NodeButtonState::Folded};
 

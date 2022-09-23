@@ -31,7 +31,7 @@
       </widget>
      </item>
      <item>
-      <widget class="cashbook::NodeButton&lt;cashbook::Wallet&gt;" name="pushButton">
+      <widget class="cashbook::NodeButton&lt;cashbook::Wallet, cashbook::WalletsModel&gt;" name="pushButton">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -65,7 +65,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>cashbook::NodeButton&lt;cashbook::Wallet&gt;</class>
+   <class>cashbook::NodeButton&lt;cashbook::Wallet, cashbook::WalletsModel&gt;</class>
    <extends>QPushButton</extends>
    <header>gui/widgets/widgets.h</header>
   </customwidget>

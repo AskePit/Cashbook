@@ -2,58 +2,18 @@
 
 namespace cashbook {
 
-template<>
-const Node<Category> *NodeButton<Category>::treeNode() const {
-    if(!m_tree) {
-        return nullptr;
-    }
-
-    CategoriesModel *model = dynamic_cast<CategoriesModel *>(m_tree->model());
-    return model->getItem(m_tree->currentIndex());
-}
-
-template<>
-const Node<Wallet> *NodeButton<Wallet>::treeNode() const {
-    if(!m_tree) {
-        return nullptr;
-    }
-
-    WalletsModel *model = dynamic_cast<WalletsModel *>(m_tree->model());
-    return model->getItem(m_tree->currentIndex());
-}
-
-template<>
-QModelIndex NodeButton<Category>::nodeIndex() {
-    if(m_node) {
-        CategoriesModel *model = dynamic_cast<CategoriesModel *>(m_tree->model());
-        return model->itemIndex(m_node);
-    } else {
-        return QModelIndex();
-    }
-}
-
-template<>
-QModelIndex NodeButton<Wallet>::nodeIndex() {
-    if(m_node) {
-        WalletsModel *model = dynamic_cast<WalletsModel *>(m_tree->model());
-        return model->itemIndex(m_node);
-    } else {
-        return QModelIndex();
-    }
-}
-
 template <>
-void PopupTree<Category>::mouseDoubleClickEvent(QMouseEvent *event) {
+void PopupTree<Category, CategoriesModel>::mouseDoubleClickEvent(QMouseEvent *event) {
     chooseValue(event);
 }
 
 template <>
-void PopupTree<Category>::focusOutEvent(QFocusEvent *event) {
+void PopupTree<Category, CategoriesModel>::focusOutEvent(QFocusEvent *event) {
     chooseValue(event);
 }
 
 template <>
-void PopupTree<Wallet>::mouseDoubleClickEvent(QMouseEvent *event) {
+void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event) {
     WalletsModel *model = dynamic_cast<WalletsModel *>(this->model());
     if(!model) {
         QTreeView::mouseDoubleClickEvent(event);
@@ -67,7 +27,7 @@ void PopupTree<Wallet>::mouseDoubleClickEvent(QMouseEvent *event) {
 }
 
 template <>
-void PopupTree<Wallet>::focusOutEvent(QFocusEvent *event) {
+void PopupTree<Wallet, WalletsModel>::focusOutEvent(QFocusEvent *event) {
     WalletsModel *model = dynamic_cast<WalletsModel *>(this->model());
     if(!model) {
         selfDestroy();
