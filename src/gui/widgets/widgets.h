@@ -63,21 +63,13 @@ public:
         return m_state;
     }
 
+    void setTree(QTreeView *tree) {
+        m_tree = tree;
+    }
+
     void setNode(const Node<T> *node) {
         m_node = node;
         setText(pathToShortString(node));
-    }
-
-    void fetchNode() {
-        const auto *node = treeNode();
-        setNode(node);
-        setFocus();
-        m_tree = nullptr;
-    }
-
-    void setTree(QTreeView *tree) {
-        m_tree = tree;
-        m_tree->setCurrentIndex(nodeIndex());
     }
 
     const Node<T> *node() const {
@@ -88,24 +80,6 @@ private:
     NodeButtonState m_state {NodeButtonState::Folded};
     const Node<T> *m_node {nullptr};
     QTreeView *m_tree {nullptr};
-
-    const Node<T>* treeNode() const {
-        if(!m_tree) {
-            return nullptr;
-        }
-
-        Model* model = dynamic_cast<Model*>(m_tree->model());
-        return model->getItem(m_tree->currentIndex());
-    }
-
-    QModelIndex nodeIndex() {
-        if(m_node) {
-            Model* model = dynamic_cast<Model*>(m_tree->model());
-            return model->itemIndex(m_node);
-        } else {
-            return QModelIndex();
-        }
-    }
 };
 
 template <class T, class Model>
@@ -127,6 +101,9 @@ public:
             hideColumn(i);
         }
         button->setTree(this);
+
+        const Node<T> *node = button->node();
+        setCurrentIndex(node ? dynamic_cast<Model*>(&model)->itemIndex(node) : QModelIndex());
         move(button->mapToGlobal(QPoint(0, 0)));
         show();
         activateWindow();
@@ -167,7 +144,12 @@ private:
             return;
         }
 
-        m_button->fetchNode();
+        Model* model = dynamic_cast<Model*>(this->model());
+        const Node<T>* node = model->getItem(currentIndex());
+        m_button->setNode(node);
+        m_button->setFocus();
+        m_button->setTree(nullptr);
+
         m_gonnaDestroy = true;
         selfDestroy();
     }
