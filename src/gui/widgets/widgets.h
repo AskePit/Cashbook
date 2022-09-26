@@ -82,6 +82,15 @@ private:
     QTreeView *m_tree {nullptr};
 };
 
+class PopupTreeProxyModel : public QSortFilterProxyModel
+{
+    Q_OBJECT
+public:
+    PopupTreeProxyModel(QObject* parent = nullptr)
+        : QSortFilterProxyModel(parent)
+    {}
+};
+
 template <class T, class Model>
 class PopupTree : public QTreeView
 {
@@ -90,7 +99,10 @@ public:
         : QTreeView(parent)
         , m_button(button)
     {
-        setModel(&model);
+        PopupTreeProxyModel* proxy = new PopupTreeProxyModel(parent);
+        proxy->setSourceModel(&model);
+
+        setModel(proxy);
         setEditTriggers(QAbstractItemView::NoEditTriggers);
         setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint | Qt::Tool);
 
@@ -103,7 +115,7 @@ public:
         button->setTree(this);
 
         const Node<T> *node = button->node();
-        setCurrentIndex(node ? dynamic_cast<Model*>(&model)->itemIndex(node) : QModelIndex());
+        setCurrentIndex(node ? getProxyIndex(qobject_cast<Model*>(&model)->itemIndex(node)) : QModelIndex());
         move(button->mapToGlobal(QPoint(0, 0)));
         show();
         activateWindow();
@@ -144,8 +156,8 @@ private:
             return;
         }
 
-        Model* model = dynamic_cast<Model*>(this->model());
-        const Node<T>* node = model->getItem(currentIndex());
+        Model* model = getSourceModel();
+        const Node<T>* node = model->getItem(getModelIndex(currentIndex()));
         m_button->setNode(node);
         m_button->setFocus();
         m_button->setTree(nullptr);
@@ -158,6 +170,22 @@ private:
         close();
         m_button->setState(NodeButtonState::Folded);
         deleteLater();
+    }
+
+    Model* getSourceModel() {
+        return qobject_cast<Model*>(getProxyModel()->sourceModel());
+    }
+
+    PopupTreeProxyModel* getProxyModel() {
+        return qobject_cast<PopupTreeProxyModel*>(model());
+    }
+
+    QModelIndex getProxyIndex(const QModelIndex& index) {
+        return getProxyModel()->mapFromSource(index);
+    }
+
+    QModelIndex getModelIndex(const QModelIndex& index) {
+        return getProxyModel()->mapToSource(index);
     }
 };
 

@@ -14,13 +14,13 @@ void PopupTree<Category, CategoriesModel>::focusOutEvent(QFocusEvent *event) {
 
 template <>
 void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event) {
-    WalletsModel *model = dynamic_cast<WalletsModel *>(this->model());
+    WalletsModel *model = getSourceModel();
     if(!model) {
         QTreeView::mouseDoubleClickEvent(event);
         return;
     }
 
-    const auto *node = model->getItem(currentIndex());
+    const auto *node = model->getItem(getModelIndex(currentIndex()));
     if(node->isLeaf()) {
         chooseValue(event);
     }
@@ -28,13 +28,13 @@ void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event) 
 
 template <>
 void PopupTree<Wallet, WalletsModel>::focusOutEvent(QFocusEvent *event) {
-    WalletsModel *model = dynamic_cast<WalletsModel *>(this->model());
+    WalletsModel *model = getSourceModel();
     if(!model) {
         selfDestroy();
         return;
     }
 
-    QModelIndex index = currentIndex();
+    QModelIndex index = getModelIndex(currentIndex());
     if(!index.isValid()) {
         selfDestroy();
         return;
