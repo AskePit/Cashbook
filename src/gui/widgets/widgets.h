@@ -157,7 +157,7 @@ private:
         }
 
         Model* model = getSourceModel();
-        const Node<T>* node = model->getItem(getModelIndex(currentIndex()));
+        const Node<T>* node = model->getItem(getCurrentSourceIndex());
         m_button->setNode(node);
         m_button->setFocus();
         m_button->setTree(nullptr);
@@ -172,20 +172,24 @@ private:
         deleteLater();
     }
 
-    Model* getSourceModel() {
+    Model* getSourceModel() const {
         return qobject_cast<Model*>(getProxyModel()->sourceModel());
     }
 
-    PopupTreeProxyModel* getProxyModel() {
+    PopupTreeProxyModel* getProxyModel() const {
         return qobject_cast<PopupTreeProxyModel*>(model());
     }
 
-    QModelIndex getProxyIndex(const QModelIndex& index) {
+    QModelIndex getSourceIndex(const QModelIndex& index) const {
+        return getProxyModel()->mapToSource(index);
+    }
+
+    QModelIndex getProxyIndex(const QModelIndex& index) const {
         return getProxyModel()->mapFromSource(index);
     }
 
-    QModelIndex getModelIndex(const QModelIndex& index) {
-        return getProxyModel()->mapToSource(index);
+    QModelIndex getCurrentSourceIndex() const {
+        return getSourceIndex(currentIndex());
     }
 };
 

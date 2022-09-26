@@ -20,7 +20,7 @@ void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event) 
         return;
     }
 
-    const auto *node = model->getItem(getModelIndex(currentIndex()));
+    const Node<Wallet> *node = model->getItem(getCurrentSourceIndex());
     if(node->isLeaf()) {
         chooseValue(event);
     }
@@ -34,13 +34,13 @@ void PopupTree<Wallet, WalletsModel>::focusOutEvent(QFocusEvent *event) {
         return;
     }
 
-    QModelIndex index = getModelIndex(currentIndex());
+    QModelIndex index = getCurrentSourceIndex();
     if(!index.isValid()) {
         selfDestroy();
         return;
     }
 
-    const auto *node = model->getItem(index);
+    const Node<Wallet> *node = model->getItem(index);
     if(!node) {
         selfDestroy();
         return;
