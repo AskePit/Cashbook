@@ -8,6 +8,7 @@
 #include <QHeaderView>
 #include <QScrollBar>
 #include <QDoubleSpinBox>
+#include <QLineEdit>
 
 namespace cashbook
 {
@@ -89,6 +90,17 @@ public:
     PopupTreeProxyModel(QObject* parent = nullptr)
         : QSortFilterProxyModel(parent)
     {}
+
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+
+    void setFilterString(const QString& filterString) {
+        m_filterString = filterString;
+        qDebug() << "set filter:" << m_filterString;
+        invalidate();
+    }
+
+private:
+    QString m_filterString;
 };
 
 template <class T, class Model>
@@ -120,6 +132,13 @@ public:
         show();
         activateWindow();
         setFocus();
+
+        m_filterLine = new QLineEdit(this);
+        connect(m_filterLine, &QLineEdit::textEdited, proxy, &PopupTreeProxyModel::setFilterString);
+        connect(m_filterLine, &QLineEdit::textEdited, this, [this](){update();});
+        m_filterLine->move(button->mapToGlobal(QPoint(0, -20)));
+        m_filterLine->show();
+        m_filterLine->setFocus();
     }
 
 protected:
@@ -146,7 +165,8 @@ protected:
     }
 
 private:
-    NodeButton<T, Model> *m_button;
+    NodeButton<T, Model> *m_button {nullptr};
+    QLineEdit* m_filterLine {nullptr};
     bool m_gonnaDestroy {false};
 
     void chooseValue(QEvent *event){

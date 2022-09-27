@@ -2,6 +2,18 @@
 
 namespace cashbook {
 
+bool PopupTreeProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
+    Q_UNUSED(sourceParent);
+    Q_UNUSED(sourceRow);
+
+    qDebug() << "filterAcceptsRow";
+
+    auto *model = sourceModel();
+    model->index
+    return model->data(model->index(sourceRow, 0, sourceParent)).toString() == m_filterString;
+}
+
 template <>
 void PopupTree<Category, CategoriesModel>::mouseDoubleClickEvent(QMouseEvent *event) {
     chooseValue(event);
@@ -9,7 +21,7 @@ void PopupTree<Category, CategoriesModel>::mouseDoubleClickEvent(QMouseEvent *ev
 
 template <>
 void PopupTree<Category, CategoriesModel>::focusOutEvent(QFocusEvent *event) {
-    chooseValue(event);
+    //chooseValue(event);
 }
 
 template <>
