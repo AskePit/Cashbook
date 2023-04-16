@@ -9,6 +9,7 @@
 #include <QScrollBar>
 #include <QDoubleSpinBox>
 #include <QLineEdit>
+#include <QVBoxLayout>
 
 namespace cashbook
 {
@@ -51,8 +52,8 @@ public:
     void setModel(QAbstractItemModel &model, bool setParent = false) {
         connect(this, &QPushButton::clicked, [this, &model, setParent]() {
             this->setState(NodeButtonState::Expanded);
-            QTreeView *view = new PopupTree<T, Model>(model, this, setParent ? this : nullptr);
-            Q_UNUSED(view);
+            QWidget *widget = new PopupTree<T, Model>(model, this, setParent ? this : nullptr);
+            Q_UNUSED(widget);
         });
     }
 
@@ -104,41 +105,44 @@ private:
 };
 
 template <class T, class Model>
-class PopupTree : public QTreeView
+class PopupTree : public QWidget
 {
 public:
     PopupTree(QAbstractItemModel &model, NodeButton<T, Model> *button, QWidget *parent = nullptr)
-        : QTreeView(parent)
+        : QWidget(parent)
+        , m_treeView(new QTreeView())
         , m_button(button)
+        , m_filterLine(new QLineEdit(this))
     {
+        QVBoxLayout* layout = new QVBoxLayout(this);
+        layout->addWidget(m_filterLine, 5);
+        layout->addWidget(m_treeView);
+        //setLayout(layout);
+
         PopupTreeProxyModel* proxy = new PopupTreeProxyModel(parent);
         proxy->setSourceModel(&model);
 
-        setModel(proxy);
-        setEditTriggers(QAbstractItemView::NoEditTriggers);
+        m_treeView->setModel(proxy);
+        m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
         setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint | Qt::Tool);
 
-        setStyleSheet("QTreeView::item { height: 18px;}");
-        setAlternatingRowColors(true);
-        header()->hide();
+        m_treeView->setStyleSheet("QTreeView::item { height: 18px;}");
+        m_treeView->setAlternatingRowColors(true);
+        m_treeView->header()->hide();
         for(int i = WalletColumn::Name+1; i<WalletColumn::Count; ++i) {
-            hideColumn(i);
+            m_treeView->hideColumn(i);
         }
-        button->setTree(this);
+        button->setTree(m_treeView);
 
         const Node<T> *node = button->node();
-        setCurrentIndex(node ? getProxyIndex(qobject_cast<Model*>(&model)->itemIndex(node)) : QModelIndex());
+        m_treeView->setCurrentIndex(node ? getProxyIndex(qobject_cast<Model*>(&model)->itemIndex(node)) : QModelIndex());
         move(button->mapToGlobal(QPoint(0, 0)));
         show();
         activateWindow();
         setFocus();
 
-        m_filterLine = new QLineEdit(this);
         connect(m_filterLine, &QLineEdit::textEdited, proxy, &PopupTreeProxyModel::setFilterString);
         connect(m_filterLine, &QLineEdit::textEdited, this, [this](){update();});
-        m_filterLine->move(button->mapToGlobal(QPoint(0, -20)));
-        m_filterLine->show();
-        m_filterLine->setFocus();
     }
 
 protected:
@@ -147,8 +151,8 @@ protected:
 
     // do not forward scroll to parents in case of nonscrolling state
     void wheelEvent(QWheelEvent* event) {
-        const bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
-        const bool atTop = verticalScrollBar()->value() == verticalScrollBar()->minimum();
+        const bool atBottom = m_treeView->verticalScrollBar()->value() == m_treeView->verticalScrollBar()->maximum();
+        const bool atTop = m_treeView->verticalScrollBar()->value() == m_treeView->verticalScrollBar()->minimum();
 
         const QPoint delta = event->angleDelta();
 
@@ -160,12 +164,13 @@ protected:
         if(noWay) {
             event->accept();
         } else {
-            QTreeView::wheelEvent(event);
+            QWidget::wheelEvent(event);
         }
     }
 
 private:
-    NodeButton<T, Model> *m_button {nullptr};
+    QTreeView* m_treeView {nullptr};
+    NodeButton<T, Model>* m_button {nullptr};
     QLineEdit* m_filterLine {nullptr};
     bool m_gonnaDestroy {false};
 
@@ -197,7 +202,7 @@ private:
     }
 
     PopupTreeProxyModel* getProxyModel() const {
-        return qobject_cast<PopupTreeProxyModel*>(model());
+        return qobject_cast<PopupTreeProxyModel*>(m_treeView->model());
     }
 
     QModelIndex getSourceIndex(const QModelIndex& index) const {
@@ -209,7 +214,7 @@ private:
     }
 
     QModelIndex getCurrentSourceIndex() const {
-        return getSourceIndex(currentIndex());
+        return getSourceIndex(m_treeView->currentIndex());
     }
 };
 

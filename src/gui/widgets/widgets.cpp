@@ -7,10 +7,9 @@ bool PopupTreeProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sou
     Q_UNUSED(sourceParent);
     Q_UNUSED(sourceRow);
 
-    qDebug() << "filterAcceptsRow";
+    //qDebug() << "filterAcceptsRow";
 
     auto *model = sourceModel();
-    model->index
     return model->data(model->index(sourceRow, 0, sourceParent)).toString() == m_filterString;
 }
 
@@ -28,7 +27,7 @@ template <>
 void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event) {
     WalletsModel *model = getSourceModel();
     if(!model) {
-        QTreeView::mouseDoubleClickEvent(event);
+        QWidget::mouseDoubleClickEvent(event);
         return;
     }
 
