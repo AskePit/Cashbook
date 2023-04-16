@@ -10,7 +10,21 @@ bool PopupTreeProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sou
     //qDebug() << "filterAcceptsRow";
 
     auto *model = sourceModel();
-    return model->data(model->index(sourceRow, 0, sourceParent)).toString() == m_filterString;
+
+    QModelIndex currIndex = model->index(sourceRow, 0, sourceParent);
+
+    if (model->data(currIndex).toString().compare(m_filterString, Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+
+    for(int r = 0; r<model->rowCount(currIndex); ++r) {
+        QModelIndex childIndex = model->index(r, 0, currIndex);
+        if (model->data(childIndex).toString().compare(m_filterString, Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 template <>

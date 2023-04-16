@@ -10,6 +10,7 @@
 #include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QVBoxLayout>
+#include <QTimer>
 
 namespace cashbook
 {
@@ -90,18 +91,29 @@ class PopupTreeProxyModel : public QSortFilterProxyModel
 public:
     PopupTreeProxyModel(QObject* parent = nullptr)
         : QSortFilterProxyModel(parent)
-    {}
+    {
+        m_timer.callOnTimeout([this](){
+            doFilterWork();
+        });
+    }
 
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
 
     void setFilterString(const QString& filterString) {
         m_filterString = filterString;
-        qDebug() << "set filter:" << m_filterString;
+        //qDebug() << "set filter:" << m_filterString;
+
+        m_timer.stop();
+        m_timer.start();
+    }
+
+    void doFilterWork() {
         invalidate();
     }
 
 private:
     QString m_filterString;
+    QTimer m_timer;
 };
 
 template <class T, class Model>
