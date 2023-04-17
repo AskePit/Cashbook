@@ -104,7 +104,7 @@ public:
         //qDebug() << "set filter:" << m_filterString;
 
         m_timer.stop();
-        m_timer.start();
+        m_timer.start(500);
     }
 
     void doFilterWork() {
