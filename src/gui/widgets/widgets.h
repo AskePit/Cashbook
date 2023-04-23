@@ -89,31 +89,25 @@ class PopupTreeProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
 public:
-    PopupTreeProxyModel(QObject* parent = nullptr)
-        : QSortFilterProxyModel(parent)
-    {
-        m_timer.callOnTimeout([this](){
-            doFilterWork();
-        });
-    }
+    PopupTreeProxyModel(QObject* parent = nullptr);
 
+    void setFilterString(const QString& filterString);
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
 
-    void setFilterString(const QString& filterString) {
-        m_filterString = filterString;
-        //qDebug() << "set filter:" << m_filterString;
-
-        m_timer.stop();
-        m_timer.start(500);
-    }
-
-    void doFilterWork() {
-        invalidate();
-    }
+Q_SIGNALS:
+    void filtered();
+    void filterCanceled();
 
 private:
+    void _doFilterWork();
+    bool _doFilterIndex(QModelIndex currIndex);
+    bool _filterPass(QModelIndex currIndex);
+    bool _isFiltered() const;
+
     QString m_filterString;
     QTimer m_timer;
+    QSet<QModelIndex> m_filtereItems;
+    QModelIndex m_mostMatched;
 };
 
 template <class T, class Model>
@@ -129,7 +123,6 @@ public:
         QVBoxLayout* layout = new QVBoxLayout(this);
         layout->addWidget(m_filterLine, 5);
         layout->addWidget(m_treeView);
-        //setLayout(layout);
 
         PopupTreeProxyModel* proxy = new PopupTreeProxyModel(parent);
         proxy->setSourceModel(&model);
@@ -154,7 +147,12 @@ public:
         setFocus();
 
         connect(m_filterLine, &QLineEdit::textEdited, proxy, &PopupTreeProxyModel::setFilterString);
-        connect(m_filterLine, &QLineEdit::textEdited, this, [this](){update();});
+        connect(static_cast<PopupTreeProxyModel*>(m_treeView->model()), &PopupTreeProxyModel::filtered, [this]() {
+            m_treeView->expandAll();
+        });
+        connect(static_cast<PopupTreeProxyModel*>(m_treeView->model()), &PopupTreeProxyModel::filterCanceled, [this]() {
+            m_treeView->collapseAll();
+        });
     }
 
 protected:
