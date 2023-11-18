@@ -2,6 +2,17 @@
 #include "ui_mainwindow.h"
 
 #include <QComboBox>
+#include <QRectF>
+#include <QDateTimeAxis>
+#include <QValueAxis>
+
+#define SPLINE 0
+
+#if SPLINE
+#include <QSplineSeries>
+#else
+#include <QLineSeries>
+#endif
 
 namespace cashbook
 {
@@ -214,6 +225,197 @@ void WalletsAnalytics::updateAnalytics()
 
     m_series->setLabelsVisible(true);
     m_series->setLabelsPosition(QPieSlice::LabelOutside);
+}
+
+CategoriesAnalytics::CategoriesAnalytics(DataModels& dataModels, QWidget* parent)
+    : m_chart(new QChart())
+#if SPLINE
+    , m_series(new QSplineSeries(parent))
+#else
+    , m_series(new QLineSeries(parent))
+#endif
+    , m_view(new QChartView(m_chart, parent))
+    , m_dataModels(dataModels)
+{
+}
+
+void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
+{
+    m_categoryTypeCombo = ui->categoriesTypeBox;
+    m_categoryCombo = ui->categoriesCategoryButton;
+    m_dateFromEdit = ui->categoriesDateFrom;
+    m_dateToEdit = ui->categoriesDateTo;
+    m_thisMonthButton = ui->categoriesThisMonthButton;
+    m_thisYearButton = ui->categoriesThisYearButton;
+    m_monthButton = ui->categoriesMonthButton;
+    m_yearButton = ui->categoriesYearButton;
+
+    m_categoryCombo->setModel(m_dataModels.outCategoriesModel);
+
+    QObject::connect(m_categoryTypeCombo, &QComboBox::currentIndexChanged, m_categoryTypeCombo, [this](int index) {
+        auto& model = index == 0 ? m_dataModels.outCategoriesModel : m_dataModels.inCategoriesModel;
+        m_categoryCombo->setModel(model);
+    });
+
+    m_dateFromEdit->setDate(QDate(Today.year(), Today.month(), 1));
+    m_dateToEdit->setDate(Today);
+    m_dateToEdit->setMaximumDate(Today);
+
+    QObject::connect(m_dateFromEdit, &QDateEdit::dateChanged, m_dateFromEdit, [this](const QDate &) {
+        updateAnalytics();
+    });
+
+    QObject::connect(m_dateToEdit, &QDateEdit::dateChanged, m_dateToEdit, [this](const QDate &) {
+        updateAnalytics();
+    });
+
+    QObject::connect(m_monthButton, &QPushButton::pressed, m_monthButton, [this]() {
+        m_dateFromEdit->setDate(Today.addDays(-30));
+        m_dateToEdit->setDate(Today);
+    });
+
+    QObject::connect(m_yearButton, &QPushButton::pressed, m_yearButton, [this]() {
+        m_dateFromEdit->setDate(Today.addYears(-1));
+        m_dateToEdit->setDate(Today);
+    });
+
+    QObject::connect(m_thisMonthButton, &QPushButton::pressed, m_thisMonthButton, [this]() {
+        m_dateFromEdit->setDate(QDate(Today.year(), Today.month(), 1));
+        m_dateToEdit->setDate(Today);
+    });
+
+    QObject::connect(m_thisYearButton, &QPushButton::pressed, m_thisYearButton, [this]() {
+        m_dateFromEdit->setDate(QDate(Today.year(), 1, 1));
+        m_dateToEdit->setDate(Today);
+    });
+
+    QDateTimeAxis *axisX = new QDateTimeAxis;
+    axisX->setRange(m_dateFromEdit->dateTime(), m_dateToEdit->dateTime());
+    axisX->setFormat("dd-MM-yyyy");
+    m_chart->addAxis(axisX, Qt::AlignBottom);
+
+
+    QValueAxis *axisY = new QValueAxis;
+    axisY->setRange(0, 1000);
+    m_chart->addAxis(axisY, Qt::AlignLeft);
+
+    m_chart->legend()->hide();
+    //m_chart->setTheme(QChart::ChartThemeBrownSand);
+    //m_chart->setBackgroundBrush(QBrush(Qt::white));
+
+    m_chart->addSeries(m_series);
+    m_series->setPointsVisible(true);
+    m_series->attachAxis(axisX);
+    m_series->attachAxis(axisY);
+    m_series->setPointLabelsVisible(false);
+    m_series->setPointLabelsFormat("@xPoint: @yPoint");
+
+    QObject::connect(m_series, &QXYSeries::hovered, m_series, [this](const QPointF &point, bool state) {
+        int index = -1;
+
+        const auto& points = m_series->points();
+
+        for(int i = 0; i < points.size(); ++i) {
+            m_series->setPointConfiguration(i, QXYSeries::PointConfiguration::LabelVisibility, false);
+        }
+
+        qreal closestDist = std::numeric_limits<qreal>::max();
+
+        for(int i = 0; i < points.size(); ++i) {
+            auto& currentPoint = points[i];
+            const qreal xDist = currentPoint.x() - point.x();
+            const qreal yDist = currentPoint.y() - point.y();
+
+            const qreal dist = qSqrt(xDist*xDist + yDist*yDist);
+
+            if (dist < closestDist) {
+                index = i;
+                closestDist = dist;
+            }
+        }
+
+        const QPointF& truePoint = points[index];
+        QDateTime d;
+        d.setMSecsSinceEpoch(truePoint.x());
+
+        m_series->setPointConfiguration(index, QXYSeries::PointConfiguration::LabelVisibility, state);
+        m_series->setPointConfiguration(
+            index,
+            QXYSeries::PointConfiguration::LabelFormat,
+            QString("%1: @yPoint").arg(d.date().toString("dd.MM.yy"))
+        );
+    });
+
+    m_view->setRenderHint(QPainter::Antialiasing, true);
+    ui->categorieAnalysisTabLayout->addWidget(m_view);
+}
+
+static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
+    while(node) {
+        if(node == parent) {
+                return true;
+        }
+        node = node->parent;
+    }
+
+    return false;
+}
+
+void CategoriesAnalytics::updateAnalytics()
+{
+    QDateTimeAxis* axisX = nullptr;
+    QValueAxis* axisY = nullptr;
+    {
+        auto horAxes = m_chart->axes(Qt::Horizontal);
+        auto verAxes = m_chart->axes(Qt::Vertical);
+
+        axisX = qobject_cast<QDateTimeAxis*>(horAxes[0]);
+        axisY = qobject_cast<QValueAxis*>(verAxes[0]);
+    }
+
+    axisX->setRange(m_dateFromEdit->dateTime(), m_dateToEdit->dateTime());
+
+    const Node<Category>* analyzedCategory = m_categoryCombo->node();
+
+    if (!analyzedCategory) {
+        return;
+    }
+
+    m_series->clear();
+
+    std::map<QDate, Money> data;
+
+    const auto log = m_dataModels.m_data.log.log;
+
+    for(const Transaction& t : log) {
+        if(t.date > m_dateToEdit->dateTime().date()) {
+            continue;
+        }
+
+        if(t.date < m_dateFromEdit->dateTime().date()) {
+            break;
+        }
+
+        const Node<Category>* categoryNode = t.category.toPointer();
+        if (categoryNode && isNodeBelongsTo(categoryNode, analyzedCategory)) {
+            data[t.date] += t.amount;
+        }
+    }
+
+    qreal yMin = std::numeric_limits<qreal>::max();
+    qreal yMax = 0.0;
+
+    for(const std::pair<const QDate, Money>& t : data) {
+        m_series->append(QDateTime(t.first, QTime()).toMSecsSinceEpoch(), static_cast<double>(t.second));
+
+        yMin = std::min(yMin, static_cast<double>(t.second));
+        yMax = std::max(yMax, static_cast<double>(t.second));
+    }
+
+    axisY->setRange(yMin, yMax);
+    axisY->applyNiceNumbers();
+    m_chart->setTitleFont(QFont("Segoe UI", 12));
+    m_chart->setTitle(analyzedCategory->data);
 }
 
 } // namespace cashbook

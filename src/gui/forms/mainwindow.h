@@ -163,6 +163,7 @@ private:
 
     // analytics
     WalletsAnalytics m_walletAnalytics;
+    CategoriesAnalytics m_categoriesAnalytics;
     bool m_allowAnalyticsUpdate {false};
 };
 
