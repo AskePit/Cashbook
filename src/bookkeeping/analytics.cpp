@@ -468,6 +468,7 @@ void CategoriesAnalytics::updateAnalytics()
 
     axisY->setRange(yMin, yMax);
     axisY->applyNiceNumbers();
+    axisY->setMinorTickCount(10);
     m_chart->setTitleFont(QFont("Segoe UI", 12));
     m_chart->setTitle(analyzedCategory->data);
 }
