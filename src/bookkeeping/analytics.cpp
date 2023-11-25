@@ -249,6 +249,7 @@ void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
     m_thisYearButton = ui->categoriesThisYearButton;
     m_monthButton = ui->categoriesMonthButton;
     m_yearButton = ui->categoriesYearButton;
+    m_densityCombo = ui->categoriesDensityBox;
 
     m_categoryCombo->setModel(m_dataModels.outCategoriesModel);
 
@@ -257,7 +258,15 @@ void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
         m_categoryCombo->setModel(model);
     });
 
-    m_dateFromEdit->setDate(QDate(Today.year(), Today.month(), 1));
+    m_categoryCombo->setUpdateCallback([this](const Node<Category>*){
+        updateAnalytics();
+    });
+
+    QObject::connect(m_densityCombo, &QComboBox::currentIndexChanged, m_densityCombo, [this](int) {
+        updateAnalytics();
+    });
+
+    m_dateFromEdit->setDate(QDate(Today.year(), 1, 1));
     m_dateToEdit->setDate(Today);
     m_dateToEdit->setMaximumDate(Today);
 
@@ -270,23 +279,43 @@ void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
     });
 
     QObject::connect(m_monthButton, &QPushButton::pressed, m_monthButton, [this]() {
+        m_canUpdate = false;
         m_dateFromEdit->setDate(Today.addDays(-30));
         m_dateToEdit->setDate(Today);
+        setDensity(Density::Day);
+        m_canUpdate = true;
+
+        updateAnalytics();
     });
 
     QObject::connect(m_yearButton, &QPushButton::pressed, m_yearButton, [this]() {
+        m_canUpdate = false;
         m_dateFromEdit->setDate(Today.addYears(-1));
         m_dateToEdit->setDate(Today);
+        setDensity(Density::Month);
+        m_canUpdate = true;
+
+        updateAnalytics();
     });
 
     QObject::connect(m_thisMonthButton, &QPushButton::pressed, m_thisMonthButton, [this]() {
+        m_canUpdate = false;
         m_dateFromEdit->setDate(QDate(Today.year(), Today.month(), 1));
         m_dateToEdit->setDate(Today);
+        setDensity(Density::Day);
+        m_canUpdate = true;
+
+        updateAnalytics();
     });
 
     QObject::connect(m_thisYearButton, &QPushButton::pressed, m_thisYearButton, [this]() {
+        m_canUpdate = false;
         m_dateFromEdit->setDate(QDate(Today.year(), 1, 1));
         m_dateToEdit->setDate(Today);
+        setDensity(Density::Month);
+        m_canUpdate = true;
+
+        updateAnalytics();
     });
 
     QDateTimeAxis *axisX = new QDateTimeAxis;
@@ -339,15 +368,26 @@ void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
         d.setMSecsSinceEpoch(truePoint.x());
 
         m_series->setPointConfiguration(index, QXYSeries::PointConfiguration::LabelVisibility, state);
+
+        QString label;
+
+        if (getDensity() == Density::Day) {
+            label = QString("%1: @yPoint").arg(d.date().toString("dd MMM yyyy"));
+        } else {
+            label = QString("%1: @yPoint").arg(d.date().toString("MMM yyyy"));
+        }
+
         m_series->setPointConfiguration(
             index,
             QXYSeries::PointConfiguration::LabelFormat,
-            QString("%1: @yPoint").arg(d.date().toString("dd.MM.yy"))
+            label
         );
     });
 
     m_view->setRenderHint(QPainter::Antialiasing, true);
     ui->categorieAnalysisTabLayout->addWidget(m_view);
+
+    m_canUpdate = true;
 }
 
 static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
@@ -363,6 +403,10 @@ static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *pa
 
 void CategoriesAnalytics::updateAnalytics()
 {
+    if (!m_canUpdate) {
+        return;
+    }
+
     QDateTimeAxis* axisX = nullptr;
     QValueAxis* axisY = nullptr;
     {
@@ -398,7 +442,13 @@ void CategoriesAnalytics::updateAnalytics()
 
         const Node<Category>* categoryNode = t.category.toPointer();
         if (categoryNode && isNodeBelongsTo(categoryNode, analyzedCategory)) {
-            data[t.date] += t.amount;
+            if (getDensity() == Density::Day) {
+                data[t.date] += t.amount;
+            } else {
+                // month density
+                QDate date(t.date.year(), t.date.month(), 1);
+                data[date] += t.amount;
+            }
         }
     }
 
@@ -416,6 +466,16 @@ void CategoriesAnalytics::updateAnalytics()
     axisY->applyNiceNumbers();
     m_chart->setTitleFont(QFont("Segoe UI", 12));
     m_chart->setTitle(analyzedCategory->data);
+}
+
+CategoriesAnalytics::Density CategoriesAnalytics::getDensity() const
+{
+    return Density(m_densityCombo->currentIndex());
+}
+
+void CategoriesAnalytics::setDensity(Density density)
+{
+    m_densityCombo->setCurrentIndex(static_cast<int>(density));
 }
 
 } // namespace cashbook

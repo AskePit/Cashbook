@@ -3113,6 +3113,12 @@ QTreeView::item { height: 18px;}</string>
               </item>
               <item>
                <widget class="QDateEdit" name="spentsDateFrom">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="palette">
                  <palette>
                   <active>
@@ -3185,6 +3191,12 @@ QTreeView::item { height: 18px;}</string>
               </item>
               <item>
                <widget class="QDateEdit" name="spentsDateTo">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="palette">
                  <palette>
                   <active>
@@ -4624,7 +4636,20 @@ QTreeView::item { height: 18px;}</string>
                </widget>
               </item>
               <item>
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Категория</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="cashbook::CategoryNodeButton" name="categoriesCategoryButton">
+                <property name="minimumSize">
+                 <size>
+                  <width>140</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="text">
                  <string/>
                 </property>
@@ -4658,6 +4683,12 @@ QTreeView::item { height: 18px;}</string>
               </item>
               <item>
                <widget class="QDateEdit" name="categoriesDateFrom">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="palette">
                  <palette>
                   <active>
@@ -4730,6 +4761,12 @@ QTreeView::item { height: 18px;}</string>
               </item>
               <item>
                <widget class="QDateEdit" name="categoriesDateTo">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="palette">
                  <palette>
                   <active>
@@ -4776,6 +4813,43 @@ QTreeView::item { height: 18px;}</string>
                 <property name="calendarPopup">
                  <bool>true</bool>
                 </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>Точность</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="categoriesDensityBox">
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>День</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Месяц</string>
+                 </property>
+                </item>
                </widget>
               </item>
               <item>

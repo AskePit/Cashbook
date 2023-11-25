@@ -30,12 +30,14 @@ class NodeButton : public QPushButton
 public:
     NodeButton(QWidget *parent = nullptr)
         : QPushButton(parent)
+        , m_nodeSetCallback(nullptr)
     {
         setStyleSheet("padding:0 0 0 2; text-align:left");
     }
 
     NodeButton(QAbstractItemModel &model, QWidget *parent = nullptr)
         : QPushButton(parent)
+        , m_nodeSetCallback(nullptr)
     {
         setStyleSheet("padding:0 0 0 2; text-align:left");
         setModel(model);
@@ -70,16 +72,25 @@ public:
     void setNode(const Node<T> *node) {
         m_node = node;
         setText(pathToShortString(node));
+        if (m_nodeSetCallback != nullptr) {
+            m_nodeSetCallback(m_node);
+        }
     }
 
     const Node<T> *node() const {
         return m_node;
     }
 
+    void setUpdateCallback(std::function<void(const Node<T>*)> cb) {
+        m_nodeSetCallback = cb;
+    }
+
 private:
     NodeButtonState m_state {NodeButtonState::Folded};
     const Node<T> *m_node {nullptr};
     QTreeView *m_tree {nullptr};
+
+    std::function<void(const Node<T>*)> m_nodeSetCallback {nullptr};
 };
 
 class PopupTreeProxyModel : public QSortFilterProxyModel
