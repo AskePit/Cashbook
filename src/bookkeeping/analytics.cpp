@@ -340,6 +340,10 @@ void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
     m_series->setPointLabelsFormat("@xPoint: @yPoint");
 
     QObject::connect(m_series, &QXYSeries::hovered, m_series, [this](const QPointF &point, bool state) {
+        // `point` - is not exact coordinates of point :(
+        // it's kinda point of cursor when it hovered point
+        // so, we should find the point ourselves
+
         int index = -1;
 
         const auto& points = m_series->points();
