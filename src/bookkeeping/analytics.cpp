@@ -258,7 +258,7 @@ void CategoriesAnalytics::initUi(Ui::MainWindow* ui)
         m_categoryCombo->setModel(model);
     });
 
-    m_categoryCombo->setUpdateCallback([this](const Node<Category>*){
+    m_categoryCombo->setUpdateCallback([this](const Node<Category>*) {
         updateAnalytics();
     });
 
@@ -407,6 +407,8 @@ void CategoriesAnalytics::updateAnalytics()
         return;
     }
 
+    m_series->clear();
+
     QDateTimeAxis* axisX = nullptr;
     QValueAxis* axisY = nullptr;
     {
@@ -424,8 +426,6 @@ void CategoriesAnalytics::updateAnalytics()
     if (!analyzedCategory) {
         return;
     }
-
-    m_series->clear();
 
     std::map<QDate, Money> data;
 

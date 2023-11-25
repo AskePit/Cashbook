@@ -70,8 +70,7 @@ QModelIndex itemIndex(const Model *model, const Node<DataType> *item)
 {
     std::stack<const Node<DataType> *> path;
 
-
-    while(item != model->m_data.rootItem) {
+    while(item && item != model->m_data.rootItem) {
         path.push(item);
         item = item->parent;
     }

@@ -50,7 +50,14 @@ public:
     }
 
     void setModel(QAbstractItemModel &model, bool setParent = false) {
-        connect(this, &QPushButton::clicked, [this, &model, setParent]() {
+        disconnect(m_modelConnection);
+
+        this->setTree(nullptr);
+        this->setNode(nullptr);
+
+        m_modelConnection = connect(this, &QPushButton::clicked, [this, &model, setParent]() {
+
+
             this->setState(NodeButtonState::Expanded);
             QTreeView *view = new PopupTree<T, Model>(model, this, setParent ? this : nullptr);
             Q_UNUSED(view);
@@ -89,6 +96,7 @@ private:
     NodeButtonState m_state {NodeButtonState::Folded};
     const Node<T> *m_node {nullptr};
     QTreeView *m_tree {nullptr};
+    QMetaObject::Connection m_modelConnection;
 
     std::function<void(const Node<T>*)> m_nodeSetCallback {nullptr};
 };
