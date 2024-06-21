@@ -4,3 +4,4 @@ build*/
 bin/
 msvc_make.bat
 .qtc_clangd/*
+.vscode/
