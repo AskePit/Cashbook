@@ -3113,6 +3113,12 @@ QTreeView::item { height: 18px;}</string>
               </item>
               <item>
                <widget class="QDateEdit" name="spentsDateFrom">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="palette">
                  <palette>
                   <active>
@@ -3185,6 +3191,12 @@ QTreeView::item { height: 18px;}</string>
               </item>
               <item>
                <widget class="QDateEdit" name="spentsDateTo">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
                 <property name="palette">
                  <palette>
                   <active>
@@ -4602,6 +4614,289 @@ QTreeView::item { height: 18px;}</string>
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="categoriesAnalysisTab">
+           <attribute name="title">
+            <string>Категории</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="categorieAnalysisTabLayout">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <widget class="QComboBox" name="categoriesTypeBox">
+                <item>
+                 <property name="text">
+                  <string>Траты</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Доход</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Категория</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="cashbook::CategoryNodeButton" name="categoriesCategoryButton">
+                <property name="minimumSize">
+                 <size>
+                  <width>140</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_30">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_9">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Оборот с</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDateEdit" name="categoriesDateFrom">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="palette">
+                 <palette>
+                  <active>
+                   <colorrole role="Window">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>146</red>
+                      <green>150</green>
+                      <blue>154</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </active>
+                  <inactive>
+                   <colorrole role="Window">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>146</red>
+                      <green>150</green>
+                      <blue>154</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </inactive>
+                  <disabled>
+                   <colorrole role="Window">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>146</red>
+                      <green>150</green>
+                      <blue>154</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </disabled>
+                 </palette>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QCalendarWidget QWidget#qt_calendar_navigationbar
+{ 
+    background-color: rgb(64, 66, 68); 
+}</string>
+                </property>
+                <property name="frame">
+                 <bool>true</bool>
+                </property>
+                <property name="readOnly">
+                 <bool>false</bool>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_17">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>по</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDateEdit" name="categoriesDateTo">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="palette">
+                 <palette>
+                  <active>
+                   <colorrole role="Window">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>146</red>
+                      <green>150</green>
+                      <blue>154</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </active>
+                  <inactive>
+                   <colorrole role="Window">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>146</red>
+                      <green>150</green>
+                      <blue>154</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </inactive>
+                  <disabled>
+                   <colorrole role="Window">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>146</red>
+                      <green>150</green>
+                      <blue>154</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </disabled>
+                 </palette>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QCalendarWidget QWidget#qt_calendar_navigationbar
+{ 
+    background-color: rgb(64, 66, 68); 
+}</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>Точность</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="categoriesDensityBox">
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>День</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Месяц</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="categoriesThisMonthButton">
+                <property name="text">
+                 <string>Этот месяц</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="categoriesThisYearButton">
+                <property name="text">
+                 <string>Этот год</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="categoriesMonthButton">
+                <property name="text">
+                 <string>30 дней</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="categoriesYearButton">
+                <property name="text">
+                 <string>365 дней</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -4714,6 +5009,11 @@ QTreeView::item { height: 18px;}</string>
    <class>QQuickWidget</class>
    <extends>QWidget</extends>
    <header location="global">QtQuickWidgets/QQuickWidget</header>
+  </customwidget>
+  <customwidget>
+   <class>cashbook::CategoryNodeButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">gui/widgets/widgets.h</header>
   </customwidget>
  </customwidgets>
  <resources>

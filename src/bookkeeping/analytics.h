@@ -3,9 +3,12 @@
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QPieSeries>
+#include <QtCharts/QXYSeries>
 #include <QtCharts/QPieSlice>
+#include <QDateTimeEdit>
 
 #include "bookkeeping/bookkeeping.h"
+#include "gui/widgets/widgets.h"
 
 class QComboBox;
 
@@ -48,6 +51,44 @@ private:
     QComboBox *m_availabilityFromCombo {nullptr};
     QComboBox *m_availabilityToCombo {nullptr};
     QComboBox *m_moneyTypeCombo {nullptr};
+};
+
+class CategoriesAnalytics
+{
+public:
+    CategoriesAnalytics(DataModels& dataModels, QWidget* parent = nullptr);
+    void initUi(Ui::MainWindow* ui);
+
+    void updateAnalytics();
+
+private:
+    enum class Density
+    {
+        Day = 0,
+        Month
+    };
+
+    Density getDensity() const;
+    void setDensity(Density density);
+
+    QChart* m_chart {nullptr};
+    QXYSeries* m_series {nullptr};
+    QChartView* m_view {nullptr};
+
+    DataModels& m_dataModels;
+
+    QComboBox *m_categoryTypeCombo {nullptr};
+    CategoryNodeButton *m_categoryCombo {nullptr};
+    QDateTimeEdit *m_dateFromEdit {nullptr};
+    QDateTimeEdit *m_dateToEdit {nullptr};
+    QComboBox *m_densityCombo {nullptr};
+
+    QPushButton *m_thisMonthButton {nullptr};
+    QPushButton *m_thisYearButton {nullptr};
+    QPushButton *m_monthButton {nullptr};
+    QPushButton *m_yearButton {nullptr};
+
+    bool m_canUpdate {false};
 };
 
 } // namespace cashbook

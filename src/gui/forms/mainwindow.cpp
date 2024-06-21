@@ -123,6 +123,7 @@ MainWindow::MainWindow(Data &data, QWidget *parent)
     , m_models(data)
     , m_modelsDelegate(m_models)
     , m_walletAnalytics(data, this)
+    , m_categoriesAnalytics(m_models, this)
 {
     preLoadSetup();
     loadData();
@@ -308,6 +309,7 @@ void MainWindow::postLoadSetup()
 
     m_walletAnalytics.initUi(ui);
     on_walletsAnalysisCriteriaCombo_currentIndexChanged(0); // just to hide bank-related label/combo
+    m_categoriesAnalytics.initUi(ui);
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
 
@@ -1130,6 +1132,7 @@ void cashbook::MainWindow::updateAnalytics()
 {
     if(m_allowAnalyticsUpdate) {
         m_walletAnalytics.updateAnalytics();
+        m_categoriesAnalytics.updateAnalytics();
     }
 }
 

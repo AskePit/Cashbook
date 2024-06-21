@@ -33,12 +33,14 @@ class NodeButton : public QPushButton
 public:
     NodeButton(QWidget *parent = nullptr)
         : QPushButton(parent)
+        , m_nodeSetCallback(nullptr)
     {
         setStyleSheet("padding:0 0 0 2; text-align:left");
     }
 
     NodeButton(QAbstractItemModel &model, QWidget *parent = nullptr)
         : QPushButton(parent)
+        , m_nodeSetCallback(nullptr)
     {
         setStyleSheet("padding:0 0 0 2; text-align:left");
         setModel(model);
@@ -51,7 +53,14 @@ public:
     }
 
     void setModel(QAbstractItemModel &model, bool setParent = false) {
-        connect(this, &QPushButton::clicked, [this, &model, setParent]() {
+        disconnect(m_modelConnection);
+
+        this->setTree(nullptr);
+        this->setNode(nullptr);
+
+        m_modelConnection = connect(this, &QPushButton::clicked, [this, &model, setParent]() {
+
+
             this->setState(NodeButtonState::Expanded);
             QWidget *widget = new PopupTree<T, Model>(model, this, setParent ? this : nullptr);
             Q_UNUSED(widget);
@@ -73,16 +82,26 @@ public:
     void setNode(const Node<T> *node) {
         m_node = node;
         setText(pathToShortString(node));
+        if (m_nodeSetCallback != nullptr) {
+            m_nodeSetCallback(m_node);
+        }
     }
 
     const Node<T> *node() const {
         return m_node;
     }
 
+    void setUpdateCallback(std::function<void(const Node<T>*)> cb) {
+        m_nodeSetCallback = cb;
+    }
+
 private:
     NodeButtonState m_state {NodeButtonState::Folded};
     const Node<T> *m_node {nullptr};
     QTreeView *m_tree {nullptr};
+    QMetaObject::Connection m_modelConnection;
+
+    std::function<void(const Node<T>*)> m_nodeSetCallback {nullptr};
 };
 
 class PopupTreeProxyModel : public QSortFilterProxyModel
