@@ -121,6 +121,7 @@ void PopupTree<Category, CategoriesModel>::mouseDoubleClickEvent(QMouseEvent *ev
 
 template <>
 void PopupTree<Category, CategoriesModel>::focusOutEvent(QFocusEvent *event) {
+    (void)event;
     //chooseValue(event);
 }
 
@@ -140,31 +141,32 @@ void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event) 
 
 template <>
 void PopupTree<Wallet, WalletsModel>::focusOutEvent(QFocusEvent *event) {
-    WalletsModel *model = getSourceModel();
-    if(!model) {
-        selfDestroy();
-        return;
-    }
+    (void)event;
+//    WalletsModel *model = getSourceModel();
+//    if(!model) {
+//        selfDestroy();
+//        return;
+//    }
 
-    QModelIndex index = getCurrentSourceIndex();
-    if(!index.isValid()) {
-        selfDestroy();
-        return;
-    }
+//    QModelIndex index = getCurrentSourceIndex();
+//    if(!index.isValid()) {
+//        selfDestroy();
+//        return;
+//    }
 
-    const Node<Wallet> *node = model->getItem(index);
-    if(!node) {
-        selfDestroy();
-        return;
-    }
+//    const Node<Wallet> *node = model->getItem(index);
+//    if(!node) {
+//        selfDestroy();
+//        return;
+//    }
 
-    if(node->isLeaf()) {
-        chooseValue(event);
-        return;
-    } else {
-        selfDestroy();
-        return;
-    }
+//    if(node->isLeaf()) {
+//        chooseValue(event);
+//        return;
+//    } else {
+//        selfDestroy();
+//        return;
+//    }
 }
 
 } // namespace cashbook

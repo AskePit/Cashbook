@@ -133,69 +133,15 @@ template <class T, class Model>
 class PopupTree : public QWidget
 {
 public:
-    PopupTree(QAbstractItemModel &model, NodeButton<T, Model> *button, QWidget *parent = nullptr)
-        : QWidget(parent)
-        , m_treeView(new QTreeView())
-        , m_button(button)
-        , m_filterLine(new QLineEdit(this))
-    {
-        QVBoxLayout* layout = new QVBoxLayout(this);
-        layout->addWidget(m_filterLine, 5);
-        layout->addWidget(m_treeView);
-
-        PopupTreeProxyModel* proxy = new PopupTreeProxyModel(parent);
-        proxy->setSourceModel(&model);
-
-        m_treeView->setModel(proxy);
-        m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint | Qt::Tool);
-
-        m_treeView->setStyleSheet("QTreeView::item { height: 18px;}");
-        m_treeView->setAlternatingRowColors(true);
-        m_treeView->header()->hide();
-        for(int i = WalletColumn::Name+1; i<WalletColumn::Count; ++i) {
-            m_treeView->hideColumn(i);
-        }
-        button->setTree(m_treeView);
-
-        const Node<T> *node = button->node();
-        m_treeView->setCurrentIndex(node ? getProxyIndex(qobject_cast<Model*>(&model)->itemIndex(node)) : QModelIndex());
-        move(button->mapToGlobal(QPoint(0, 0)));
-        show();
-        activateWindow();
-        setFocus();
-
-        connect(m_filterLine, &QLineEdit::textEdited, proxy, &PopupTreeProxyModel::setFilterString);
-        connect(static_cast<PopupTreeProxyModel*>(m_treeView->model()), &PopupTreeProxyModel::filtered, [this]() {
-            m_treeView->expandAll();
-        });
-        connect(static_cast<PopupTreeProxyModel*>(m_treeView->model()), &PopupTreeProxyModel::filterCanceled, [this]() {
-            m_treeView->collapseAll();
-        });
-    }
+    PopupTree(QAbstractItemModel &model, NodeButton<T, Model> *button, QWidget *parent = nullptr);
 
 protected:
-    void mouseDoubleClickEvent(QMouseEvent *event);
-    void focusOutEvent(QFocusEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
     // do not forward scroll to parents in case of nonscrolling state
-    void wheelEvent(QWheelEvent* event) {
-        const bool atBottom = m_treeView->verticalScrollBar()->value() == m_treeView->verticalScrollBar()->maximum();
-        const bool atTop = m_treeView->verticalScrollBar()->value() == m_treeView->verticalScrollBar()->minimum();
-
-        const QPoint delta = event->angleDelta();
-
-        const bool scrollDown = delta.y() < 0;
-        const bool scrollUp = delta.y() > 0;
-
-        const bool noWay = (atBottom && scrollDown) || (atTop && scrollUp);
-
-        if(noWay) {
-            event->accept();
-        } else {
-            QWidget::wheelEvent(event);
-        }
-    }
+    void wheelEvent(QWheelEvent* event) override;
 
 private:
     QTreeView* m_treeView {nullptr};
@@ -203,28 +149,10 @@ private:
     QLineEdit* m_filterLine {nullptr};
     bool m_gonnaDestroy {false};
 
-    void chooseValue(QEvent *event){
-        Q_UNUSED(event)
+    QVector<QMetaObject::Connection> m_connections;
 
-        if(m_gonnaDestroy) {
-            return;
-        }
-
-        Model* model = getSourceModel();
-        const Node<T>* node = model->getItem(getCurrentSourceIndex());
-        m_button->setNode(node);
-        m_button->setFocus();
-        m_button->setTree(nullptr);
-
-        m_gonnaDestroy = true;
-        selfDestroy();
-    }
-
-    void selfDestroy() {
-        close();
-        m_button->setState(NodeButtonState::Folded);
-        deleteLater();
-    }
+    void chooseValue(QEvent *event);
+    void selfDestroy();
 
     Model* getSourceModel() const {
         return qobject_cast<Model*>(getProxyModel()->sourceModel());
@@ -247,6 +175,58 @@ private:
     }
 };
 
+template <class T, class Model>
+PopupTree<T, Model>::PopupTree(QAbstractItemModel &model, NodeButton<T, Model> *button, QWidget *parent /*= nullptr*/)
+    : QWidget(parent)
+    , m_treeView(new QTreeView(this))
+    , m_button(button)
+    , m_filterLine(new QLineEdit(this))
+{
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(m_filterLine, 5);
+    layout->addWidget(m_treeView);
+
+    PopupTreeProxyModel* proxy = new PopupTreeProxyModel(this);
+    proxy->setSourceModel(&model);
+
+    m_treeView->setModel(proxy);
+    m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::CustomizeWindowHint | Qt::Tool);
+
+    m_treeView->setStyleSheet("QTreeView::item { height: 18px;}");
+    m_treeView->setAlternatingRowColors(true);
+    m_treeView->header()->hide();
+    for(int i = WalletColumn::Name+1; i<WalletColumn::Count; ++i) {
+        m_treeView->hideColumn(i);
+    }
+    button->setTree(m_treeView);
+
+    setFixedHeight(500);
+
+    connect(m_treeView, &QTreeView::doubleClicked, [this]() {
+        mouseDoubleClickEvent(nullptr);
+    });
+
+    const Node<T> *node = button->node();
+    m_treeView->setCurrentIndex(node ? getProxyIndex(qobject_cast<Model*>(&model)->itemIndex(node)) : QModelIndex());
+    move(button->mapToGlobal(QPoint(0, 0)));
+    show();
+    activateWindow();
+    m_filterLine->setFocus();
+
+    auto conn1 = connect(m_filterLine, &QLineEdit::textEdited, proxy, &PopupTreeProxyModel::setFilterString);
+    auto conn2 = connect(static_cast<PopupTreeProxyModel*>(m_treeView->model()), &PopupTreeProxyModel::filtered, [this]() {
+        m_treeView->expandAll();
+    });
+    auto conn3 = connect(static_cast<PopupTreeProxyModel*>(m_treeView->model()), &PopupTreeProxyModel::filterCanceled, [this]() {
+        m_treeView->collapseAll();
+    });
+
+    m_connections.push_back(conn1);
+    m_connections.push_back(conn2);
+    m_connections.push_back(conn3);
+}
+
 template <>
 void PopupTree<Category, CategoriesModel>::mouseDoubleClickEvent(QMouseEvent *event);
 
@@ -258,6 +238,66 @@ void PopupTree<Wallet, WalletsModel>::mouseDoubleClickEvent(QMouseEvent *event);
 
 template <>
 void PopupTree<Wallet, WalletsModel>::focusOutEvent(QFocusEvent *event);
+
+template <class T, class Model>
+void PopupTree<T, Model>::keyPressEvent(QKeyEvent *event) {
+    // DO NOT WORK for some reason!!
+
+    if (event->key() == Qt::Key_Enter) {
+        mouseDoubleClickEvent(nullptr);
+    } else {
+        QWidget::keyPressEvent(event);
+    }
+}
+
+template <class T, class Model>
+void PopupTree<T, Model>::wheelEvent(QWheelEvent* event) {
+    const bool atBottom = m_treeView->verticalScrollBar()->value() == m_treeView->verticalScrollBar()->maximum();
+    const bool atTop = m_treeView->verticalScrollBar()->value() == m_treeView->verticalScrollBar()->minimum();
+
+    const QPoint delta = event->angleDelta();
+
+    const bool scrollDown = delta.y() < 0;
+    const bool scrollUp = delta.y() > 0;
+
+    const bool noWay = (atBottom && scrollDown) || (atTop && scrollUp);
+
+    if(noWay) {
+        event->accept();
+    } else {
+        QWidget::wheelEvent(event);
+    }
+}
+
+template <class T, class Model>
+void PopupTree<T, Model>::chooseValue(QEvent *event){
+    Q_UNUSED(event)
+
+    if(m_gonnaDestroy) {
+        return;
+    }
+
+    Model* model = getSourceModel();
+    const Node<T>* node = model->getItem(getCurrentSourceIndex());
+    m_button->setNode(node);
+    m_button->setFocus();
+    m_button->setTree(nullptr);
+
+    selfDestroy();
+}
+
+template <class T, class Model>
+void PopupTree<T, Model>::selfDestroy() {
+    m_gonnaDestroy = true;
+
+    for (const auto& conn : m_connections) {
+        disconnect(conn);
+    }
+
+    close();
+    m_button->setState(NodeButtonState::Folded);
+    deleteLater();
+}
 
 using CategoryNodeButton = NodeButton<Category, CategoriesModel>;
 using WalletNodeButton = NodeButton<Wallet, WalletsModel>;
