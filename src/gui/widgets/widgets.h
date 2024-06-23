@@ -243,7 +243,7 @@ template <class T, class Model>
 void PopupTree<T, Model>::keyPressEvent(QKeyEvent *event) {
     // DO NOT WORK for some reason!!
 
-    if (event->key() == Qt::Key_Enter) {
+    if (event->key() == Qt::Key_Return) {
         mouseDoubleClickEvent(nullptr);
     } else {
         QWidget::keyPressEvent(event);
