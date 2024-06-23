@@ -107,6 +107,12 @@ bool PopupTreeProxyModel::_filterPass(QModelIndex currIndex) {
     auto *model = sourceModel();
     const QString& itemString = model->data(currIndex).toString();
 
+    if (m_filterString.size() > 1) {
+        if (itemString.startsWith(m_filterString, Qt::CaseInsensitive)) {
+            return true;
+        }
+    }
+
     return levenshteinDistance(m_filterString, itemString.toLower()) < 3;
 }
 
