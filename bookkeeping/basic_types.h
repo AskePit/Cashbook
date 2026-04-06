@@ -1,8 +1,8 @@
 #ifndef BOOKKEEPING_BASIC_TYPES_H
 #define BOOKKEEPING_BASIC_TYPES_H
 
-#include <askelib/std/tree.h>
-#include <askelib/std/money.h>
+#include <utils/tree.h>
+#include <bookkeeping/money.h>
 #include <QString>
 #include <QVector>
 #include <QUuid>
