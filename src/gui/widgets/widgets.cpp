@@ -38,13 +38,15 @@ void PopupTreeProxyModel::_doFilterWork() {
     m_mostMatched = QModelIndex();
 
     if(!_isFiltered()) {
-        invalidateFilter();
+        beginFilterChange();
+        endFilterChange();
         emit filterCanceled();
         return;
     }
 
     _doFilterIndex(QModelIndex());
-    invalidateFilter();
+    beginFilterChange();
+    endFilterChange();
     emit filtered();
 }
 
