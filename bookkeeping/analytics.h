@@ -1,5 +1,4 @@
-#ifndef ANALYTICS_H
-#define ANALYTICS_H
+#pragma once
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QPieSeries>
@@ -92,5 +91,3 @@ private:
 };
 
 } // namespace cashbook
-
-#endif // ANALYTICS_H

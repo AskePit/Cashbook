@@ -1,5 +1,4 @@
-#ifndef BOOKKEEPING_MODELS_H
-#define BOOKKEEPING_MODELS_H
+#pragma once
 
 #include "bookkeeping/bookkeeping.h"
 
@@ -444,5 +443,3 @@ public:
 };
 
 } // namespace cashbook
-
-#endif // BOOKKEEPING_MODELS_H

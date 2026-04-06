@@ -1,5 +1,4 @@
-#ifndef INNODEDIALOG_H
-#define INNODEDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QModelIndex>
@@ -28,5 +27,3 @@ private:
 };
 
 } // namespace cashbook
-
-#endif // INNODEDIALOG_H

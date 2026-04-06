@@ -1,5 +1,4 @@
-#ifndef BOOKKEEPING_H
-#define BOOKKEEPING_H
+#pragma once
 
 #include "basic_types.h"
 #include <set>
@@ -432,5 +431,3 @@ Q_DECLARE_METATYPE(const cashbook::Category *)
 Q_DECLARE_METATYPE(Node<cashbook::Category> *)
 Q_DECLARE_METATYPE(const Node<cashbook::Category> *)
 Q_DECLARE_METATYPE(cashbook::Transaction::Type::t)
-
-#endif // BOOKKEEPING_H

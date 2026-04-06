@@ -1,5 +1,4 @@
-#ifndef CATEGORIESSTATICCHART_H
-#define CATEGORIESSTATICCHART_H
+#pragma once
 
 #include <QWidget>
 #include <QtCharts/QChartView>
@@ -98,5 +97,3 @@ private:
 };
 
 } // namespace cashbook
-
-#endif // CATEGORIESSTATICCHART_H

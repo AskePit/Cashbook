@@ -1,5 +1,4 @@
-#ifndef BOOKKEEPING_WIDGETS_H
-#define BOOKKEEPING_WIDGETS_H
+#pragma once
 
 #include "bookkeeping/models.h"
 #include <QTreeView>
@@ -326,5 +325,3 @@ public:
 };
 
 } // namespace cashbook
-
-#endif // BOOKKEEPING_WIDGETS_H

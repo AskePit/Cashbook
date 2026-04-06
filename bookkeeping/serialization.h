@@ -1,5 +1,4 @@
-#ifndef SERIALIZATION_H
-#define SERIALIZATION_H
+#pragma once
 
 class QString;
 
@@ -12,5 +11,3 @@ void save(Data &data);
 void load(Data &data);
 
 } // namespace cashbook
-
-#endif // SERIALIZATION_H

@@ -1,5 +1,4 @@
-#ifndef SELECTWALLETDIALOG_H
-#define SELECTWALLETDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include "bookkeeping/models.h"
@@ -26,5 +25,3 @@ private:
 };
 
 } // namespace cashbook
-
-#endif // SELECTWALLETDIALOG_H

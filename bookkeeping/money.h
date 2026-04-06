@@ -1,11 +1,4 @@
-/*! @file
- *
- * Simple money type.
- *
- */
-
-#ifndef ASKELIB_STD_DECIMAL_H
-#define ASKELIB_STD_DECIMAL_H
+#pragma once
 
 #include <stdint.h>
 #include <cassert>
@@ -193,5 +186,3 @@ Money operator-(const Money &m1, double m2);
 Money operator*(const Money &m1, double mult);
 Money operator/(const Money &m1, double div);
 Money operator%(const Money &m1, intmax_t div);
-
-#endif //ASKELIB_STD_DECIMAL_H

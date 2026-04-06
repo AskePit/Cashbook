@@ -1,11 +1,4 @@
-/*! @file
- *
- * Qt filesystem helper functions.
- *
- */
-
-#ifndef ASKELIB_STD_FS_H
-#define ASKELIB_STD_FS_H
+#pragma once
 
 #include <QFile>
 
@@ -38,5 +31,3 @@ bool isPicture(const QString &fileName);
 QString binaryToText(const QByteArray &data, bool caps = true);
 
 } // namespace aske
-
-#endif //ASKELIB_STD_FS_H

@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include "bookkeeping/models.h"
 #include "bookkeeping/analytics.h"
@@ -168,5 +167,3 @@ private:
 };
 
 } // namespace cashbook
-
-#endif // MAINWINDOW_H

@@ -1,5 +1,4 @@
-#ifndef WALLETPROPERTIESWINDOW_H
-#define WALLETPROPERTIESWINDOW_H
+#pragma once
 
 #include <QDialog>
 #include "bookkeeping/bookkeeping.h"
@@ -36,5 +35,3 @@ private:
 };
 
 } // namespace cashbook
-
-#endif // WALLETPROPERTIESWINDOW_H

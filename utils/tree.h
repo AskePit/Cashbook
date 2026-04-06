@@ -1,11 +1,4 @@
-/*! @file
- *
- * Generic tree class.
- *
- */
-
-#ifndef ASKELIB_STD_TREE_H
-#define ASKELIB_STD_TREE_H
+#pragma once
 
 #include <list>
 #include <vector>
@@ -326,5 +319,3 @@ private:
 
 template <class T>
 using Tree = Node<T>;
-
-#endif // ASKELIB_STD_TREE_H

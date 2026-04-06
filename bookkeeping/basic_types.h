@@ -1,5 +1,4 @@
-#ifndef BOOKKEEPING_BASIC_TYPES_H
-#define BOOKKEEPING_BASIC_TYPES_H
+#pragma once
 
 #include <utils/tree.h>
 #include <bookkeeping/money.h>
@@ -333,5 +332,3 @@ Q_DECLARE_METATYPE(cashbook::IdableString *)
 Q_DECLARE_METATYPE(const cashbook::IdableString *)
 Q_DECLARE_METATYPE(Node<cashbook::IdableString> *)
 Q_DECLARE_METATYPE(const Node<cashbook::IdableString> *)
-
-#endif // BOOKKEEPING_BASIC_TYPES_H
