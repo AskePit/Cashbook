@@ -17,7 +17,8 @@
 #include <QStandardPaths>
 #include <QQmlContext>
 #include <QQuickItem>
-#include <QWebEnginePage>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 namespace cashbook
 {
@@ -1215,32 +1216,47 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
         m_data.importRusReceiptFile(jsonFile, getWalletNode());
     } else {
         // Serb recipe
-        QString recipeUrl = QInputDialog::getText(this, tr("Укажите ссылку на чек..."), tr("Url"));
+        QNetworkAccessManager* manager = new QNetworkAccessManager(this);
 
-        const auto onHtmlLoaded = [this, getWalletNode](QString content)
-        {
-            QStringView c(content);
+        QString recipeUrl = QInputDialog::getText(
+            this,
+            tr("Укажите ссылку на чек..."),
+            tr("Url")
+            );
 
-            auto firstIdx = c.indexOf(QLatin1String("<pre style="));
-            auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
-            c = c.mid(firstIdx, lastIdx-firstIdx);
+        QNetworkRequest request{QUrl(recipeUrl)};
 
-            firstIdx = c.indexOf(QLatin1String("==="));
-            lastIdx = c.lastIndexOf(QLatin1String("<br"));
-            c = c.mid(firstIdx, lastIdx-firstIdx);
+        connect(manager, &QNetworkAccessManager::finished,
+                this,
+                [this, getWalletNode](QNetworkReply* reply)
+                {
+                    if (reply->error() != QNetworkReply::NoError) {
+                        qDebug() << "Request failed:" << reply->errorString();
+                        reply->deleteLater();
+                        return;
+                    }
 
-            firstIdx = c.indexOf(QStringLiteral("Назив"));
-            c = c.mid(firstIdx);
+                    QString content = QString::fromUtf8(reply->readAll());
 
-            m_data.importSerbReceiptFile(c, getWalletNode());
-        };
+                    // --- your existing parsing logic ---
+                    QStringView c(content);
 
-        QWebEnginePage* page = new QWebEnginePage();
-        connect(page, &QWebEnginePage::loadFinished, this, [page, onHtmlLoaded](bool){
-            page->toHtml([&onHtmlLoaded](const QString& c){
-                onHtmlLoaded(c);
-            });
-        });
-        page->setUrl(QUrl(recipeUrl));
+                    auto firstIdx = c.indexOf(QLatin1String("<pre style="));
+                    auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
+                    c = c.mid(firstIdx, lastIdx - firstIdx);
+
+                    firstIdx = c.indexOf(QLatin1String("==="));
+                    lastIdx = c.lastIndexOf(QLatin1String("<br"));
+                    c = c.mid(firstIdx, lastIdx - firstIdx);
+
+                    firstIdx = c.indexOf(QStringLiteral("Назив"));
+                    c = c.mid(firstIdx);
+
+                    m_data.importSerbReceiptFile(c, getWalletNode());
+
+                    reply->deleteLater();
+                });
+
+        manager->get(request);
     }
 }

@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT += core widgets gui charts qml quick quickwidgets
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webenginewidgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = cashbook
 TEMPLATE = app
