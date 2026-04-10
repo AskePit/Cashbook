@@ -3,6 +3,7 @@
 #include "basic_types.h"
 #include <set>
 #include <deque>
+#include <generator>
 
 namespace cashbook
 {
@@ -28,8 +29,9 @@ struct Wallet : public Idable
         static QString toString(Type::t type);
         static QString toConfigString(Type::t type);
         static Type::t fromConfigString(const QString &str);
-        static constexpr std::array<Type::t, Type::Count> enumerate() {
-            return {Common, Cash, Card, Account, Deposit, Investment, CryptoCurrency, Points};
+        static std::generator<Type::t> enumerate() {
+            for (int i = 0; i < Count; ++i)
+                co_yield static_cast<Type::t>(i);
         }
     };
 
@@ -54,18 +56,9 @@ struct Wallet : public Idable
         static QString toString(Availability::t type);
         static QString toConfigString(Availability::t type);
         static Availability::t fromConfigString(const QString &str);
-        static constexpr std::array<Availability::t, Availability::Count> enumerate() {
-            return { Free,
-                     InAMonth,
-                     InAQarter,
-                     InAYear,
-                     In3Years,
-                     In5Years,
-                     In10Years,
-                     In20Years,
-                     AfterRetirement,
-                     ForFutureGenerations
-            };
+        static std::generator<Availability::t> enumerate() {
+            for (int i = 0; i < Count; ++i)
+                co_yield static_cast<Availability::t>(i);
         }
     };
 
@@ -115,8 +108,9 @@ struct Wallet : public Idable
             static QString toString(Type::t type);
             static QString toConfigString(Type::t type);
             static Type::t fromConfigString(const QString &str);
-            static constexpr std::array<Type::t, Type::Count> enumerate() {
-                return {Common, Currency, Stocks, Metals, CryptoCurrency, RealEstate};
+            static std::generator<Type::t> enumerate() {
+                for (int i = 0; i < Count; ++i)
+                    co_yield static_cast<Type::t>(i);
             }
         };
 
@@ -174,8 +168,9 @@ struct Transaction
         static QString toString(Type::t type);
         static QString toConfigString(Type::t type);
         static Type::t fromConfigString(const QString &str);
-        static constexpr std::array<Type::t, Type::Count> enumerate() {
-            return {In, Out, Transfer};
+        static std::generator<Type::t> enumerate() {
+            for (int i = 0; i < Count; ++i)
+                co_yield static_cast<Type::t>(i);
         }
     };
 
@@ -247,8 +242,9 @@ struct PlanTerm {
         Count
     };
 
-    static constexpr std::array<PlanTerm::t, PlanTerm::Count> enumerate() {
-        return {Short, Middle, Long};
+    static std::generator<PlanTerm::t> enumerate() {
+        for (int i = 0; i < Count; ++i)
+            co_yield static_cast<PlanTerm::t>(i);
     }
 };
 
@@ -261,35 +257,35 @@ struct TaskStatus {
     };
 };
 
-class OwnersData : public Changable
+class OwnersData : public ChangeableObject
 {
 public:
 
     QVector<Owner> owners;
 };
 
-class BanksData : public Changable
+class BanksData : public ChangeableObject
 {
 public:
 
     QVector<Bank> banks;
 };
 
-class WalletsData : public Changable
+class WalletsData : public ChangeableObject
 {
 public:
 
     Tree<Wallet> *rootItem {nullptr};
 };
 
-class CategoriesData : public Changable
+class CategoriesData : public ChangeableObject
 {
 public:
 
     Tree<Category> *rootItem {nullptr};
 };
 
-class LogData : public Changable
+class LogData : public ChangeableObject
 {
 public:
 
@@ -315,19 +311,19 @@ public:
     std::set<Month> changedMonths;
 };
 
-class PlansTermData : public Changable
+class PlansTermData : public ChangeableObject
 {
 public:
 
     QVector<Plan> plans;
 };
 
-class PlansData : public ChangeObservable
+class PlansData : public ChangeableAggregator
 {
 public:
 
     PlansData() {
-        setChangableItems({
+        setChangeables({
             &shortTerm,
             &middleTerm,
             &longTerm
@@ -339,19 +335,19 @@ public:
     PlansTermData longTerm;
 };
 
-class TasksListsData : public Changable
+class TasksListsData : public ChangeableObject
 {
 public:
 
     QVector<Task> tasks;
 };
 
-class TasksData : public ChangeObservable
+class TasksData : public ChangeableAggregator
 {
 public:
 
     TasksData() {
-        setChangableItems({
+        setChangeables({
             &active,
             &completed
         });
@@ -361,7 +357,7 @@ public:
     TasksListsData completed;
 };
 
-class Data : public QObject, public ChangeObservable
+class Data : public QObject, public ChangeableAggregator
 {
     Q_OBJECT
 public:
@@ -406,7 +402,7 @@ template<class T, class Model>
 Node<T> *Data::nodeFromPath(const Model &model, const QString &path) {
     QStringList l = path.split(pathConcat, Qt::KeepEmptyParts);
     Node<T> *node = model.rootItem;
-    for(const auto &s : l) {
+    for(const auto &s : std::as_const(l)) {
         bool found = false;
         for(const auto &child : node->children) {
             if(extractPathString(child) == s) {

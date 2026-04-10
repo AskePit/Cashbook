@@ -257,7 +257,7 @@ void LogData::insertRows(int position, size_t rows)
     log.insert(std::next(log.begin(), position), static_cast<size_t>(rows), t);
     unanchored += static_cast<int>(rows);
     changedMonths.insert(Month(t.date));
-    setChanged();
+    setDirty();
 }
 
 template <class T>
@@ -354,7 +354,7 @@ bool LogData::anchoreTransactions()
         }
     }
 
-    setChanged();
+    setDirty();
 
     unanchored = 0;
     return true;
@@ -367,7 +367,7 @@ void LogData::appendTransactions(const std::vector<Transaction> &transactions)
     }
     QDate date = transactions.front().date;
     changedMonths.insert(Month(date));
-    setChanged();
+    setDirty();
 
     for(const auto &t : transactions) {
         log.push_front(t);
@@ -382,7 +382,7 @@ void LogData::updateNote(size_t row, const QString &note)
     t.note = note;
 
     changedMonths.insert(Month(t.date));
-    setChanged();
+    setDirty();
 }
 
 static bool isNodeBelongsTo(const Node<Category> *node, const Node<Category> *parent) {
@@ -494,7 +494,7 @@ bool LogData::normalizeData()
                     std::swap(*std::next(day.begin(), static_cast<ptrdiff_t>(j)), day.back());
                     day.pop_back();
                     changedMonths.insert(Month(iRec.date));
-                    setChanged();
+                    setDirty();
                     --j;
                 }
             }
@@ -577,7 +577,7 @@ bool LogData::normalizeData()
             }
 
             changedMonths.insert(Month(date));
-            setChanged();
+            setDirty();
 
             // spread balance records between outs and ins depending on sign of wallets' balance
             std::vector<std::pair<ArchNode<Wallet>, int>> outs;
@@ -717,7 +717,7 @@ bool LogData::normalizeData()
     }
     processDay(); // process last day
 
-    bool changed = isChanged();
+    bool changed = isDirty();
     if(changed) {
         std::swap(log, res);
     }
@@ -728,7 +728,7 @@ bool LogData::normalizeData()
 Data::Data()
     : log(statistics)
 {
-    setChangableItems({
+    setChangeables({
         &owners,
         &wallets,
         &inCategories,
@@ -859,7 +859,7 @@ void Data::clear()
     tasks.active.tasks.clear();
     tasks.completed.tasks.clear();
 
-    resetChanged();
+    reset();
 }
 
 void Data::importRusReceiptFile(const QString &json, const Node<Wallet> *wallet)

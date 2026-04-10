@@ -373,7 +373,7 @@ void MainWindow::postLoadSetup()
 void MainWindow::saveData()
 {
     cashbook::save(m_data);
-    m_data.resetChanged();
+    m_data.reset();
 }
 
 
@@ -391,7 +391,7 @@ void MainWindow::on_actionWalletProperties_triggered()
 
     cashbook::WalletPropertiesWindow d(node->data, m_data.owners, m_data.banks, this);
     if(d.exec()) {
-        m_data.wallets.setChanged();
+        m_data.wallets.setDirty();
     }
 }
 
@@ -860,7 +860,7 @@ void cashbook::MainWindow::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event);
 
-    if(m_data.isChanged()) {
+    if(m_data.isDirty()) {
         int ret { callQuestionDialog(tr("Сохранить изменения?"), this) };
         if(ret == QMessageBox::Ok) {
             on_actionSave_triggered();

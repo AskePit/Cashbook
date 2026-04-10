@@ -21,19 +21,14 @@ struct Month
     int year {0};
     int month {0};
 
-    bool operator==(const Month &other) const;
-    bool operator!=(const Month &other) const {
-        return !(*this == other);
-    }
+    auto operator<=>(const Month&) const = default;
+
     QString toString() const;
     QDate toDate() const;
 
 private:
     static QString monthToString(int m);
 };
-
-bool operator<(const Month &m1, const Month &m2);
-bool operator>(const Month &m1, const Month &m2);
 
 struct Idable
 {
@@ -43,7 +38,7 @@ struct Idable
 class IdableString : public Idable, public QString
 {
 public:
-    IdableString();
+    IdableString() = default;
     IdableString(const char *str);
     IdableString(const QString &str);
 
@@ -222,45 +217,45 @@ QString formatPercent(double percent);
  * @brief The AbstractChangable interface.
  * @details Interface for an object that has a "changed" state, which can be reseted.
  */
-class AbstractChangable
+class IChangeable
 {
 public:
-    virtual bool isChanged() const = 0;
-    virtual void resetChanged() = 0;
+    virtual bool isDirty() const = 0;
+    virtual void reset() = 0;
 };
 
 /**
  * @brief The Changable class.
  * @details Represents spesific object that can be changed and can change itself.
  */
-class Changable : public AbstractChangable
+class ChangeableObject : public IChangeable
 {
 public:
-    bool isChanged() const override {
-        return m_changed;
+    bool isDirty() const final {
+        return m_isDirty;
     }
 
-    void resetChanged() override {
-        m_changed = false;
+    void reset() final {
+        m_isDirty = false;
     }
 
-    virtual void setChanged() {
-        m_changed = true;
+    void setDirty() {
+        m_isDirty = true;
     }
 
     /**
-     * Proxy function that sets object changed if `changed` is `true`
-     * and returns `changed`.
+     * Proxy function that sets object dirty if `dirty` is `true`
+     * and returns `dirty`.
      *
      * This function is usefull for oneliners which return result from function.
      */
-    bool changeFilter(bool changed) {
-        m_changed |= changed;
-        return changed;
+    bool addDirty(bool dirty) {
+        m_isDirty |= dirty;
+        return m_isDirty;
     }
 
 private:
-    bool m_changed;
+    bool m_isDirty;
 };
 
 /**
@@ -269,42 +264,42 @@ private:
  *          If any of these objects are changed, this object is considered
  *          being changed too.
  */
-class ChangeObservable : public AbstractChangable
+class ChangeableAggregator : public IChangeable
 {
 public:
-    void setChangableItems(std::vector<AbstractChangable*> items) {
+    void setChangeables(std::vector<IChangeable*> items) {
         m_items = items;
     }
 
-    void addChangableItem(AbstractChangable* item) {
+    void addChangeable(IChangeable* item) {
         m_items.push_back(item);
     }
 
-    std::vector<AbstractChangable*> &changableItems() {
+    std::vector<IChangeable*> &changeables() {
         return m_items;
     }
 
-    void removeChangableItem(AbstractChangable* toRemove) {
+    void removeChangeable(IChangeable* toRemove) {
         m_items.erase( std::remove(m_items.begin(), m_items.end(), toRemove), m_items.end() );
     }
 
-    bool isChanged() const final {
-        for(AbstractChangable *item : m_items) {
-            if(item->isChanged()) {
+    bool isDirty() const final {
+        for(IChangeable *item : m_items) {
+            if(item->isDirty()) {
                 return true;
             }
         }
         return false;
     }
 
-    void resetChanged() final {
-        for(AbstractChangable *item : m_items) {
-            item->resetChanged();
+    void reset() final {
+        for(IChangeable *item : m_items) {
+            item->reset();
         }
     }
 
 protected:
-    std::vector<AbstractChangable*> m_items;
+    std::vector<IChangeable*> m_items;
 };
 
 } // namespace cashbook

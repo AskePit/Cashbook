@@ -9,20 +9,6 @@ Month::Month(const QDate &date)
     month = date.month();
 }
 
-/*bool Month::operator<(const Month &other) const {
-    if(year < other.year) {
-        return true;
-    } else if(year > other.year) {
-        return false;
-    }
-
-    return month < other.month;
-}*/
-
-bool Month::operator==(const Month &other) const {
-    return year == other.year && month == other.month;
-}
-
 QString Month::toString() const {
     return QString("%1 %2").arg(year).arg(monthToString(month));
 }
@@ -48,30 +34,6 @@ QString Month::monthToString(int m) {
         case 12: return QObject::tr("дек");
     }
 }
-
-bool operator<(const Month &m1, const Month &m2) {
-    if(m1.year < m2.year) {
-        return true;
-    } else if(m1.year > m2.year) {
-        return false;
-    }
-
-    return m1.month < m2.month;
-}
-
-bool operator>(const Month &m1, const Month &m2) {
-    if(m1.year > m2.year) {
-        return true;
-    } else if(m1.year < m2.year) {
-        return false;
-    }
-
-    return m1.month > m2.month;
-}
-
-IdableString::IdableString()
-    : QString()
-{}
 
 IdableString::IdableString(const char *str)
     : QString(str)
@@ -119,7 +81,7 @@ QString formatMoney(const Money &money, bool symbol /*= true*/)
         units.insert(index, ' ');
     }
 
-    QString symbolSign = symbol ? getCurrencySymbol(money.currency()) : "";
+    QString symbolSign = symbol ? getCurrencySymbol(money.CurrencyT) : "";
 
     if(money.cents()) {
         QString cents = QString::number(money.cents());

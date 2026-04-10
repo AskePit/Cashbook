@@ -26,6 +26,7 @@ HEADERS += \
     bookkeeping/models.h \
     bookkeeping/bookkeeping.h \
     bookkeeping/money.h \
+    bookkeeping/money.hpp \
     bookkeeping/serialization.h \
     gui/forms/analytics/categoriesstaticchart.h \
     gui/forms/mainwindow.h \
@@ -65,6 +66,6 @@ win32-g++ {
 RESOURCES += \
     resources/resources.qrc
 
-CONFIG += c++20
+CONFIG += c++23
 
 RC_ICONS = resources/logo_white.ico

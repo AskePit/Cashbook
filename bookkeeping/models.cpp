@@ -295,7 +295,7 @@ bool CategoriesModel::insertRows(int position, int rows, const QModelIndex &pare
     auto createCategory = [](){
         return tr("Новая категория");
     };
-    return m_data.changeFilter( common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent) );
+    return m_data.addDirty( common::tree::insertRows<CategoriesModel, Category>(this, createCategory, position, rows, parent) );
 }
 
 QModelIndex CategoriesModel::parent(const QModelIndex &index) const
@@ -305,12 +305,12 @@ QModelIndex CategoriesModel::parent(const QModelIndex &index) const
 
 bool CategoriesModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    return m_data.changeFilter( common::tree::removeRows(this, position, rows, parent) );
+    return m_data.addDirty( common::tree::removeRows(this, position, rows, parent) );
 }
 
 bool CategoriesModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
 {
-    return m_data.changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild));
+    return m_data.addDirty( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild));
 }
 
 int CategoriesModel::rowCount(const QModelIndex &parent) const
@@ -330,7 +330,7 @@ bool CategoriesModel::setData(const QModelIndex &index, const QVariant &value, i
         case CategoriesColumn::Name: item->data.setName(value.toString()); break;
     }
     emit dataChanged(index, index);
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -444,7 +444,7 @@ bool WalletsModel::insertRows(int position, int rows, const QModelIndex &parent)
         w.name = tr("Новый кошелек");
         return w;
     };
-    return m_data.changeFilter( common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent) );
+    return m_data.addDirty( common::tree::insertRows<WalletsModel, Wallet>(this, createCategory, position, rows, parent) );
 }
 
 QModelIndex WalletsModel::parent(const QModelIndex &index) const
@@ -454,12 +454,12 @@ QModelIndex WalletsModel::parent(const QModelIndex &index) const
 
 bool WalletsModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
-    return m_data.changeFilter( common::tree::removeRows(this, position, rows, parent) );
+    return m_data.addDirty( common::tree::removeRows(this, position, rows, parent) );
 }
 
 bool WalletsModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const QModelIndex &destinationParent, int destinationChild)
 {
-    return m_data.changeFilter( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild) );
+    return m_data.addDirty( common::tree::moveRow(this, sourceParent, sourceRow, destinationParent, destinationChild) );
 }
 
 int WalletsModel::rowCount(const QModelIndex &parent) const
@@ -482,7 +482,7 @@ bool WalletsModel::setData(const QModelIndex &index, const QVariant &value, int 
     }
 
     emit dataChanged(index, index);
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -545,7 +545,7 @@ bool OwnersModel::setData(const QModelIndex &index, const QVariant &value, int r
 
     m_data.owners[index.row()].setString(value.toString());
     emit dataChanged(index, index);
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -556,7 +556,7 @@ bool OwnersModel::insertRows(int position, int rows, const QModelIndex &parent)
     beginInsertRows(parent, position, position + rows - 1);
     m_data.owners.insert(position, rows, tr("Новый пользователь"));
     endInsertRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -573,7 +573,7 @@ bool OwnersModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     m_data.owners.remove(position, rows);
     endRemoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -588,7 +588,7 @@ bool OwnersModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const 
     m_data.owners.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -836,7 +836,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
 
     emit dataChanged(index, index);
     m_data.changedMonths.insert(Month(t.date));
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -863,7 +863,7 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
     m_data.unanchored -= 1;
 
     endRemoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -878,7 +878,7 @@ bool LogModel::copyTop()
     m_data.log[0] = m_data.log[1];
     m_data.log[0].note.clear();
     emit dataChanged(index(0, LogColumn::Start), index(0, LogColumn::Count), {Qt::DisplayRole});
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -1108,7 +1108,7 @@ bool PlansModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     emit dataChanged(index, index);
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -1122,7 +1122,7 @@ bool PlansModel::insertRows(int position, int rows, const QModelIndex &parent)
     Plan item;
     m_data.plans.insert(position, item);
     endInsertRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -1134,7 +1134,7 @@ bool PlansModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     m_data.plans.removeAt(position);
     endRemoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -1149,7 +1149,7 @@ bool PlansModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     m_data.plans.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }
@@ -1162,7 +1162,7 @@ void PlansModel::insertPlan(const Plan &plan)
     m_data.plans[size] = plan;
 
     emit dataChanged(index(size, PlansColumn::Count), index(size, PlansColumn::Count));
-    m_data.setChanged();
+    m_data.setDirty();
 }
 
 //
@@ -1351,7 +1351,7 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     emit dataChanged(index, index);
-    m_data.setChanged();
+    m_data.setDirty();
 
     if(origin.category != task.category
     || origin.from != task.from
@@ -1379,7 +1379,7 @@ bool TasksModel::insertRows(int position, int rows, const QModelIndex &parent)
     item.to = Today;
     m_data.tasks.insert(position, item);
     endInsertRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -1391,7 +1391,7 @@ bool TasksModel::removeRows(int position, int rows, const QModelIndex &parent)
     beginRemoveRows(parent, position, position + rows - 1);
     m_data.tasks.removeAt(position);
     endRemoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
     return true;
 }
 
@@ -1406,7 +1406,7 @@ bool TasksModel::moveRow(const QModelIndex &sourceParent, int sourceRow, const Q
     m_data.tasks.move(sourceRow, destinationChild - shift);
 
     endMoveRows();
-    m_data.setChanged();
+    m_data.setDirty();
 
     return true;
 }

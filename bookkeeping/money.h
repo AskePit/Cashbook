@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <utility>
-#include <map>
+#include <array>
 
 class Currency
 {
@@ -20,6 +20,8 @@ public:
         Jpy,
         Btc,
 
+        Count,
+
         UserDefined = 1024
     };
 
@@ -27,55 +29,52 @@ public:
     static void setWeight(Currency::t currency, double weight);
 
 private:
-    static std::map<Currency::t, double> weights;
+    static std::array<double, Count> weights;
 };
 
-class Money {
+template<Currency::t C = Currency::Default>
+class TMoney {
 public:
     using money_pair = std::pair<intmax_t, intmax_t>;
+    static constexpr Currency::t CurrencyT = C;
 
     // creation
-    Money()
+    TMoney()
     {}
 
-    explicit Money(intmax_t units, intmax_t cents)
-        : m_amount(units*m_centsPerUnit + cents)
+    explicit TMoney(intmax_t units, intmax_t cents)
+        : m_amount(units*CENTS_PER_UNIT + cents)
     {}
 
-    explicit Money(intmax_t cents)
+    explicit TMoney(intmax_t cents)
         : m_amount(cents)
     {}
 
-    Money(double value, Currency::t curr = Currency::Default)
-        : m_currency(curr)
+    TMoney(double value)
     {
-        double cents = value*m_centsPerUnit;
-        cents = std::round(cents*m_centsPerUnit)/m_centsPerUnit; // round hack
+        double cents = value*CENTS_PER_UNIT;
+        cents = std::round(cents*CENTS_PER_UNIT)/CENTS_PER_UNIT; // round hack
         m_amount = intmax_t(cents);
     }
 
-    friend void swap(Money& first, Money& second) // nothrow
+    friend void swap(TMoney& first, TMoney& second) // nothrow
     {
         using std::swap;
 
         swap(first.m_amount, second.m_amount);
-        swap(first.m_currency, second.m_currency);
-        swap(first.m_centsPerUnit, second.m_centsPerUnit);
     }
 
-    Money(const Money &other)
+    TMoney(const TMoney &other)
         : m_amount(other.m_amount)
-        , m_currency(other.m_currency)
-        , m_centsPerUnit(other.m_centsPerUnit)
     {}
 
-    Money(Money &&other)
-        : Money()
+    TMoney(TMoney &&other)
+        : TMoney()
     {
         swap(*this, other);
     }
 
-    Money &operator=(Money other)
+    TMoney &operator=(TMoney other)
     {
         swap(*this, other);
         return *this;
@@ -84,17 +83,17 @@ public:
     // casts
     explicit operator double() const
     {
-        return m_amount/(double)m_centsPerUnit;
+        return m_amount/(double)CENTS_PER_UNIT;
     }
 
     intmax_t units() const
     {
-        return m_amount/m_centsPerUnit;
+        return m_amount/CENTS_PER_UNIT;
     }
 
     intmax_t cents() const
     {
-        return m_amount%m_centsPerUnit;
+        return m_amount%CENTS_PER_UNIT;
     }
 
     intmax_t as_cents() const
@@ -102,24 +101,9 @@ public:
         return m_amount;
     }
 
-    int centsPerUnit() const
-    {
-        return m_centsPerUnit;
-    }
-
-    void setCentsPerUnit(int centsPerUnit)
-    {
-        m_centsPerUnit = centsPerUnit;
-    }
-
     money_pair units_cents() const
     {
         return {units(), cents()};
-    }
-
-    Currency::t currency() const
-    {
-        return m_currency;
     }
 
     bool isZero() const
@@ -127,62 +111,48 @@ public:
         return m_amount == 0;
     }
 
-    void setCurrency(Currency::t currency)
-    {
-        m_currency = currency;
-    }
-
-    void convertTo(Currency::t currency) {
-        double ratio = Currency::weight(currency) / Currency::weight(m_currency);
-        m_amount = static_cast<intmax_t>(static_cast<double>(m_amount) * ratio);
-        m_currency = currency;
-    }
-
-    Money convertToCopy(Currency::t currency) const {
-        Money money(*this);
-        money.convertTo(currency);
-        return money;
+    template<Currency::t OtherCurrency>
+    void convertTo() {
+        double ratio = Currency::weight(OtherCurrency) / Currency::weight(C);
+        intmax_t cents = static_cast<intmax_t>(static_cast<double>(m_amount) * ratio);
+        return TMoney<OtherCurrency>(cents);
     }
 
     // arithmetic
-    Money &operator+=(const Money &other);
-    Money &operator-=(const Money &other);
-    Money &operator*=(double mult) { m_amount = intmax_t(m_amount*mult); return *this; }
-    Money &operator/=(double div) { m_amount = intmax_t(m_amount/div); return *this; }
-    Money &operator%=(intmax_t div) { m_amount %= div; return *this; }
+    TMoney &operator+=(const TMoney &other);
+    TMoney &operator-=(const TMoney &other);
+    TMoney &operator*=(double mult) { m_amount = intmax_t(m_amount*mult); return *this; }
+    TMoney &operator/=(double div) { m_amount = intmax_t(m_amount/div); return *this; }
+    TMoney &operator%=(intmax_t div) { m_amount %= div; return *this; }
 
-    bool operator==(const Money &other) const
-    {
-        return m_amount == other.m_amount
-            && m_currency == other.m_currency
-            && m_centsPerUnit == other.m_centsPerUnit;
-    }
-    bool operator!=(const Money &other) const { return !((*this) == other); }
-    bool operator< (const Money &other) const { return m_amount <  other.m_amount; }
-    bool operator<=(const Money &other) const { return m_amount <= other.m_amount; }
-    bool operator> (const Money &other) const { return m_amount >  other.m_amount; }
-    bool operator>=(const Money &other) const { return m_amount >= other.m_amount; }
-
-    bool operator==(double other) const { return (double)m_amount == other; }
-    bool operator!=(double other) const { return (double)m_amount != other; }
-    bool operator< (double other) const { return (double)m_amount <  other; }
-    bool operator<=(double other) const { return (double)m_amount <= other; }
-    bool operator> (double other) const { return (double)m_amount >  other; }
-    bool operator>=(double other) const { return (double)m_amount >= other; }
+    auto operator<=>(const TMoney&) const = default;
 
 private:
+    static constexpr int CENTS_PER_UNIT {100};
+
     intmax_t m_amount {0};
-    Currency::t m_currency {Currency::Rub};
-    int m_centsPerUnit {100};
 };
 
-Money operator+(const Money &m1, const Money &m2);
-Money operator-(const Money &m1, const Money &m2);
-Money operator+(double m1, const Money &m2);
-Money operator-(double m1, const Money &m2);
-Money operator+(const Money &m1, double m2);
-Money operator-(const Money &m1, double m2);
+template<Currency::t C>
+TMoney<C> operator+(const TMoney<C> &m1, const TMoney<C> &m2);
+template<Currency::t C>
+TMoney<C> operator-(const TMoney<C> &m1, const TMoney<C> &m2);
+template<Currency::t C>
+TMoney<C> operator+(double m1, const TMoney<C> &m2);
+template<Currency::t C>
+TMoney<C> operator-(double m1, const TMoney<C> &m2);
+template<Currency::t C>
+TMoney<C> operator+(const TMoney<C> &m1, double m2);
+template<Currency::t C>
+TMoney<C> operator-(const TMoney<C> &m1, double m2);
 
-Money operator*(const Money &m1, double mult);
-Money operator/(const Money &m1, double div);
-Money operator%(const Money &m1, intmax_t div);
+template<Currency::t C>
+TMoney<C> operator*(const TMoney<C> &m1, double mult);
+template<Currency::t C>
+TMoney<C> operator/(const TMoney<C> &m1, double div);
+template<Currency::t C>
+TMoney<C> operator%(const TMoney<C> &m1, intmax_t div);
+
+using Money = TMoney<>;
+
+#include "money.hpp"
