@@ -17,8 +17,6 @@
 #include <QStandardPaths>
 #include <QQmlContext>
 #include <QQuickItem>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 
 namespace cashbook
 {
@@ -909,11 +907,7 @@ void cashbook::MainWindow::updateUnanchoredSum()
 
 void cashbook::MainWindow::showUnanchoredSum()
 {
-    Money sum;
-    for(int i = 0; i<m_models.logModel.m_data.unanchored; ++i) {
-        sum += m_models.logModel.m_data.log[i].amount;
-    }
-    ui->unanchoredSumLabel->setText(formatMoney(sum));
+    ui->unanchoredSumLabel->setText(formatMoney(m_models.logModel.m_data.unanchoredSum()));
 
     ui->unanchoredLabel->show();
     ui->unanchoredSumLabel->show();
@@ -1216,47 +1210,16 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
         m_data.importRusReceiptFile(jsonFile, getWalletNode());
     } else {
         // Serb recipe
-        QNetworkAccessManager* manager = new QNetworkAccessManager(this);
-
         QString recipeUrl = QInputDialog::getText(
             this,
             tr("Укажите ссылку на чек..."),
             tr("Url")
             );
 
-        QNetworkRequest request{QUrl(recipeUrl)};
+        if (recipeUrl.isEmpty()) {
+            return;
+        }
 
-        connect(manager, &QNetworkAccessManager::finished,
-                this,
-                [this, getWalletNode](QNetworkReply* reply)
-                {
-                    if (reply->error() != QNetworkReply::NoError) {
-                        qDebug() << "Request failed:" << reply->errorString();
-                        reply->deleteLater();
-                        return;
-                    }
-
-                    QString content = QString::fromUtf8(reply->readAll());
-
-                    // --- your existing parsing logic ---
-                    QStringView c(content);
-
-                    auto firstIdx = c.indexOf(QLatin1String("<pre style="));
-                    auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
-                    c = c.mid(firstIdx, lastIdx - firstIdx);
-
-                    firstIdx = c.indexOf(QLatin1String("==="));
-                    lastIdx = c.lastIndexOf(QLatin1String("<br"));
-                    c = c.mid(firstIdx, lastIdx - firstIdx);
-
-                    firstIdx = c.indexOf(QStringLiteral("Назив"));
-                    c = c.mid(firstIdx);
-
-                    m_data.importSerbReceiptFile(c, getWalletNode());
-
-                    reply->deleteLater();
-                });
-
-        manager->get(request);
+        m_data.fetchAndImportSerbReceipt(recipeUrl, getWalletNode());
     }
 }

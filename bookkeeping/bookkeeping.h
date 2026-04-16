@@ -301,6 +301,9 @@ public:
     bool anchoreTransactions();
     void appendTransactions(const std::vector<Transaction> &transactions);
 
+    Money unanchoredSum() const;
+    void removeRow(int position);
+
     void updateNote(size_t row, const QString &note);
     void updateTask(Task &task) const;
     bool normalizeData();
@@ -384,6 +387,7 @@ public:
     void clear();
     void importRusReceiptFile(const QString &json, const Node<Wallet> *wallet);
     void importSerbReceiptFile(QStringView receipt, const Node<Wallet> *wallet);
+    void fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet);
 
     void onOwnersRemove(QStringList paths);
     void onInCategoriesRemove(QStringList paths);

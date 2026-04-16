@@ -1,6 +1,8 @@
 #include "bookkeeping/bookkeeping.h"
 #include <utils/filesystem.h>
 
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QRegularExpression>
 
 namespace cashbook
@@ -257,6 +259,23 @@ void LogData::insertRows(int position, size_t rows)
     log.insert(std::next(log.begin(), position), static_cast<size_t>(rows), t);
     unanchored += static_cast<int>(rows);
     changedMonths.insert(Month(t.date));
+    setDirty();
+}
+
+Money LogData::unanchoredSum() const
+{
+    Money sum;
+    for(int i = 0; i < unanchored; ++i) {
+        sum += log[i].amount;
+    }
+    return sum;
+}
+
+void LogData::removeRow(int position)
+{
+    changedMonths.insert(Month(log[static_cast<size_t>(position)].date));
+    log.erase(std::next(log.begin(), position), std::next(log.begin(), position + 1));
+    unanchored -= 1;
     setDirty();
 }
 
@@ -956,6 +975,44 @@ void Data::importSerbReceiptFile(QStringView receipt, const Node<Wallet> *wallet
     }
 
     log.appendTransactions(transactions);
+}
+
+void Data::fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet)
+{
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+
+    connect(manager, &QNetworkAccessManager::finished,
+            this,
+            [this, wallet, manager](QNetworkReply *reply)
+            {
+                manager->deleteLater();
+
+                if (reply->error() != QNetworkReply::NoError) {
+                    qDebug() << "Request failed:" << reply->errorString();
+                    reply->deleteLater();
+                    return;
+                }
+
+                QString content = QString::fromUtf8(reply->readAll());
+                QStringView c(content);
+
+                auto firstIdx = c.indexOf(QLatin1String("<pre style="));
+                auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
+                c = c.mid(firstIdx, lastIdx - firstIdx);
+
+                firstIdx = c.indexOf(QLatin1String("==="));
+                lastIdx = c.lastIndexOf(QLatin1String("<br"));
+                c = c.mid(firstIdx, lastIdx - firstIdx);
+
+                firstIdx = c.indexOf(QStringLiteral("Назив"));
+                c = c.mid(firstIdx);
+
+                importSerbReceiptFile(c, wallet);
+
+                reply->deleteLater();
+            });
+
+    manager->get(QNetworkRequest{QUrl(url)});
 }
 
 } // namespace cashbook

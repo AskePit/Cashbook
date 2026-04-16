@@ -1,40 +1,3 @@
-### Problem 3: Receipt HTML parsing in `MainWindow::on_actionImportReceipt_triggered`
-
-**File:** `gui/forms/mainwindow.cpp:1163-1262`
-
-The Serbian receipt import flow performs HTTP fetching (`QNetworkAccessManager`) and HTML content parsing (extracting text between `<pre style=` and `</pre>`, then finding `===` delimiters and `"Назив"` markers) directly inside the UI slot. The `MainWindow` should not be responsible for network I/O or HTML scraping.
-
-**Fix:** The network fetching + HTML extraction should live in a dedicated service/helper (e.g., `SerbReceiptFetcher` or be part of `Data`). The UI slot should only:
-1. Show dialogs to get user input (URL, wallet selection)
-2. Call the service to fetch + parse
-3. Feed results back to `Data::importSerbReceiptFile`
-
-Note: `Data::importSerbReceiptFile` already exists and handles the actual receipt text parsing — the problem is just the HTML-to-text extraction and HTTP fetch that lives in the UI.
-
----
-
-### Problem 4: `showUnanchoredSum` computes business data
-
-**File:** `gui/forms/mainwindow.cpp:910-920`
-
-```cpp
-void MainWindow::showUnanchoredSum()
-{
-    Money sum;
-    for(int i = 0; i<m_models.logModel.m_data.unanchored; ++i) {
-        sum += m_models.logModel.m_data.log[i].amount;
-    }
-    ui->unanchoredSumLabel->setText(formatMoney(sum));
-    ...
-}
-```
-
-The UI is iterating over raw transaction data and computing a sum. This is a business logic calculation.
-
-**Fix:** Add a method to `LogData` like `Money unanchoredSum() const` that performs this computation, then the UI just calls `formatMoney(m_models.logModel.m_data.unanchoredSum())`.
-
----
-
 ### Problem 5: `TreemapModel::showCategoryStatement` creates a UI window
 
 **File:** `gui/forms/analytics/categoriesstaticchart.cpp:312-332`
@@ -69,28 +32,10 @@ This is allocated with `new` but never assigned as a child of any QObject with p
 
 ---
 
-### Problem 8: `LogModel::removeRows` performs business logic
-
-**File:** `bookkeeping/models.cpp:854-868`
-
-```cpp
-m_data.log.erase(...);
-m_data.unanchored -= 1;
-```
-
-The model directly mutates `LogData` internals (erasing from the deque, decrementing the `unanchored` counter). Compare with `LogModel::insertRows` which properly delegates to `m_data.insertRows()`. The remove operation should similarly be delegated to `LogData`.
-
-**Fix:** Add `LogData::removeRow(int position)` and call it from `LogModel::removeRows`, mirroring the pattern already used for `insertRows`.
-
----
-
 ### Summary — prioritized
 
 | # | Severity | Issue | Where | Fix |
 |---|----------|-------|-------|-----|
-| 3 | **Medium** | HTTP fetch + HTML parsing in UI slot | `mainwindow.cpp:1163-1262` | Extract to service class |
-| 4 | **Low** | Unanchored sum computed in UI | `mainwindow.cpp:910-920` | Add `LogData::unanchoredSum()` |
 | 5 | **Medium** | Model class creates UI window | `categoriesstaticchart.cpp:312-332` | Use signal, handle in UI |
 | 6 | **Low** | `TreemapModel` memory leak | `mainwindow.cpp:317` | Parent to `this` or make member |
 | 7 | **Low** | Hardcoded fonts/colors in model | `models.cpp:1527-1539` | Move to delegate/stylesheet |
-| 8 | **Low** | `LogModel::removeRows` bypasses `LogData` | `models.cpp:854-868` | Add `LogData::removeRow()` |

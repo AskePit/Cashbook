@@ -851,13 +851,8 @@ bool LogModel::removeRows(int position, int rows, const QModelIndex &parent)
 
     Q_UNUSED(parent);
     beginRemoveRows(parent, position, position + rows - 1);
-
-    m_data.changedMonths.insert(Month(m_data.log[static_cast<size_t>(position)].date));
-    m_data.log.erase(std::next(m_data.log.begin(), position), std::next(m_data.log.begin(), position+rows));
-    m_data.unanchored -= 1;
-
+    m_data.removeRow(position);
     endRemoveRows();
-    m_data.setDirty();
     return true;
 }
 
