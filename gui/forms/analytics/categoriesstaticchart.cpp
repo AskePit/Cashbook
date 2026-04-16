@@ -2,8 +2,6 @@
 #include "ui_categoriesstaticchart.h"
 
 #include <QRectF>
-#include <QTableView>
-#include <QHeaderView>
 
 namespace cashbook
 {
@@ -312,23 +310,7 @@ QString TreemapModel::getCategoryPath() const
 void TreemapModel::showCategoryStatement(const QString& nodeName)
 {
     const Node<Category>* category = _getCategoryByName(nodeName);
-
-    FilteredLogModel* filterModel = new FilteredLogModel(m_from, m_to, m_categoriesType, category, this);
-    filterModel->setSourceModel(const_cast<LogModel*>(&m_data->logModel));
-    QTableView* table = new QTableView();
-    table->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Tool);
-    table->setWindowState(Qt::WindowMaximized);
-    table->setAttribute(Qt::WA_DeleteOnClose);
-    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->verticalHeader()->hide();
-    table->verticalHeader()->setDefaultSectionSize(23);
-    table->setModel(filterModel);
-    table->resizeColumnsToContents();
-    table->hideColumn(LogColumn::Type);
-    table->hideColumn(m_categoriesType == Transaction::Type::In ? LogColumn::From : LogColumn::To);
-    table->showFullScreen(); // full screen works
-    table->showMaximized(); // maximize doesn't work but it restores window from fullscreen well - hackity hack!
-    table->activateWindow();
+    emit categoryStatementRequested(category, m_categoriesType);
 }
 
 } // namespace cashbook

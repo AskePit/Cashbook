@@ -13,6 +13,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QHeaderView>
+#include <QTableView>
 #include <QInputDialog>
 #include <QStandardPaths>
 #include <QQmlContext>
@@ -358,6 +359,27 @@ void MainWindow::postLoadSetup()
 
     connect(ui->spentsTypeBox, &QComboBox::currentIndexChanged, this, [p](int index) {
         p->setCategoriesType(index);
+    });
+
+    connect(p, &TreemapModel::categoryStatementRequested, this,
+        [this, p](const Node<Category>* category, Transaction::Type::t categoriesType) {
+        FilteredLogModel* filterModel = new FilteredLogModel(
+            p->dateFrom(), p->dateTo(), categoriesType, category, this);
+        filterModel->setSourceModel(const_cast<LogModel*>(&m_models.logModel));
+        QTableView* table = new QTableView();
+        table->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Tool);
+        table->setWindowState(Qt::WindowMaximized);
+        table->setAttribute(Qt::WA_DeleteOnClose);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->verticalHeader()->hide();
+        table->verticalHeader()->setDefaultSectionSize(23);
+        table->setModel(filterModel);
+        table->resizeColumnsToContents();
+        table->hideColumn(LogColumn::Type);
+        table->hideColumn(categoriesType == Transaction::Type::In ? LogColumn::From : LogColumn::To);
+        table->showFullScreen();
+        table->showMaximized();
+        table->activateWindow();
     });
 
     ui->quickWidget->setAttribute(Qt::WA_AlwaysStackOnTop);

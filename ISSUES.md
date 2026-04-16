@@ -1,13 +1,3 @@
-### Problem 5: `TreemapModel::showCategoryStatement` creates a UI window
-
-**File:** `gui/forms/analytics/categoriesstaticchart.cpp:312-332`
-
-`TreemapModel` is a `QObject`-based data model, but `showCategoryStatement()` creates a `QTableView`, sets window flags, configures columns, and shows it full-screen. This is purely UI logic embedded in a model class.
-
-**Fix:** Emit a signal from `TreemapModel` (e.g., `void categoryStatementRequested(const Node<Category>* category)`) and handle the window creation in the UI layer (e.g., in `MainWindow::postLoadSetup` where the model is connected). Alternatively, move this into a factory function in a `gui/` file.
-
----
-
 ### Problem 6: `TreemapModel` memory leak + ownership issue
 
 **File:** `gui/forms/mainwindow.cpp:317`
@@ -36,6 +26,5 @@ This is allocated with `new` but never assigned as a child of any QObject with p
 
 | # | Severity | Issue | Where | Fix |
 |---|----------|-------|-------|-----|
-| 5 | **Medium** | Model class creates UI window | `categoriesstaticchart.cpp:312-332` | Use signal, handle in UI |
 | 6 | **Low** | `TreemapModel` memory leak | `mainwindow.cpp:317` | Parent to `this` or make member |
 | 7 | **Low** | Hardcoded fonts/colors in model | `models.cpp:1527-1539` | Move to delegate/stylesheet |

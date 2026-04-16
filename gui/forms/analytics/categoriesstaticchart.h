@@ -47,6 +47,9 @@ public:
 
     void init(const DataModels& data);
 
+    QDate dateFrom() const { return m_from; }
+    QDate dateTo() const { return m_to; }
+
     void setDateFrom(QDate from) {
         m_from = from;
     }
@@ -70,6 +73,7 @@ public:
 
 signals:
     void onUpdated();
+    void categoryStatementRequested(const Node<Category>* category, Transaction::Type::t categoriesType);
 
 private:
     std::vector<Rect> _getCurrentValues();
