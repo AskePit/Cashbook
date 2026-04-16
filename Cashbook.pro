@@ -29,6 +29,7 @@ HEADERS += \
     bookkeeping/money.hpp \
     bookkeeping/serialization.h \
     gui/forms/analytics/categoriesstaticchart.h \
+    gui/modelsdelegate.h \
     gui/forms/mainwindow.h \
     gui/forms/innodedialog.h \
     gui/forms/selectwalletdialog.h \
@@ -47,6 +48,7 @@ SOURCES += \
     bookkeeping/money.cpp \
     bookkeeping/serialization.cpp \
     gui/forms/analytics/categoriesstaticchart.cpp \
+    gui/modelsdelegate.cpp \
     gui/forms/mainwindow.cpp \
     gui/forms/innodedialog.cpp \
     gui/forms/selectwalletdialog.cpp \

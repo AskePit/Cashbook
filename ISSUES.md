@@ -1,13 +1,3 @@
-### Problem 2: `models.cpp` includes and creates GUI widgets
-
-**File:** `bookkeeping/models.cpp:2` — `#include "gui/widgets/widgets.h"`
-
-The `ModelsDelegate` class (defined in `bookkeeping/models.h:408-424`, implemented in `bookkeeping/models.cpp:1574-1815`) creates concrete GUI widgets: `QCheckBox`, `QComboBox`, `QDateEdit`, `RelaxedDoubleSpinBox`, `CategoryNodeButton`, `WalletNodeButton`. It also casts to specific model types (`LogModel`, `PlansModel`, `TasksModel`) to decide which editor to create. This creates a circular dependency: `bookkeeping/models.cpp` depends on `gui/widgets/`, while `gui/` depends on `bookkeeping/models.h`.
-
-**Fix:** Move `ModelsDelegate` out of `bookkeeping/models.h/cpp` into its own file under `gui/`, e.g., `gui/modelsdelegate.h/cpp`. The delegate is fundamentally a UI concern — it paints cells and creates editor widgets. The pure data models (`CategoriesModel`, `LogModel`, etc.) can stay in `bookkeeping/`.
-
----
-
 ### Problem 3: Receipt HTML parsing in `MainWindow::on_actionImportReceipt_triggered`
 
 **File:** `gui/forms/mainwindow.cpp:1163-1262`
@@ -98,7 +88,6 @@ The model directly mutates `LogData` internals (erasing from the deque, decremen
 
 | # | Severity | Issue | Where | Fix |
 |---|----------|-------|-------|-----|
-| 2 | **High** | `ModelsDelegate` creates widgets from `bookkeeping/` | `bookkeeping/models.*` | Move delegate to `gui/` |
 | 3 | **Medium** | HTTP fetch + HTML parsing in UI slot | `mainwindow.cpp:1163-1262` | Extract to service class |
 | 4 | **Low** | Unanchored sum computed in UI | `mainwindow.cpp:910-920` | Add `LogData::unanchoredSum()` |
 | 5 | **Medium** | Model class creates UI window | `categoriesstaticchart.cpp:312-332` | Use signal, handle in UI |
