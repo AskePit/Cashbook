@@ -294,6 +294,12 @@ void MainWindow::postLoadSetup()
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
     }
+    connect(&m_models.briefStatisticsModel, &QAbstractItemModel::modelReset, this, [this]() {
+        for(int row = 0; row < ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
+            ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
+            ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);
+        }
+    });
 
     resizeContentsWithPadding(ui->briefTable, BriefColumn::Count, 30);
 
@@ -313,6 +319,7 @@ void MainWindow::postLoadSetup()
     m_categoriesAnalytics.initUi(ui);
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
+    connect(&m_data, &Data::categoriesStatisticsUpdated, this, &MainWindow::updateAnalytics);
 
     TreemapModel* p = new TreemapModel(this);
 
@@ -389,6 +396,8 @@ void MainWindow::postLoadSetup()
 
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
     QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
+
+    connect(&m_data, &Data::categoriesStatisticsUpdated, p, &TreemapModel::updatePeriod);
 }
 
 void MainWindow::saveData()

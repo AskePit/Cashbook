@@ -1551,7 +1551,10 @@ bool DataModels::anchoreTransactions()
 {
     if(logModel.anchoreTransactions()) {
         walletsModel.update();
+        briefStatisticsModel.update();
         emit m_data.categoriesStatisticsUpdated();
+        tasksModels[TaskStatus::Active].update();
+        tasksModels[TaskStatus::Completed].update();
         return true;
     }
 
