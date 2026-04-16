@@ -21,7 +21,7 @@ FORMS += \
     gui/forms/walletpropertieswindow.ui
 
 HEADERS += \
-    bookkeeping/analytics.h \
+    gui/forms/analytics/analytics.h \
     bookkeeping/basic_types.h \
     bookkeeping/models.h \
     bookkeeping/bookkeeping.h \
@@ -40,7 +40,7 @@ HEADERS += \
     utils/tree.h
 
 SOURCES += \
-    bookkeeping/analytics.cpp \
+    gui/forms/analytics/analytics.cpp \
     bookkeeping/basic_types.cpp \
     bookkeeping/models.cpp \
     bookkeeping/bookkeeping.cpp \

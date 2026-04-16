@@ -1,7 +1,7 @@
 #pragma once
 
 #include "bookkeeping/models.h"
-#include "bookkeeping/analytics.h"
+#include "gui/forms/analytics/analytics.h"
 
 #include <QMainWindow>
 #include <QEvent>

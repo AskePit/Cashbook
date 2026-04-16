@@ -1,13 +1,3 @@
-### Problem 1: `analytics.h/cpp` lives in `bookkeeping/` but is pure UI code
-
-**Files:** `bookkeeping/analytics.h`, `bookkeeping/analytics.cpp`
-
-`WalletsAnalytics` and `CategoriesAnalytics` are entirely UI classes — they own `QChart*`, `QPieSeries*`, `QChartView*`, `QComboBox*`, `QPushButton*`, `QDateTimeEdit*`, and they call `initUi(Ui::MainWindow*)` to grab widget pointers. They also include `gui/widgets/widgets.h`. Yet they live in `bookkeeping/`, a directory that is supposed to be the core business logic layer.
-
-**Fix:** Move `analytics.h/cpp` to `gui/forms/analytics/` (or a new `gui/analytics/`). The chart/filter computation logic that is truly reusable (e.g., the wallet filtering + grouping in `WalletsAnalytics::updateAnalytics`, the date-bucketed spending scan in `CategoriesAnalytics::updateAnalytics`) could be extracted into a pure data function in `bookkeeping/` that returns a `std::map<QString, Money>` or similar, and the UI classes would just call that function and feed results into the chart.
-
----
-
 ### Problem 2: `models.cpp` includes and creates GUI widgets
 
 **File:** `bookkeeping/models.cpp:2` — `#include "gui/widgets/widgets.h"`
@@ -108,7 +98,6 @@ The model directly mutates `LogData` internals (erasing from the deque, decremen
 
 | # | Severity | Issue | Where | Fix |
 |---|----------|-------|-------|-----|
-| 1 | **High** | Analytics classes are UI but live in `bookkeeping/` | `bookkeeping/analytics.*` | Move to `gui/`, extract pure computation to core |
 | 2 | **High** | `ModelsDelegate` creates widgets from `bookkeeping/` | `bookkeeping/models.*` | Move delegate to `gui/` |
 | 3 | **Medium** | HTTP fetch + HTML parsing in UI slot | `mainwindow.cpp:1163-1262` | Extract to service class |
 | 4 | **Low** | Unanchored sum computed in UI | `mainwindow.cpp:910-920` | Add `LogData::unanchoredSum()` |
