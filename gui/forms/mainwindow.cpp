@@ -20,6 +20,7 @@
 #include <QQuickItem>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QTimer>
 
 namespace cashbook
 {
@@ -215,7 +216,6 @@ void MainWindow::preLoadSetup()
     const int stretch1 = 100;
     const int stretch2 = 30;
     setSplitterStretching(ui->logSplitter, stretch1, stretch2);
-    setSplitterStretching(ui->briefSplitter, stretch1, stretch2);
     setSplitterStretching(ui->ownersSplitter, stretch1, stretch2);
 
     ui->logTable->setColumnWidth(LogColumn::Date, 55);
@@ -397,6 +397,15 @@ void MainWindow::postLoadSetup()
 
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
     QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
+
+    connect(ui->tabWidget_2, &QTabWidget::currentChanged, this, [this](int index) {
+        if(ui->tabWidget_2->widget(index) == ui->spentsAnalysisTab) {
+            QTimer::singleShot(0, this, [this]() {
+                ui->quickWidget->updateGeometry();
+                QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelUpdated");
+            });
+        }
+    });
 
     m_models.setOnChange([this, p]() {
         updateAnalytics();
