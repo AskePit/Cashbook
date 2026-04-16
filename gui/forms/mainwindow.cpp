@@ -313,7 +313,7 @@ void MainWindow::postLoadSetup()
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
 
-    TreemapModel* p = new TreemapModel;
+    TreemapModel* p = new TreemapModel(this);
 
     ui->spentsDateFrom->setDate(QDate(Today.year(), Today.month(), 1));
     p->setDateFrom(ui->spentsDateFrom->date());
