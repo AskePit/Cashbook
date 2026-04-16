@@ -892,14 +892,15 @@ void cashbook::MainWindow::on_actionSave_triggered()
 
 void cashbook::MainWindow::closeEvent(QCloseEvent *event)
 {
-    Q_UNUSED(event);
-
     if(m_data.isDirty()) {
         int ret { callQuestionDialog(tr("Сохранить изменения?"), this) };
         if(ret == QMessageBox::Ok) {
             on_actionSave_triggered();
         }
     }
+
+    QApplication::processEvents();
+    event->accept();
 }
 
 class Tab {
