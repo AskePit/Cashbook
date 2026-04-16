@@ -1,8 +1,6 @@
 #include "bookkeeping/bookkeeping.h"
 #include <utils/filesystem.h>
 
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QRegularExpression>
 
 namespace cashbook
@@ -374,8 +372,8 @@ bool LogData::anchoreTransactions()
     }
 
     setDirty();
-
     unanchored = 0;
+    notifyChanged();
     return true;
 }
 
@@ -757,8 +755,8 @@ Data::Data()
         &tasks
     });
 
-    connect(this, &Data::categoriesStatisticsUpdated, [this](){
-        updateTasks();
+    log.setOnChange([this]() {
+        notifyChanged();
     });
 }
 
@@ -828,16 +826,6 @@ void Data::updateTasks(TasksListsData &tasksData)
     for(Task &task : tasksData.tasks) {
         log.updateTask(task);
     }
-}
-
-bool Data::anchoreTransactions()
-{
-    bool did = log.anchoreTransactions();
-    if(did) {
-        emit categoriesStatisticsUpdated();
-    }
-
-    return did;
 }
 
 Node<Wallet> *Data::walletFromPath(const QString &path) {
@@ -975,44 +963,6 @@ void Data::importSerbReceiptFile(QStringView receipt, const Node<Wallet> *wallet
     }
 
     log.appendTransactions(transactions);
-}
-
-void Data::fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet)
-{
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-
-    connect(manager, &QNetworkAccessManager::finished,
-            this,
-            [this, wallet, manager](QNetworkReply *reply)
-            {
-                manager->deleteLater();
-
-                if (reply->error() != QNetworkReply::NoError) {
-                    qDebug() << "Request failed:" << reply->errorString();
-                    reply->deleteLater();
-                    return;
-                }
-
-                QString content = QString::fromUtf8(reply->readAll());
-                QStringView c(content);
-
-                auto firstIdx = c.indexOf(QLatin1String("<pre style="));
-                auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
-                c = c.mid(firstIdx, lastIdx - firstIdx);
-
-                firstIdx = c.indexOf(QLatin1String("==="));
-                lastIdx = c.lastIndexOf(QLatin1String("<br"));
-                c = c.mid(firstIdx, lastIdx - firstIdx);
-
-                firstIdx = c.indexOf(QStringLiteral("Назив"));
-                c = c.mid(firstIdx);
-
-                importSerbReceiptFile(c, wallet);
-
-                reply->deleteLater();
-            });
-
-    manager->get(QNetworkRequest{QUrl(url)});
 }
 
 } // namespace cashbook

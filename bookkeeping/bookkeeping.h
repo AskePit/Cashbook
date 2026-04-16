@@ -360,10 +360,11 @@ public:
     TasksListsData completed;
 };
 
-class Data : public QObject, public ChangeableAggregator
+class Data : public ChangeableAggregator
 {
-    Q_OBJECT
 public:
+    using OnChangeCallback = std::function<void()>;
+
     Data();
 
     OwnersData owners;
@@ -383,23 +384,33 @@ public:
 
     void updateTasks();
     void updateTasks(TasksListsData &tasks);
-    bool anchoreTransactions();
     void clear();
     void importRusReceiptFile(const QString &json, const Node<Wallet> *wallet);
     void importSerbReceiptFile(QStringView receipt, const Node<Wallet> *wallet);
-    void fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet);
 
     void onOwnersRemove(QStringList paths);
     void onInCategoriesRemove(QStringList paths);
     void onOutCategoriesRemove(QStringList paths);
     void onWalletsRemove(QStringList paths);
 
-signals:
-    void categoriesStatisticsUpdated();
+    void setOnChange(OnChangeCallback cb) {
+        m_onChange = std::move(cb);
+    }
+
+    void notifyChanged() {
+        if(!m_notifying && m_onChange) {
+            m_notifying = true;
+            m_onChange();
+            m_notifying = false;
+        }
+    }
 
 private:
     template<class T, class Model>
     Node<T> *nodeFromPath(const Model &model, const QString &path);
+
+    OnChangeCallback m_onChange;
+    bool m_notifying {false};
 };
 
 template<class T, class Model>

@@ -147,6 +147,7 @@ private:
     void showCategoryContextMenu(const QPoint& point);
 
     void updateAnalytics();
+    void fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet);
 
 protected:
     void closeEvent(QCloseEvent *event);

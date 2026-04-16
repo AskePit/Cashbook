@@ -1541,24 +1541,30 @@ DataModels::DataModels(Data& data)
     , briefStatisticsModel(data.statistics.brief)
     , m_data(data)
 {
-    QObject::connect(&ownersModel, &OwnersModel::nodesGonnaBeRemoved, &data, &Data::onOwnersRemove);
-    QObject::connect(&inCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, &data, &Data::onInCategoriesRemove);
-    QObject::connect(&outCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved, &data, &Data::onOutCategoriesRemove);
-    QObject::connect(&walletsModel, &WalletsModel::nodesGonnaBeRemoved, &data, &Data::onWalletsRemove);
+    QObject::connect(&ownersModel, &OwnersModel::nodesGonnaBeRemoved,
+        [&data](QStringList paths){ data.onOwnersRemove(paths); });
+    QObject::connect(&inCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved,
+        [&data](QStringList paths){ data.onInCategoriesRemove(paths); });
+    QObject::connect(&outCategoriesModel, &CategoriesModel::nodesGonnaBeRemoved,
+        [&data](QStringList paths){ data.onOutCategoriesRemove(paths); });
+    QObject::connect(&walletsModel, &WalletsModel::nodesGonnaBeRemoved,
+        [&data](QStringList paths){ data.onWalletsRemove(paths); });
+
+    data.setOnChange([this]() {
+        m_data.updateTasks();
+        walletsModel.update();
+        briefStatisticsModel.update();
+        tasksModels[TaskStatus::Active].update();
+        tasksModels[TaskStatus::Completed].update();
+        if(m_onChange) {
+            m_onChange();
+        }
+    });
 }
 
 bool DataModels::anchoreTransactions()
 {
-    if(logModel.anchoreTransactions()) {
-        walletsModel.update();
-        briefStatisticsModel.update();
-        emit m_data.categoriesStatisticsUpdated();
-        tasksModels[TaskStatus::Active].update();
-        tasksModels[TaskStatus::Completed].update();
-        return true;
-    }
-
-    return false;
+    return logModel.anchoreTransactions();
 }
 
 } // namespace cashbook

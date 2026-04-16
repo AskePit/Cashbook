@@ -18,6 +18,8 @@
 #include <QStandardPaths>
 #include <QQmlContext>
 #include <QQuickItem>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 namespace cashbook
 {
@@ -319,7 +321,6 @@ void MainWindow::postLoadSetup()
     m_categoriesAnalytics.initUi(ui);
     m_allowAnalyticsUpdate = true;
     updateAnalytics();
-    connect(&m_data, &Data::categoriesStatisticsUpdated, this, &MainWindow::updateAnalytics);
 
     TreemapModel* p = new TreemapModel(this);
 
@@ -397,7 +398,10 @@ void MainWindow::postLoadSetup()
     ui->quickWidget->rootContext()->setContextProperty("sModel", p);
     QMetaObject::invokeMethod(ui->quickWidget->rootObject(), "onModelSet");
 
-    connect(&m_data, &Data::categoriesStatisticsUpdated, p, &TreemapModel::updatePeriod);
+    m_models.setOnChange([this, p]() {
+        updateAnalytics();
+        p->updatePeriod();
+    });
 }
 
 void MainWindow::saveData()
@@ -1252,6 +1256,44 @@ void cashbook::MainWindow::on_actionImportReceipt_triggered()
             return;
         }
 
-        m_data.fetchAndImportSerbReceipt(recipeUrl, getWalletNode());
+        fetchAndImportSerbReceipt(recipeUrl, getWalletNode());
     }
+}
+
+void cashbook::MainWindow::fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet)
+{
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+
+    connect(manager, &QNetworkAccessManager::finished,
+            this,
+            [this, wallet, manager](QNetworkReply *reply)
+            {
+                manager->deleteLater();
+
+                if (reply->error() != QNetworkReply::NoError) {
+                    qDebug() << "Request failed:" << reply->errorString();
+                    reply->deleteLater();
+                    return;
+                }
+
+                QString content = QString::fromUtf8(reply->readAll());
+                QStringView c(content);
+
+                auto firstIdx = c.indexOf(QLatin1String("<pre style="));
+                auto lastIdx = c.lastIndexOf(QLatin1String("</pre>"));
+                c = c.mid(firstIdx, lastIdx - firstIdx);
+
+                firstIdx = c.indexOf(QLatin1String("==="));
+                lastIdx = c.lastIndexOf(QLatin1String("<br"));
+                c = c.mid(firstIdx, lastIdx - firstIdx);
+
+                firstIdx = c.indexOf(QStringLiteral("Назив"));
+                c = c.mid(firstIdx);
+
+                m_data.importSerbReceiptFile(c, wallet);
+
+                reply->deleteLater();
+            });
+
+    manager->get(QNetworkRequest{QUrl(url)});
 }

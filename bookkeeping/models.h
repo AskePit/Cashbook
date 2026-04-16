@@ -404,9 +404,15 @@ public:
 class DataModels
 {
 public:
+    using OnChangeCallback = std::function<void()>;
+
     DataModels(Data& data);
 
     bool anchoreTransactions();
+
+    void setOnChange(OnChangeCallback cb) {
+        m_onChange = std::move(cb);
+    }
 
     OwnersModel ownersModel;
     WalletsModel walletsModel;
@@ -418,6 +424,9 @@ public:
     BriefModel briefStatisticsModel;
 
     Data& m_data;
+
+private:
+    OnChangeCallback m_onChange;
 };
 
 } // namespace cashbook

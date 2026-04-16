@@ -231,6 +231,8 @@ public:
 class ChangeableObject : public IChangeable
 {
 public:
+    using OnChangeCallback = std::function<void()>;
+
     bool isDirty() const final {
         return m_isDirty;
     }
@@ -254,8 +256,19 @@ public:
         return m_isDirty;
     }
 
+    void setOnChange(OnChangeCallback cb) {
+        m_onChange = std::move(cb);
+    }
+
+    void notifyChanged() {
+        if(m_onChange) {
+            m_onChange();
+        }
+    }
+
 private:
-    bool m_isDirty;
+    bool m_isDirty {false};
+    OnChangeCallback m_onChange;
 };
 
 /**
