@@ -3,7 +3,6 @@
 #include <QSet>
 #include <QDebug>
 #include <QColor>
-#include <QFont>
 
 #include <functional>
 #include <stack>
@@ -1502,38 +1501,6 @@ QVariant BriefModel::data(const QModelIndex &index, int role) const
                     case BriefRow::Spent: return formatMoney(common.spent - regular.spent);
                 }
             }
-        }
-    }
-
-    if(role == Qt::ForegroundRole) {
-        if(col == BriefColumn::Common) {
-            return rowType == BriefRow::Received ? colors::profit : colors::loses;
-        } else {
-            return colors::normal;
-        }
-    }
-
-    if(role == Qt::FontRole) {
-        if(header) {
-            QFont f("Segoe UI", 8);
-            f.setBold(true);
-            return f;
-        }
-
-        if(col == BriefColumn::Common) {
-            QFont f("Segoe UI", 9);
-            f.setBold(true);
-            return f;
-        } else {
-            return QFont("Segoe UI", 9);
-        }
-    }
-
-    if(role == Qt::TextAlignmentRole) {
-        if(col == BriefColumn::Date) {
-            return QVariant(Qt::AlignHCenter | Qt::AlignVCenter);
-        } else {
-            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
         }
     }
 

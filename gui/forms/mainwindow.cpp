@@ -289,6 +289,7 @@ void MainWindow::postLoadSetup()
     updateUnanchoredSum();
 
     ui->briefTable->setModel(&m_models.briefStatisticsModel);
+    ui->briefTable->setItemDelegate(&m_briefDelegate);
     for(int row = 0; row<ui->briefTable->model()->rowCount(); row += BriefRow::Count) {
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Date, 2, 1);
         ui->briefTable->setSpan(row + BriefRow::Received, BriefColumn::Balance, 2, 1);

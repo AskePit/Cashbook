@@ -10,6 +10,59 @@
 namespace cashbook
 {
 
+static const QColor briefColorNormal {Qt::black};
+static const QColor briefColorProfit {34, 120, 53};
+static const QColor briefColorLoses {220, 47, 67};
+
+BriefDelegate::BriefDelegate(QObject* parent)
+    : QItemDelegate(parent)
+    , m_headerFont(QApplication::font())
+    , m_commonFont(QApplication::font())
+    , m_normalFont(QApplication::font())
+{
+    m_headerFont.setPointSize(8);
+    m_headerFont.setBold(true);
+
+    m_commonFont.setPointSize(9);
+    m_commonFont.setBold(true);
+
+    m_normalFont.setPointSize(9);
+}
+
+void BriefDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    int col = index.column();
+    BriefRow::t rowType = static_cast<BriefRow::t>(index.row() % BriefRow::Count);
+    bool header = index.row() == BriefRow::Space2 * 1;
+
+    QStyleOptionViewItem opt = option;
+
+    // Font
+    if(header) {
+        opt.font = m_headerFont;
+    } else if(col == BriefColumn::Common) {
+        opt.font = m_commonFont;
+    } else {
+        opt.font = m_normalFont;
+    }
+
+    // Foreground color
+    if(col == BriefColumn::Common) {
+        opt.palette.setColor(QPalette::Text, rowType == BriefRow::Received ? briefColorProfit : briefColorLoses);
+    } else {
+        opt.palette.setColor(QPalette::Text, briefColorNormal);
+    }
+
+    // Text alignment
+    if(col == BriefColumn::Date) {
+        opt.displayAlignment = Qt::AlignHCenter | Qt::AlignVCenter;
+    } else {
+        opt.displayAlignment = Qt::AlignLeft | Qt::AlignVCenter;
+    }
+
+    QItemDelegate::paint(painter, opt, index);
+}
+
 static int categoryNodeType = qRegisterMetaType<const Node<Category> *>();
 static int walletNodeType = qRegisterMetaType<const Node<Wallet> *>();
 static int transactionTypeType = qRegisterMetaType<Transaction::Type::t>();

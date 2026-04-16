@@ -3,11 +3,27 @@
 #include "bookkeeping/models.h"
 
 #include <QItemDelegate>
+#include <QFont>
 
 namespace cashbook
 {
 
 class DataModels;
+
+class BriefDelegate : public QItemDelegate
+{
+    Q_OBJECT
+
+public:
+    BriefDelegate(QObject* parent = nullptr);
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+
+private:
+    QFont m_headerFont;
+    QFont m_commonFont;
+    QFont m_normalFont;
+};
 
 class ModelsDelegate : public QItemDelegate
 {
