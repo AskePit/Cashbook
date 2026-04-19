@@ -7,6 +7,7 @@
 #include "bookkeeping/serialization.h"
 #include "selectwalletdialog.h"
 #include "walletpropertieswindow.h"
+#include "categorypropertieswindow.h"
 #include "gui/forms/analytics/categoriesstaticchart.h"
 
 #include <QFileDialog>
@@ -161,13 +162,17 @@ void MainWindow::preLoadSetup()
             /* .view =        */ ui->outCategoriesTree,
             /* .model =       */ &m_models.outCategoriesModel,
             /* .delegate =    */ &m_modelsDelegate,
-            /* .contextMenu = */ bindToThis(&MainWindow::showCategoryContextMenu),
+            /* .contextMenu = */ [this](const QPoint& point){
+                showCategoryContextMenu(ui->outCategoriesTree, m_models.outCategoriesModel, point);
+            },
         },
         {
             /* .view =        */ ui->inCategoriesTree,
             /* .model =       */ &m_models.inCategoriesModel,
             /* .delegate =    */ &m_modelsDelegate,
-            /* .contextMenu = */ bindToThis(&MainWindow::showCategoryContextMenu),
+            /* .contextMenu = */ [this](const QPoint& point){
+                showCategoryContextMenu(ui->inCategoriesTree, m_models.inCategoriesModel, point);
+            },
         },
         {
             /* .view =        */ ui->walletsTree,
@@ -440,22 +445,20 @@ void MainWindow::on_actionWalletProperties_triggered()
 
 void MainWindow::on_actionCategoryProperties_triggered()
 {
-    /*
-    QModelIndex index = ui->walletsTree->currentIndex();
-    Node<Wallet> *node = m_models.walletsModel.getItem(index);
+    if(!m_categoryContextTree || !m_categoryContextModel) {
+        return;
+    }
+
+    QModelIndex index = m_categoryContextTree->currentIndex();
+    Node<Category> *node = m_categoryContextModel->getItem(index);
     if(!node) {
         return;
     }
 
-    if(!node->isLeaf()) {
-        return;
-    }
-
-    cashbook::WalletPropertiesWindow d(node->data, m_data.owners, m_data.banks, this);
+    cashbook::CategoryPropertiesWindow d(node->data, this);
     if(d.exec()) {
-        m_data.wallets.setChanged();
+        m_categoryContextModel->m_data.setDirty();
     }
-    */
 }
 
 void MainWindow::on_walletsAnalysisCriteriaCombo_currentIndexChanged(int)
@@ -1142,31 +1145,24 @@ void cashbook::MainWindow::showWalletContextMenu(const QPoint& point)
     menu.exec(globalPos);
 }
 
-void cashbook::MainWindow::showCategoryContextMenu(const QPoint& point)
+void cashbook::MainWindow::showCategoryContextMenu(QTreeView* tree, CategoriesModel& model, const QPoint& point)
 {
-    Q_UNUSED(point);
+    QPoint globalPos = tree->mapToGlobal(point);
+    auto index = tree->indexAt(point);
 
-    //    if(w && (w == m_in->viewport() || w == m_out->viewport())) {
-    //QTreeView *view = w == m_in->viewport() ? m_in : m_out;
-
-    // TODO
-    /*
-    QPoint globalPos = ui->walletsTree->mapToGlobal(point);
-    auto index = ui->walletsTree->indexAt(point);
-
-    const Node<cashbook::Wallet> *node = m_models.walletsModel.getItem(index);
+    Node<Category> *node = model.getItem(index);
     if(!node) {
         return;
     }
 
-    if(!node->isLeaf()) {
-        return;
-    }
+    tree->setCurrentIndex(index);
 
-    QMenu menu(ui->walletsTree);
+    m_categoryContextTree = tree;
+    m_categoryContextModel = &model;
+
+    QMenu menu(tree);
     menu.addAction(ui->actionCategoryProperties);
     menu.exec(globalPos);
-    */
 }
 
 void cashbook::MainWindow::updateAnalytics()

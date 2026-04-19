@@ -144,7 +144,7 @@ private:
     void showLongPlansMenu(const QPoint& point);
     void showPlansContextMenu(const QPoint& point);
     void showWalletContextMenu(const QPoint& point);
-    void showCategoryContextMenu(const QPoint& point);
+    void showCategoryContextMenu(QTreeView* tree, CategoriesModel& model, const QPoint& point);
 
     void updateAnalytics();
     void fetchAndImportSerbReceipt(const QString &url, const Node<Wallet> *wallet);
@@ -162,6 +162,9 @@ private:
     ClickFilter m_clickFilter;
 
     QModelIndex m_noteContextIndex;
+
+    QTreeView* m_categoryContextTree {nullptr};
+    CategoriesModel* m_categoryContextModel {nullptr};
 
     // analytics
     WalletsAnalytics m_walletAnalytics;

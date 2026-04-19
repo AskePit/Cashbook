@@ -18,7 +18,8 @@ FORMS += \
     gui/forms/mainwindow.ui \
     gui/forms/innodedialog.ui \
     gui/forms/selectwalletdialog.ui \
-    gui/forms/walletpropertieswindow.ui
+    gui/forms/walletpropertieswindow.ui \
+    gui/forms/categorypropertieswindow.ui
 
 HEADERS += \
     gui/forms/analytics/analytics.h \
@@ -34,6 +35,7 @@ HEADERS += \
     gui/forms/innodedialog.h \
     gui/forms/selectwalletdialog.h \
     gui/forms/walletpropertieswindow.h \
+    gui/forms/categorypropertieswindow.h \
     gui/widgets/widgets.h \
     $$files($$PWD/third-party/yaml-cpp/src/*.h) \
     $$PWD/third-party/qtyaml.h \
@@ -53,6 +55,7 @@ SOURCES += \
     gui/forms/innodedialog.cpp \
     gui/forms/selectwalletdialog.cpp \
     gui/forms/walletpropertieswindow.cpp \
+    gui/forms/categorypropertieswindow.cpp \
     gui/widgets/widgets.cpp \
     main.cpp \
     $$files($$PWD/third-party/yaml-cpp/src/*.cpp) \
